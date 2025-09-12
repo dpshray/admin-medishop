@@ -64,7 +64,7 @@ export default function ReusableSidebar({
                         <UserDropdown user={user} groups={dropdownGroups} onLogout={onLogout}/>
                     </div>
                 </header>
-                <main className="flex-1 space-y-4  sm:space-y-6  overflow-auto">{children}</main>
+                <main className="flex-1 space-y-4  sm:space-y-6  overflow-auto p-3">{children}</main>
             </SidebarInset>
         </SidebarProvider>
     )

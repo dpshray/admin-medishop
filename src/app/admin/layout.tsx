@@ -28,12 +28,13 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
             label: "Main",
             items: [
                 {label: "Dashboard", href: "/admin", icon: Home},
-                {label: "Users", href: "/admin/users", icon: Users},
+                {label: "Vendors", href: "/admin/vendors", icon: Users},
             ],
         },
         {
             label: "Products",
             items: [
+                {label: "Brands", href: "/admin/brands", icon: Package},
                 {label: "Suppliers", href: "/admin/suppliers", icon: Truck},
                 {label: "Products", href: "/admin/products", icon: Package},
                 {label: "Categories", href: "/admin/categories", icon: Layers},

@@ -2,11 +2,13 @@
 
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
 import {Download, Package, Plus, Settings} from "lucide-react"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {cn} from "@/lib/utils"
 import {DashboardCard} from "@/components/card/dashboard/dashboard-card"
 import {RevenueChart} from "@/components/card/dashboard/revenue-chart"
 import UsersTable from "@/components/card/dashboard/users-table"
+import {Button} from "@/components/ui/button"
+import {motion} from "framer-motion"
+import {Badge} from "@/components/ui/badge"
 
 export default function VendorPage() {
     const recentActivities = [
@@ -15,7 +17,6 @@ export default function VendorPage() {
         {type: "sales", message: "MegaMart hit $10k sales milestone", time: "1 hour ago"},
         {type: "alert", message: "Delayed shipping reported for FreshFoods", time: "2 hours ago"},
     ]
-
 
     const topProducts = [
         {id: 1, name: "Wireless Headphones", sold: "1,200 units", growth: "+15%", vendors: 12},
@@ -63,23 +64,36 @@ export default function VendorPage() {
 
     return (
         <div className="space-y-6 px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="font-heading text-3xl font-bold">Vendor Dashboard</h1>
-                    <p className="text-muted-foreground">Manage your vendors, products, and sales performance</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Select>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Last 30 days"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="7d">Last 7 days</SelectItem>
-                            <SelectItem value="30d">Last 30 days</SelectItem>
-                            <SelectItem value="90d">Last 90 days</SelectItem>
-                            <SelectItem value="1y">Last year</SelectItem>
-                        </SelectContent>
-                    </Select>
+            <div
+                className={cn('flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-gradient-to-r from-purple-600 via-pink-500 to-pink-400 p-6 rounded-xl text-white my-2')}>
+                <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between w-full">
+                    <div className="space-y-4 max-w-lg">
+                        <Badge className="bg-white/20 text-white hover:bg-white/30 rounded-xl">Premium</Badge>
+                        <h2 className="text-3xl font-bold">Welcome to Vendor Dashboard</h2>
+                        <p className="text-white/80">Manage your vendors, products, and sales performance</p>
+                        <div className="flex flex-wrap gap-3">
+                            <Button className="rounded-2xl bg-white text-purple-700 hover:bg-white/90">
+                                Explore Plans
+                            </Button>
+                            <Button variant="outline"
+                                    className="rounded-2xl  !bg-white/10 border-white text-background hover:bg-white/10">
+                                Take a Tour
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="hidden lg:block">
+                        <motion.div
+                            animate={{rotate: 360}}
+                            transition={{duration: 50, repeat: Infinity, ease: "linear"}}
+                            className="relative h-40 w-40"
+                        >
+                            <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-md"/>
+                            <div className="absolute inset-4 rounded-full bg-white/20"/>
+                            <div className="absolute inset-8 rounded-full bg-white/30"/>
+                            <div className="absolute inset-12 rounded-full bg-white/40"/>
+                            <div className="absolute inset-16 rounded-full bg-white/50"/>
+                        </motion.div>
+                    </div>
                 </div>
             </div>
 
@@ -89,15 +103,15 @@ export default function VendorPage() {
                 ))}
             </div>
 
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto mt-6">
                 <RevenueChart/>
             </div>
 
-            <div className="w-full flex gap-6">
-                <UsersTable onAddUser={() => {
+            <div className="flex flex-col lg:flex-row gap-6 mt-6">
+                <UsersTable onAddUser={function (): void {
+                    throw new Error("Function not implemented.")
                 }}/>
-
-                <Card className={'w-full'}>
+                <Card className="w-full lg:w-1/2">
                     <CardHeader>
                         <CardTitle>Top Selling Products</CardTitle>
                         <CardDescription>Most popular products this month</CardDescription>
@@ -121,7 +135,7 @@ export default function VendorPage() {
                 </Card>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-7">
+            <div className="grid gap-6 lg:grid-cols-7 mt-6">
                 <Card className="lg:col-span-4">
                     <CardHeader>
                         <CardTitle>Recent Activity</CardTitle>
@@ -162,7 +176,7 @@ export default function VendorPage() {
                                     )}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <action.icon className="w-5 h-5 text-blue-600 flex-shrink-0"/>
+                                        <action.icon className="w-5 h-5 text-purple-600 flex-shrink-0"/>
                                         <div className="flex-1 min-w-0">
                                             <div className="font-medium text-sm">{action.title}</div>
                                             <div className="text-xs text-gray-600">{action.desc}</div>

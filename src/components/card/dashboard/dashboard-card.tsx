@@ -5,6 +5,7 @@ import {motion} from 'framer-motion'
 import {LucideIcon, TrendingUp} from 'lucide-react'
 import {cn} from '@/lib/utils'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from '@/components/ui/card'
+import {Progress} from '@/components/ui/progress'
 
 interface DashboardCardProps {
     title: string
@@ -36,7 +37,8 @@ export const DashboardCard = memo(
                 animate={{opacity: 1, y: 0}}
                 transition={{delay: index * 0.1}}
                 whileHover={{scale: 1.02, transition: {duration: 0.2}}}
-                className={cn('w-full', className)}
+                className={cn('w-full ', className,
+                    `hover:bg-gradient-to-r hover:from-${color}-500/20 hover:to-${color}-500/40`)}
             >
                 <Card
                     className="relative overflow-hidden rounded-xl border bg-card/40 transition-all duration-300 hover:shadow-lg">
@@ -68,12 +70,13 @@ export const DashboardCard = memo(
                         <CardDescription className="text-sm font-medium text-muted-foreground">
                             {title}
                         </CardDescription>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-                            <motion.div
-                                initial={{width: 0}}
-                                animate={{width: `${65 + index * 8}%`}}
-                                transition={{duration: 1, delay: index * 0.1}}
-                                className={cn('h-full rounded-full', color.replace('text-', 'bg-'))}
+                        <div className="mt-3">
+                            <Progress
+                                value={65 + index * 8}
+                                className={cn(
+                                    'h-2 rounded-full',
+                                    color.replace('text-', '[&>div]:bg-')
+                                )}
                             />
                         </div>
                     </CardContent>

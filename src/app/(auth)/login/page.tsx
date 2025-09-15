@@ -33,7 +33,7 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginFormValues) => {
         try {
             const response = await authService.login(data)
-            console.log('Response from', response?.data.user.user_type)
+            console.log('Response from', response)
             if (response) {
                 localStorage.setItem("_at", response?.data?.token)
                 localStorage.setItem("_role", response?.data?.user?.user_type?.toLowerCase() || "")
@@ -83,7 +83,7 @@ export default function LoginPage() {
                             </div>
                             <Button
                                 type="submit"
-                                className="w-full h-11 font-semibold"
+                                className="w-full font-semibold"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? "Signing in..." : "Sign In"}
@@ -102,21 +102,21 @@ export default function LoginPage() {
                         <div className="grid grid-cols-3 gap-3">
                             <Button
                                 variant="outline"
-                                className="h-11 font-medium"
+                                className=" font-medium"
                                 onClick={() => console.log("Login with Google")}
                             >
                                 <Mail className="w-5 h-5"/>
                             </Button>
                             <Button
                                 variant="outline"
-                                className="h-11 font-medium"
+                                className="font-medium"
                                 onClick={() => console.log("Login with GitHub")}
                             >
                                 <Github className="w-5 h-5"/>
                             </Button>
                             <Button
                                 variant="outline"
-                                className="h-11 font-medium"
+                                className="font-medium"
                                 onClick={() => console.log("Login with Facebook")}
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">

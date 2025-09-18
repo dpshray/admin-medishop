@@ -9,7 +9,7 @@ import VendorTable from "@/app/admin/vendors/VenderTable"
 export default function VendorPage() {
     const router = useRouter()
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen mainContainer">
             <div className="container  py-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-100 rounded-lg">

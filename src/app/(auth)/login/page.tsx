@@ -37,7 +37,7 @@ export default function LoginPage() {
             if (response) {
                 localStorage.setItem("_at", response?.data?.token)
                 localStorage.setItem("_role", response?.data?.user?.user_type?.toLowerCase() || "")
-                //TODO: redirect to dashboard
+                router.push( '/admin')
             }
         } catch (error) {
             console.log(error)

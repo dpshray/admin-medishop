@@ -1,97 +1,87 @@
 "use client"
 
-import type React from "react"
+import React, {useId} from "react"
 import {Label} from "@/components/ui/label"
+import {Input} from "@/components/ui/input"
+import {Textarea} from "@/components/ui/textarea"
 import {cn} from "@/lib/utils"
 
-interface TextInputProps {
-    name?: string
+interface TextInputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string
-    placeholder?: string
-    type?: string
-    required?: boolean
-    className?: string
-    icon?: React.ElementType
     error?: string
+    icon?: React.ElementType
     textarea?: boolean
-    [key: string]: any
+    textareaProps?: React.TextareaHTMLAttributes<HTMLTextAreaElement>
 }
 
 export default function TextInputField({
-                                           name,
                                            label,
-                                           placeholder,
-                                           type = "text",
-                                           required = false,
-                                           className,
-                                           icon: Icon,
                                            error,
+                                           icon: Icon,
                                            textarea = false,
+                                           textareaProps,
+                                           className,
+                                           required,
                                            ...props
-                                       }: TextInputProps) {
+                                       }: TextInputFieldProps) {
+    const id = useId()
+
     return (
-        <div className="w-full space-y-1 sm:space-y-2">
+        <div className="w-full space-y-2">
             {label && (
-                <Label htmlFor={name} className={cn("text-xs sm:text-sm font-medium break-words", error && "text-red-500")}>
+                <Label
+                    htmlFor={id}
+                    className={cn(
+                        'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+                        error && 'text-destructive'
+                    )}
+                >
                     {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
+                    {required && <span className="text-destructive ml-1">*</span>}
                 </Label>
             )}
 
             <div className="relative">
                 {Icon && (
-                    <div
-                        className={cn(
-                            "absolute inset-y-0 left-0 flex items-center pl-2 sm:pl-3 pointer-events-none text-muted-foreground",
-                            error && "text-red-500",
-                        )}
-                    >
-                        <Icon size={14} className="sm:w-4 sm:h-4" aria-hidden="true"/>
+                    <div className={cn(
+                        "absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground",
+                        error && "text-destructive"
+                    )}>
+                        <Icon className="h-4 w-4" aria-hidden="true"/>
                     </div>
                 )}
 
                 {textarea ? (
-                    <textarea
-                        id={name}
-                        name={name}
-                        placeholder={placeholder}
+                    <Textarea
+                        id={id}
                         required={required}
                         className={cn(
-                            "w-full min-h-[80px] sm:min-h-[100px] transition-colors resize-none rounded-md border border-input text-xs sm:text-sm shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 px-2 py-2 sm:px-3",
-                            Icon ? "pl-8 sm:pl-10" : "pl-2 sm:pl-3",
-                            error && "border-red-500 focus:ring-red-500",
-                            className,
+                            Icon && "pl-10",
+                            error && "border-destructive focus-visible:ring-destructive",
+                            className
                         )}
                         aria-invalid={error ? "true" : "false"}
-                        aria-errormessage={error ? `${name}-error` : undefined}
-                        aria-describedby={error ? `${name}-error` : undefined}
-                        aria-required={required ? "true" : "false"}
-                        {...props}
+                        aria-describedby={error ? `${id}-error` : undefined}
+                        {...textareaProps}
                     />
                 ) : (
-                    <input
-                        id={name}
-                        name={name}
-                        type={type}
-                        placeholder={placeholder}
+                    <Input
+                        id={id}
                         required={required}
                         className={cn(
-                            "w-full transition-colors rounded-md border border-input text-xs sm:text-sm shadow-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 px-2 py-2 sm:px-3",
-                            Icon ? "pl-8 sm:pl-10" : "pl-2 sm:pl-3",
-                            error && "border-red-500 focus:ring-red-500",
-                            className,
+                            Icon && "pl-10",
+                            error && "border-destructive focus-visible:ring-destructive",
+                            className
                         )}
                         aria-invalid={error ? "true" : "false"}
-                        aria-errormessage={error ? `${name}-error` : undefined}
-                        aria-describedby={error ? `${name}-error` : undefined}
-                        aria-required={required ? "true" : "false"}
+                        aria-describedby={error ? `${id}-error` : undefined}
                         {...props}
                     />
                 )}
             </div>
 
             {error && (
-                <p id={`${name}-error`} className="text-xs sm:text-sm text-red-500 mt-1 break-words">
+                <p id={`${id}-error`} className="text-sm text-destructive">
                     {error}
                 </p>
             )}

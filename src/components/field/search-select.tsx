@@ -1,27 +1,23 @@
 "use client"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
-import { useState } from "react"
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
-import { CheckIcon, ChevronDownIcon } from "lucide-react"
+
+import {useState} from "react"
+import {Label} from "@/components/ui/label"
+import {cn} from "@/lib/utils"
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command"
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
+import {Button} from "@/components/ui/button"
+import {CheckIcon, ChevronDownIcon} from "lucide-react"
+import {OptionType} from "@/types/types"
 
 interface SearchSelectFieldProps {
     label?: string
     required?: boolean
     placeholder?: string
-    options: Array<{ value: string; label: string }>
+    options: OptionType[]
     error?: string
     name?: string
-    onChangeAction?: (value: string) => void
+    onChangeAction?: (value: string | number) => void
+
     [key: string]: any
 }
 
@@ -31,23 +27,24 @@ export default function SearchSelectField({
                                               placeholder = "Select option",
                                               options = [],
                                               error,
-                                              name,
-                                              onChangeAction = () => {},
+                                              onChangeAction = () => {
+                                              },
                                               ...props
                                           }: SearchSelectFieldProps) {
-    const [open, setOpen] = useState<boolean>(false)
-    const [value, setValue] = useState<string>("")
+    const [open, setOpen] = useState(false)
+    const [value, setValue] = useState<string | number>("")
 
-    const handleSelect = (currentValue: string) => {
+    const handleSelect = (currentValue: string | number) => {
         setValue(currentValue)
         onChangeAction(currentValue)
         setOpen(false)
     }
 
     return (
-        <div className="space-y-2" {...props}>
+        <div className="md:space-y-2 w-full  space-y-1  " {...props}>
             {label && (
-                <Label className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70")}>
+                <Label
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {label}
                     {required && <span className="text-red-500">*</span>}
                 </Label>
@@ -68,27 +65,22 @@ export default function SearchSelectField({
             <span className={cn("truncate", !value && "text-muted-foreground")}>
               {value ? options.find((option) => option.value === value)?.label : placeholder}
             </span>
-                        <ChevronDownIcon size={16} className="text-muted-foreground/80 shrink-0" aria-hidden="true" />
+                        <ChevronDownIcon size={16} className="text-muted-foreground/80 shrink-0" aria-hidden="true"/>
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0"
-                    align="start"
-                >
+                <PopoverContent className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0"
+                                align="start">
                     <Command>
-                        <CommandInput placeholder={placeholder} />
+                        <CommandInput placeholder={placeholder}/>
                         <CommandList>
                             <CommandEmpty>No option found.</CommandEmpty>
                             <CommandGroup>
                                 {options.length > 0 ? (
                                     options.map((option) => (
-                                        <CommandItem
-                                            key={option.value}
-                                            value={option.value}
-                                            onSelect={() => handleSelect(option.value)}
-                                        >
+                                        <CommandItem key={option.value.toString()} value={option.value.toString()}
+                                                     onSelect={() => handleSelect(option.value)}>
                                             {option.label}
-                                            {value === option.value && <CheckIcon size={16} className="ml-auto" />}
+                                            {value === option.value && <CheckIcon size={16} className="ml-auto"/>}
                                         </CommandItem>
                                     ))
                                 ) : (

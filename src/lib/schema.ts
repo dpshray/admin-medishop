@@ -34,3 +34,6 @@ export const createVendorSchema = z.object({
         .array(z.instanceof(File))
         .min(1, "At least one business license is required"),
 });
+
+
+export type VendorFormValues = z.infer<typeof createVendorSchema>;

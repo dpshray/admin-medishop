@@ -3,13 +3,14 @@ import HttpServices from "@/service/http.service";
 class BrandService extends HttpServices {
     async getAllBrands(params?: { per_page?: number; page?: number }) {
         try {
-            return await this.getRequest({
+            const res = await this.getRequest({
                 url: "/admin/brand",
                 config: {
                     auth: true,
                     params,
                 },
             });
+            return res?.data
         } catch (error) {
             throw error;
         }
@@ -30,6 +31,19 @@ class BrandService extends HttpServices {
     }
 
     async updateBrand(id: number, data: any) {
+        try {
+            return await this.putRequest({
+                //admin/brand/1
+                url: `/admin/brand/${id}`,
+                data,
+                config: {
+                    auth: true,
+                    file: true,
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
     }
 
     async createBrand(data: any) {
@@ -40,6 +54,19 @@ class BrandService extends HttpServices {
                 config: {
                     auth: true,
                     file: true,
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    getBrandBySlug(slug: string) {
+        try {
+            return this.getRequest({
+                url: `/admin/brand/${slug}`,
+                config: {
+                    auth: true,
                 }
             })
         } catch (error) {

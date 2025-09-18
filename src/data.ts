@@ -34,7 +34,7 @@ export const users: User[] = [
     },
 ]
 
-export    const vendorDashboardCards = [
+export const vendorDashboardCards = [
     {
         title: "Total Vendors",
         value: "1,245",
@@ -168,3 +168,5 @@ export const adminDashboardData = [
         bgColor: "bg-red-100",
     },
 ]
+
+

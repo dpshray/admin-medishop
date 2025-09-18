@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
             {
                 protocol: "https",
                 hostname: "api.medishop.dworklabs.com",
+            },{
+                protocol: "http",
+                hostname:'192.168.100.23'
             }
         ],
     },

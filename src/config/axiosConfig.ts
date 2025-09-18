@@ -1,7 +1,7 @@
 import axios, {AxiosError, AxiosInstance, AxiosResponse} from "axios";
 
 const axiosInstance: AxiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://192.168.100.23:8008/api/v1" ,
+    baseURL: process.env.NEXT_PUBLIC_BASE_URL ,
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",

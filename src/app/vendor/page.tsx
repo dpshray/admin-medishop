@@ -9,6 +9,7 @@ import UsersTable from "@/components/card/dashboard/users-table"
 import {Button} from "@/components/ui/button"
 import {motion} from "framer-motion"
 import {Badge} from "@/components/ui/badge"
+import {vendorDashboardCards} from "@/data";
 
 export default function VendorPage() {
     const recentActivities = [
@@ -23,47 +24,10 @@ export default function VendorPage() {
         {id: 2, name: "Organic Apples Pack", sold: "890 units", growth: "+9%", vendors: 6},
     ]
 
-    const dashboardCards = [
-        {
-            title: "Total Vendors",
-            value: "1,245",
-            change: "+12%",
-            changeType: "positive" as const,
-            icon: Package,
-            color: "text-blue-500",
-            bgColor: "bg-blue-100"
-        },
-        {
-            title: "Total Products",
-            value: "8,432",
-            change: "+8%",
-            changeType: "positive" as const,
-            icon: Package,
-            color: "text-green-500",
-            bgColor: "bg-green-100"
-        },
-        {
-            title: "Sales",
-            value: "$23,450",
-            change: "-3%",
-            changeType: "negative" as const,
-            icon: Download,
-            color: "text-red-500",
-            bgColor: "bg-red-100"
-        },
-        {
-            title: "Active Orders",
-            value: "1,120",
-            change: "+5%",
-            changeType: "positive" as const,
-            icon: Settings,
-            color: "text-purple-500",
-            bgColor: "bg-purple-100"
-        },
-    ]
+
 
     return (
-        <div className="space-y-6 px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6 px-4 ">
             <div
                 className={cn('flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-gradient-to-r from-purple-600 via-pink-500 to-pink-400 p-6 rounded-xl text-white my-2')}>
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between w-full">
@@ -98,7 +62,7 @@ export default function VendorPage() {
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-                {dashboardCards.map((card, index) => (
+                {vendorDashboardCards.map((card, index) => (
                     <DashboardCard key={index} {...card} index={index}/>
                 ))}
             </div>

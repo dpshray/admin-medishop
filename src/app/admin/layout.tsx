@@ -4,7 +4,8 @@ import type React from "react"
 import type {NavGroup} from "@/components/sidebar/app-sidebar"
 import type {DropdownGroup} from "@/components/sidebar/user-dropdown"
 import {
-    BarChart3, Box,
+    BarChart3,
+    Box,
     ClipboardCheck,
     ClipboardList,
     FileText,
@@ -14,6 +15,7 @@ import {
     Package,
     Settings,
     ShoppingCart,
+    Tag,
     Truck,
     UserPen,
     Users,
@@ -38,6 +40,7 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
                 {label: "Suppliers", href: "/admin/suppliers", icon: Truck},
                 {label: "Products", href: "/admin/products", icon: Package},
                 {label: "Categories", href: "/admin/categories", icon: Layers},
+                {label: "Tags", href: "/admin/tags", icon: Tag},
                 {label: "Inventories", href: "/admin/inventories", icon: Warehouse},
             ],
         },

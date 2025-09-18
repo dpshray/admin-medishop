@@ -4,8 +4,10 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button"
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
-import {DollarSign, Download, Edit3, Eye, MoreHorizontal, Plus, Settings, TrendingUp, Users, Zap} from "lucide-react"
+import {Download, Edit3, Eye, MoreHorizontal, Plus, Settings, Users} from "lucide-react"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import {adminDashboardData} from "@/data";
+import {DashboardCard} from "@/components/card/dashboard/dashboard-card";
 
 export default function AdminPage() {
     const recentActivities = [
@@ -84,7 +86,7 @@ export default function AdminPage() {
     ]
 
     return (
-        <div className="space-y-6 ">
+        <div className="mainContainer">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
@@ -106,65 +108,9 @@ export default function AdminPage() {
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-                <Card>
-                    <CardContent className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
-                                <p className="text-2xl font-bold">$45,231.89</p>
-                                <p className="text-xs text-emerald-600">+20.1% from last month</p>
-                            </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-                                <DollarSign className="h-6 w-6 text-emerald-600"/>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Active Users</p>
-                                <p className="text-2xl font-bold">2,350</p>
-                                <p className="text-xs text-emerald-600">+18.1% from last month</p>
-                            </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                                <Users className="h-6 w-6 text-blue-600"/>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">API Requests</p>
-                                <p className="text-2xl font-bold">1.2M</p>
-                                <p className="text-xs text-emerald-600">+19% from last month</p>
-                            </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                                <Zap className="h-6 w-6 text-purple-600"/>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Conversion Rate</p>
-                                <p className="text-2xl font-bold">3.2%</p>
-                                <p className="text-xs text-emerald-600">+0.5% since last month</p>
-                            </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-                                <TrendingUp className="h-6 w-6 text-orange-600"/>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                {adminDashboardData.map((card, index) => (
+                    <DashboardCard key={index} {...card} index={index}/>
+                ))}
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">

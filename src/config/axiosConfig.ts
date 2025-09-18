@@ -1,7 +1,7 @@
 import axios, {AxiosError, AxiosInstance, AxiosResponse} from "axios";
 
 const axiosInstance: AxiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "https://api.medishop.dworklabs.com/api/v1",
+    baseURL: process.env.NEXT_PUBLIC_BASE_URL ,
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
@@ -25,7 +25,7 @@ axiosInstance.interceptors.response.use(
     (error: AxiosError) => {
 
         console.error("Response Error from axios:", error);
-        return Promise.reject(error);
+        return Promise.reject(error?.response?.data);
     }
 );
 

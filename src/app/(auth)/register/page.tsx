@@ -95,7 +95,7 @@ export default function RegisterPage() {
                                 id="password"
                                 placeholder="Create a password"
                                 error={errors.password?.message}
-                                icon={<Lock className="h-4 w-4" />}
+                                icon={Lock}
                             />
                             <PasswordInputField
                                 {...register("confirmPassword")}
@@ -103,7 +103,7 @@ export default function RegisterPage() {
                                 id="confirmPassword"
                                 placeholder="Confirm your password"
                                 error={errors.confirmPassword?.message}
-                                icon={<Lock className="h-4 w-4" />}
+                                icon={Lock}
                             />
                             <div className="flex items-center space-x-2">
                                 <Checkbox

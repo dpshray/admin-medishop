@@ -9,7 +9,7 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"
 import {Separator} from "@/components/ui/separator"
-import {Github, Mail} from "lucide-react"
+import {Mail} from "lucide-react"
 import TextInputField from "@/components/field/text-input"
 import PasswordInputField from "@/components/field/password-input"
 import {loginSchema} from "@/lib/schema";
@@ -37,7 +37,7 @@ export default function LoginPage() {
             if (response) {
                 localStorage.setItem("_at", response?.data?.token)
                 localStorage.setItem("_role", response?.data?.user?.user_type?.toLowerCase() || "")
-                router.push( '/admin')
+                router.push('/admin')
             }
         } catch (error) {
             console.log(error)
@@ -83,71 +83,34 @@ export default function LoginPage() {
                             </div>
                             <Button
                                 type="submit"
-                                className="w-full font-semibold"
+                                className="w-full font-semibold cursor-pointer"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? "Signing in..." : "Sign In"}
                             </Button>
                         </form>
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <Separator className="w-full"/>
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground font-medium">
-                  Or continue with
-                </span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <Button
-                                variant="outline"
-                                className=" font-medium"
-                                onClick={() => console.log("Login with Google")}
-                            >
-                                <Mail className="w-5 h-5"/>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="font-medium"
-                                onClick={() => console.log("Login with GitHub")}
-                            >
-                                <Github className="w-5 h-5"/>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="font-medium"
-                                onClick={() => console.log("Login with Facebook")}
-                            >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path
-                                        fill="currentColor"
-                                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-                                    />
-                                </svg>
-                            </Button>
-                        </div>
-                        <div className="text-center text-sm">
-                            <span className="text-muted-foreground">Don&#39;t have an account? </span>
-                            <Link
-                                href="/register"
-                                className="font-semibold text-primary hover:text-primary/80 transition-colors"
-                            >
-                                Create account
-                            </Link>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-xs text-muted-foreground">
-                                By signing in, you agree to our{" "}
-                                <Link href="/terms" className="text-primary hover:underline">
-                                    Terms of Service
-                                </Link>{" "}
-                                and{" "}
-                                <Link href="/privacy" className="text-primary hover:underline">
-                                    Privacy Policy
-                                </Link>
-                            </p>
-                        </div>
+                        {/*<div className="relative">*/}
+                        {/*    <div className="absolute inset-0 flex items-center">*/}
+                        {/*        <Separator className="w-full"/>*/}
+                        {/*    </div>*/}
+                        {/*    <div className="relative flex justify-center text-xs uppercase">*/}
+                        {/*    <span className="bg-background px-2 text-muted-foreground font-medium">*/}
+                        {/*      Or continue with*/}
+                        {/*    </span>*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
+                        {/*<div className="w-full">*/}
+                        {/*    <Button*/}
+                        {/*        variant="outline"*/}
+                        {/*        className=" font-medium w-full"*/}
+                        {/*        onClick={() => console.log("Login with Google")}*/}
+                        {/*    >*/}
+                        {/*        <Mail className="w-5 h-5"/>*/}
+                        {/*        Login with Google*/}
+                        {/*    </Button>*/}
+                        {/*</div>*/}
+
+
                     </CardContent>
                 </Card>
             </div>

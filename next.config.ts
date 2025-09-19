@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
     images: {
@@ -10,9 +10,18 @@ const nextConfig: NextConfig = {
             {
                 protocol: "https",
                 hostname: "api.medishop.dworklabs.com",
-            },{
+                port: '',
+                pathname: '/storage/**',
+            },
+            {
+                protocol: "https",
+                hostname: "api.medishop.dworklabs.com",
+                port: "",
+                pathname: "/assets/img/**",
+            },
+            {
                 protocol: "http",
-                hostname:'192.168.100.23'
+                hostname: '192.168.100.23'
             }
         ],
     },

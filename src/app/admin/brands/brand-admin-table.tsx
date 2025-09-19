@@ -51,7 +51,10 @@ export default function BrandAdminTable() {
                 page: paginationState.currentPage,
                 per_page: paginationState.pageSize
             }
-            return await brandService.getAllBrands(params)
+            const response = await brandService.getAllBrands(params)
+            console.log('Response', response)
+            return response
+
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
@@ -127,18 +130,6 @@ export default function BrandAdminTable() {
         }
     }, [selectedBrand, refetch])
 
-    const handleBulkDelete = useCallback(async (selectedBrands: Brand[]) => {
-        if (selectedBrands.length === 0) return
-
-        try {
-            const promises = selectedBrands.map(brand => brandService.deleteBrand(brand.id))
-            await Promise.all(promises)
-            toast.success(`Successfully deleted ${selectedBrands.length} brand(s)`)
-            refetch()
-        } catch (error: any) {
-            toast.error(error?.message || "Failed to delete selected brands")
-        }
-    }, [refetch])
 
     const columns: ColumnDef<Brand>[] = useMemo(() => [
         {
@@ -151,7 +142,7 @@ export default function BrandAdminTable() {
                     }
                     onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                     aria-label="Select all brands"
-                    className="mx-auto"
+                    className=""
                 />
             ),
             cell: ({row}) => (
@@ -220,6 +211,7 @@ export default function BrandAdminTable() {
                 <GlobalTableHoverImage
                     src={row.original.image}
                     alt={row.original.name}
+                    fallbackSrc={'/placeholder.png'}
                 />
             ),
             enableSorting: false,
@@ -292,7 +284,6 @@ export default function BrandAdminTable() {
                 columns={columns}
                 loading={isLoading}
                 onAddAction={handleAddBrand}
-                onDeleteAction={handleBulkDelete}
                 actionLabel="Add Brand"
                 pagination={{
                     page: paginationState.currentPage,

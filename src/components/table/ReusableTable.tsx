@@ -1,6 +1,6 @@
 "use client"
 
-import {ReactNode, useId, useRef, useState} from "react"
+import { ReactNode, useId, useRef, useState } from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -29,8 +29,7 @@ import {
     Search,
     Trash2,
 } from "lucide-react"
-
-import {cn, generatePageRange} from "@/lib/utils"
+import { cn, generatePageRange } from "@/lib/utils"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -42,7 +41,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {Button} from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -50,11 +49,29 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {Input} from "@/components/ui/input"
-import {Label} from "@/components/ui/label"
-import {Pagination, PaginationContent, PaginationEllipsis, PaginationItem} from "@/components/ui/pagination"
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+} from "@/components/ui/pagination"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 interface DataTablePagination {
     page: number
@@ -109,11 +126,10 @@ export function DataTable<TData, TValue>({
                                              enableSorting = true,
                                              defaultPageSize = 10,
                                              totalCount,
-                                             actionLabel = "Add"
+                                             actionLabel = "Add",
                                          }: DataTableProps<TData, TValue>) {
     const id = useId()
     const inputRef = useRef<HTMLInputElement>(null)
-
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
     const [localPagination, setLocalPagination] = useState<PaginationState>({
@@ -140,26 +156,40 @@ export function DataTable<TData, TValue>({
         state: {
             sorting: enableSorting ? sorting : [],
             pagination: pagination
-                ? {pageIndex: pagination.page - 1, pageSize: pagination.pageSize || defaultPageSize}
+                ? {
+                    pageIndex: pagination.page - 1,
+                    pageSize: pagination.pageSize || defaultPageSize,
+                }
                 : localPagination,
             columnFilters,
             columnVisibility,
         },
     })
 
-    const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original)
-    const currentPage = pagination ? pagination.page : table.getState().pagination.pageIndex + 1
+    const selectedRows = table.getSelectedRowModel().rows.map(
+        (row) => row.original
+    )
+    const currentPage = pagination
+        ? pagination.page
+        : table.getState().pagination.pageIndex + 1
     const totalPages = pagination ? pagination.totalPages : table.getPageCount()
-    const currentPageSize = pagination ? pagination.pageSize || defaultPageSize : table.getState().pagination.pageSize
+    const currentPageSize = pagination
+        ? pagination.pageSize || defaultPageSize
+        : table.getState().pagination.pageSize
     const dataCount = totalCount ?? data.length
 
     const startIndex = pagination
         ? (pagination.page - 1) * currentPageSize + 1
-        : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
-
+        : table.getState().pagination.pageIndex *
+        table.getState().pagination.pageSize +
+        1
     const endIndex = pagination
         ? Math.min(pagination.page * currentPageSize, dataCount)
-        : Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getRowCount())
+        : Math.min(
+            (table.getState().pagination.pageIndex + 1) *
+            table.getState().pagination.pageSize,
+            table.getRowCount()
+        )
 
     const handleDeleteRows = () => {
         onDeleteAction?.(selectedRows)
@@ -195,22 +225,28 @@ export function DataTable<TData, TValue>({
     return (
         <div className={cn("space-y-4", className)}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     {enableSearch && (
-                        <div className="relative">
+                        <div className="relative w-full sm:w-auto">
                             <Input
                                 id={`${id}-search`}
                                 ref={inputRef}
-                                className={cn("min-w-60 pl-9", hasSearch && "pr-9")}
-                                value={(table.getColumn(searchColumn)?.getFilterValue() ?? "") as string}
-                                onChange={(e) => table.getColumn(searchColumn)?.setFilterValue(e.target.value)}
+                                className={cn(
+                                    "w-full pl-9 sm:min-w-60",
+                                    hasSearch && "pr-9"
+                                )}
+                                value={
+                                    (table.getColumn(searchColumn)?.getFilterValue() ?? "") as string
+                                }
+                                onChange={(e) =>
+                                    table.getColumn(searchColumn)?.setFilterValue(e.target.value)
+                                }
                                 placeholder={searchPlaceholder}
                                 type="text"
                                 aria-label="Search table"
                             />
-                            <div
-                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-muted-foreground">
-                                <Search size={16} aria-hidden="true"/>
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-muted-foreground">
+                                <Search size={16} aria-hidden="true" />
                             </div>
                             {hasSearch && (
                                 <Button
@@ -220,7 +256,7 @@ export function DataTable<TData, TValue>({
                                     onClick={clearSearch}
                                     aria-label="Clear search"
                                 >
-                                    <CircleX size={16}/>
+                                    <CircleX size={16} />
                                 </Button>
                             )}
                         </div>
@@ -230,7 +266,7 @@ export function DataTable<TData, TValue>({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    <Columns3 size={16}/>
+                                    <Columns3 size={16} />
                                     View
                                 </Button>
                             </DropdownMenuTrigger>
@@ -244,7 +280,9 @@ export function DataTable<TData, TValue>({
                                             key={column.id}
                                             className="capitalize"
                                             checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(value)}
+                                            onCheckedChange={(value) =>
+                                                column.toggleVisibility(value)
+                                            }
                                             onSelect={(e) => e.preventDefault()}
                                         >
                                             {column.id}
@@ -255,47 +293,52 @@ export function DataTable<TData, TValue>({
                     )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {enableRowSelection && selectedRows.length > 0 && onDeleteAction && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Trash2 size={16}/>
-                                    Delete ({selectedRows.length})
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <div className="flex items-start gap-4">
-                                    <div
-                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10">
-                                        <CircleAlert className="h-5 w-5 text-destructive"/>
+                <div className="flex flex-wrap items-center gap-3">
+                    {enableRowSelection &&
+                        selectedRows.length > 0 &&
+                        onDeleteAction && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <Trash2 size={16} />
+                                        Delete ({selectedRows.length})
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10">
+                                            <CircleAlert className="h-5 w-5 text-destructive" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>
+                                                    Delete {selectedRows.length} item
+                                                    {selectedRows.length > 1 ? "s" : ""}?
+                                                </AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. The selected item
+                                                    {selectedRows.length > 1 ? "s" : ""} will be
+                                                    permanently deleted.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Delete {selectedRows.length} item{selectedRows.length > 1 ? 's' : ''}?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. The selected
-                                                item{selectedRows.length > 1 ? 's' : ''} will be permanently deleted.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                    </div>
-                                </div>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={handleDeleteRows}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleDeleteRows}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
 
                     {onAddAction && (
                         <Button variant="outline" size="sm" onClick={onAddAction}>
-                            <Plus size={16}/>
+                            <Plus size={16} />
                             {actionLabel}
                         </Button>
                     )}
@@ -304,41 +347,68 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
 
-            <div className={cn("rounded-md border bg-background", tableClassName)}>
-                <Table>
+            <div
+                className={cn(
+                    "rounded-md border bg-background overflow-x-auto",
+                    tableClassName
+                )}
+            >
+                <Table className="min-w-[600px] sm:min-w-full">
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
                                     <TableHead
                                         key={header.id}
-                                        style={{width: header.getSize()}}
+                                        style={{ width: header.getSize() }}
                                         className="h-12"
                                     >
                                         {!header.isPlaceholder && (
                                             <div
                                                 className={cn(
                                                     "flex items-center",
-                                                    enableSorting && header.column.getCanSort() &&
+                                                    enableSorting &&
+                                                    header.column.getCanSort() &&
                                                     "cursor-pointer select-none hover:text-foreground"
                                                 )}
-                                                onClick={enableSorting ? header.column.getToggleSortingHandler() : undefined}
+                                                onClick={
+                                                    enableSorting
+                                                        ? header.column.getToggleSortingHandler()
+                                                        : undefined
+                                                }
                                                 onKeyDown={(e) => {
-                                                    if (enableSorting && header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
+                                                    if (
+                                                        enableSorting &&
+                                                        header.column.getCanSort() &&
+                                                        (e.key === "Enter" || e.key === " ")
+                                                    ) {
                                                         e.preventDefault()
                                                         header.column.getToggleSortingHandler()?.(e)
                                                     }
                                                 }}
-                                                tabIndex={enableSorting && header.column.getCanSort() ? 0 : undefined}
-                                                role={enableSorting && header.column.getCanSort() ? "button" : undefined}
+                                                tabIndex={
+                                                    enableSorting && header.column.getCanSort()
+                                                        ? 0
+                                                        : undefined
+                                                }
+                                                role={
+                                                    enableSorting && header.column.getCanSort()
+                                                        ? "button"
+                                                        : undefined
+                                                }
                                             >
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                                {flexRender(
+                                                    header.column.columnDef.header,
+                                                    header.getContext()
+                                                )}
                                                 {enableSorting && header.column.getCanSort() && (
                                                     <div className="ml-2">
-                                                        {header.column.getIsSorted() === "asc" &&
-                                                            <ChevronUp size={16}/>}
-                                                        {header.column.getIsSorted() === "desc" &&
-                                                            <ChevronDown size={16}/>}
+                                                        {header.column.getIsSorted() === "asc" && (
+                                                            <ChevronUp size={16} />
+                                                        )}
+                                                        {header.column.getIsSorted() === "desc" && (
+                                                            <ChevronDown size={16} />
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -351,11 +421,11 @@ export function DataTable<TData, TValue>({
 
                     <TableBody>
                         {loading ? (
-                            Array.from({length: currentPageSize}).map((_, i) => (
+                            Array.from({ length: currentPageSize }).map((_, i) => (
                                 <TableRow key={`skeleton-${i}`}>
                                     {columns.map((_, j) => (
                                         <TableCell key={`skeleton-cell-${j}`} className="h-12">
-                                            <div className="h-4 w-full animate-pulse rounded bg-muted"/>
+                                            <div className="h-4 w-full animate-pulse rounded bg-muted" />
                                         </TableCell>
                                     ))}
                                 </TableRow>
@@ -372,14 +442,20 @@ export function DataTable<TData, TValue>({
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="h-12">
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}
                                         </TableCell>
                                     ))}
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-24 text-center text-muted-foreground"
+                                >
                                     {noDataText}
                                 </TableCell>
                             </TableRow>
@@ -389,7 +465,13 @@ export function DataTable<TData, TValue>({
             </div>
 
             {showPagination && (
-                <div className={cn("flex items-center justify-between", paginationClassName)}>
+                <div
+                    className={cn(
+                        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+                        paginationClassName
+                    )}
+                >
+                    {/* Left side - Rows per page */}
                     <div className="flex items-center space-x-2">
                         <Label htmlFor={`${id}-page-size`} className="text-sm font-medium">
                             Rows per page
@@ -402,7 +484,7 @@ export function DataTable<TData, TValue>({
                             }}
                         >
                             <SelectTrigger id={`${id}-page-size`} className="w-20">
-                                <SelectValue/>
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 {(pagination?.pageSizeOptions || [5, 10, 25, 50, 100]).map((size) => (
@@ -414,13 +496,12 @@ export function DataTable<TData, TValue>({
                         </Select>
                     </div>
 
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <span>
-                            {startIndex}-{endIndex} of {dataCount}
-                        </span>
-                    </div>
+                    {/* Right side - Info + Pagination in one line */}
+                    <div className="flex items-center justify-end gap-4">
+      <span className="text-sm text-muted-foreground whitespace-nowrap">
+        {startIndex}-{endIndex} of {dataCount}
+      </span>
 
-                    <div>
                         <Pagination>
                             <PaginationContent>
                                 <PaginationItem>
@@ -430,9 +511,8 @@ export function DataTable<TData, TValue>({
                                         onClick={() => handlePageClick(1)}
                                         disabled={currentPage === 1}
                                         aria-label="Go to first page"
-                                        className="cursor-pointer"
                                     >
-                                        <ChevronFirst size={16}/>
+                                        <ChevronFirst size={16} />
                                     </Button>
                                 </PaginationItem>
 
@@ -443,24 +523,25 @@ export function DataTable<TData, TValue>({
                                         onClick={() => handlePageClick(currentPage - 1)}
                                         disabled={currentPage === 1}
                                         aria-label="Go to previous page"
-                                        className="cursor-pointer"
                                     >
-                                        <ChevronLeft size={16}/>
+                                        <ChevronLeft size={16} />
                                     </Button>
                                 </PaginationItem>
 
                                 {pageRange.map((page, index) => (
                                     <PaginationItem key={index}>
                                         {page === "ellipsis" ? (
-                                            <PaginationEllipsis/>
+                                            <PaginationEllipsis />
                                         ) : (
                                             <Button
                                                 variant={page === currentPage ? "default" : "outline"}
                                                 size="sm"
                                                 onClick={() => handlePageClick(page as number)}
                                                 aria-label={`Go to page ${page}`}
-                                                className={cn('h-9 w-9 cursor-pointer  hover:bg-gray-100',
-                                                    page === currentPage ? "bg-primaryColor/60" : "")}
+                                                className={cn(
+                                                    "h-9 w-9 hover:bg-gray-100",
+                                                    page === currentPage ? "bg-primaryColor/60" : ""
+                                                )}
                                             >
                                                 {page}
                                             </Button>
@@ -476,7 +557,7 @@ export function DataTable<TData, TValue>({
                                         disabled={currentPage === totalPages}
                                         aria-label="Go to next page"
                                     >
-                                        <ChevronRight size={16}/>
+                                        <ChevronRight size={16} />
                                     </Button>
                                 </PaginationItem>
 
@@ -488,7 +569,7 @@ export function DataTable<TData, TValue>({
                                         disabled={currentPage === totalPages}
                                         aria-label="Go to last page"
                                     >
-                                        <ChevronLast size={16}/>
+                                        <ChevronLast size={16} />
                                     </Button>
                                 </PaginationItem>
                             </PaginationContent>
@@ -496,6 +577,7 @@ export function DataTable<TData, TValue>({
                     </div>
                 </div>
             )}
+
         </div>
     )
 }

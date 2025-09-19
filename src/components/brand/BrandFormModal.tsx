@@ -22,13 +22,7 @@ const createBrandSchema = z.object({
     slug: z.string().optional(),
 })
 
-const updateBrandSchema = z.object({
-    name: z.string().max(100, "Name must be less than 100 characters").optional(),
-    image: z.instanceof(File).optional(),
-    is_featured: z.boolean().optional(),
-    is_popular: z.boolean().optional(),
-    slug: z.string().optional(),
-})
+const updateBrandSchema = createBrandSchema.partial()
 
 type BrandFormValues = z.infer<typeof createBrandSchema> | z.infer<typeof updateBrandSchema>
 

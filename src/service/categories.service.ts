@@ -38,9 +38,12 @@ class CategoriesService extends HttpServices {
 
     async updateCategory(id: number, data: any) {
         try {
-            return await this.putRequest({
+            return await this.postRequest({
                 url: `/admin/category/${id}`,
-                data,
+                data:{
+                    ...data,
+                    _method: "PUT",
+                },
                 config: {
                     auth: true,
                     file: true,

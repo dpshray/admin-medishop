@@ -30,3 +30,8 @@ export const generatePageRange = (currentPage: number, totalPages: number) => {
 
     return range.filter((item, index, arr) => arr.indexOf(item) === index)
 }
+
+
+export function cleanUrl(url: string): string {
+    return url.replace(/^http:(?=https?:)/, "");
+}

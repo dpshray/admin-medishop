@@ -19,6 +19,36 @@ class VendorService extends HttpServices {
         }
     }
 
+    async deleteVendor(uuid: string) {
+        try {
+            return await this.deleteRequest({
+                url: `admin/vendor/${uuid}`,
+                config: {
+                    auth: true
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async createVendor(data: any) {
+        try {
+            return await this.postRequest({
+                url: "/admin/vendor",
+                data,
+                config: {
+                    auth: true,
+                    file: true,
+                }
+            })
+
+        } catch (error) {
+            console.log('Error from createVendor', error)
+            throw error;
+        }
+    }
+
 }
 
 const vendorService = new VendorService();

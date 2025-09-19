@@ -34,11 +34,16 @@ export default function VendorTable() {
     const [totalPages, setTotalPages] = useState(1)
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
     const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
+    const [searchTerm, setSearchTerm] = useState<string>("")
 
     const {data: vendors, isLoading, error} = useQuery({
-        queryKey: ["admin-vendor", currentPage, pageSize],
+        queryKey: ["admin-vendor", currentPage, pageSize, searchTerm],
         queryFn: async () => {
-            const res = await vendorService.getAllVendor({page: currentPage, per_page: pageSize})
+            const res = await vendorService.getAllVendor({
+                page: currentPage,
+                per_page: pageSize,
+                search: searchTerm,
+            })
             setTotalPages(res?.total_page || 1)
             setCurrentPage(res?.page || 1)
             return res
@@ -56,15 +61,19 @@ export default function VendorTable() {
             queryClient.invalidateQueries({queryKey: ["admin-vendor"]})
         },
         onError: (error: any) => {
-            const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete vendor"
+            const errorMessage =
+                error?.response?.data?.message || error?.message || "Failed to delete vendor"
             toast.error(errorMessage)
         },
     })
 
-    const handleEditVendor = useCallback((vendor: Vendor) => {
-        setSelectedVendor(vendor)
-        router.push(`/admin/vendors/edit/${vendor.vendor_uuid}`)
-    }, [router])
+    const handleEditVendor = useCallback(
+        (vendor: Vendor) => {
+            setSelectedVendor(vendor)
+            router.push(`/admin/vendors/edit/${vendor.vendor_uuid}`)
+        },
+        [router]
+    )
 
     const handleDeleteVendor = useCallback((vendor: Vendor) => {
         setSelectedVendor(vendor)
@@ -91,171 +100,193 @@ export default function VendorTable() {
         router.push("/admin/vendors/add-vendor")
     }, [router])
 
-    const handleBulkDelete = useCallback((selectedVendors: Vendor[]) => {
-        if (selectedVendors.length === 0) return
-
-        const deletePromises = selectedVendors.map(vendor =>
-            vendorService.deleteVendor(vendor.vendor_uuid)
-        )
-
-        Promise.all(deletePromises)
-            .then(() => {
-                toast.success(`${selectedVendors.length} vendor${selectedVendors.length > 1 ? 's' : ''} deleted successfully`)
-                queryClient.invalidateQueries({queryKey: ["admin-vendor"]})
-            })
-            .catch(() => {
-                toast.error("Some vendors could not be deleted")
-            })
-    }, [queryClient])
-
-    const columns: ColumnDef<Vendor>[] = useMemo(() => [
-        {
-            id: "select",
-            header: ({table}) => (
-                <Checkbox
-                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all rows"
-                    className=""
-                />
-            ),
-            cell: ({row}) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    className="mx-auto"
-                    aria-label="Select row"
-                />
-            ),
-            enableSorting: false,
-            enableHiding: false,
-            size: 10,
+    const handleBulkDelete = useCallback(
+        (selectedVendors: Vendor[]) => {
+            if (selectedVendors.length === 0) return
+            const deletePromises = selectedVendors.map((vendor) =>
+                vendorService.deleteVendor(vendor.vendor_uuid)
+            )
+            Promise.all(deletePromises)
+                .then(() => {
+                    toast.success(
+                        `${selectedVendors.length} vendor${selectedVendors.length > 1 ? "s" : ""} deleted successfully`
+                    )
+                    queryClient.invalidateQueries({queryKey: ["admin-vendor"]})
+                })
+                .catch(() => {
+                    toast.error("Some vendors could not be deleted")
+                })
         },
-        {
-            header: "Name",
-            accessorKey: "name",
-            enableHiding: false,
-            cell: ({row}) => {
-                const name = row.getValue("name") as string
-                const email = row.original.email
-                return (
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
-                            <AvatarImage src="https://via.placeholder.com/150" alt={name}/>
-                            <AvatarFallback className="text-xs">{name?.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col min-w-0">
-                            <span className="font-medium text-xs sm:text-sm truncate">{name}</span>
-                            <span
-                                className="text-muted-foreground text-xs truncate max-w-[100px] sm:max-w-[140px]">{email}</span>
+        [queryClient]
+    )
+
+    const columns: ColumnDef<Vendor>[] = useMemo(
+        () => [
+            {
+                id: "select",
+                header: ({table}) => (
+                    <Checkbox
+                        checked={
+                            table.getIsAllPageRowsSelected() ||
+                            (table.getIsSomePageRowsSelected() && "indeterminate")
+                        }
+                        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                        aria-label="Select all rows"
+                    />
+                ),
+                cell: ({row}) => (
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                        className="mx-auto"
+                        aria-label="Select row"
+                    />
+                ),
+                enableSorting: false,
+                enableHiding: false,
+                size: 10,
+            },
+            {
+                header: "Name",
+                accessorKey: "name",
+                enableHiding: false,
+                cell: ({row}) => {
+                    const name = row.getValue("name") as string
+                    const email = row.original.email
+                    return (
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
+                                <AvatarImage src="https://via.placeholder.com/150" alt={name} />
+                                <AvatarFallback className="text-xs">
+                                    {name?.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                                <span className="font-medium text-xs sm:text-sm truncate">{name}</span>
+                                <span className="text-muted-foreground text-xs truncate max-w-[100px] sm:max-w-[140px]">
+                  {email}
+                </span>
+                            </div>
                         </div>
+                    )
+                },
+                enableSorting: false,
+            },
+            {
+                header: "Vendor ID",
+                accessorKey: "vendor_uuid",
+                cell: ({row}) => (
+                    <div
+                        className="text-xs sm:text-sm font-mono truncate max-w-[80px] sm:max-w-[120px] lg:max-w-[160px]"
+                        title={row.getValue("vendor_uuid") as string}
+                    >
+                        {(row.getValue("vendor_uuid") as string)?.slice(0, 8)}...
                     </div>
-                )
+                ),
             },
-            enableSorting: false,
-        },
-        {
-            header: "Vendor ID",
-            accessorKey: "vendor_uuid",
-            cell: ({row}) => (
-                <div className="text-xs sm:text-sm font-mono truncate max-w-[80px] sm:max-w-[120px] lg:max-w-[160px]"
-                     title={row.getValue("vendor_uuid") as string}>
-                    {(row.getValue("vendor_uuid") as string)?.slice(0, 8)}...
-                </div>
-            ),
-        },
-        {
-            header: "User ID",
-            accessorKey: "user_uuid",
-            cell: ({row}) => (
-                <div className="text-xs sm:text-sm font-mono truncate max-w-[80px] sm:max-w-[120px] lg:max-w-[160px]"
-                     title={row.getValue("user_uuid") as string}>
-                    {(row.getValue("user_uuid") as string)?.slice(0, 8)}...
-                </div>
-            ),
-        },
-        {
-            header: "Verified",
-            accessorKey: "verified",
-            cell: ({row}) => {
-                const verified = row.getValue("verified") as boolean
-                return (
-                    <Badge
-                        variant={verified ? "default" : "secondary"}
-                        className={cn(
-                            "text-xs whitespace-nowrap",
-                            verified
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200 border-green-300'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300'
-                        )}
+            {
+                header: "User ID",
+                accessorKey: "user_uuid",
+                cell: ({row}) => (
+                    <div
+                        className="text-xs sm:text-sm font-mono truncate max-w-[80px] sm:max-w-[120px] lg:max-w-[160px]"
+                        title={row.getValue("user_uuid") as string}
                     >
-                        {verified ? "Verified" : "Pending"}
-                    </Badge>
-                )
+                        {(row.getValue("user_uuid") as string)?.slice(0, 8)}...
+                    </div>
+                ),
             },
-        },
-        {
-            header: "Status",
-            accessorKey: "status",
-            cell: ({row}) => {
-                const status = row.getValue("status") as boolean
-                return (
-                    <Badge
-                        variant={status ? "default" : "secondary"}
-                        className={cn(
-                            "text-xs whitespace-nowrap",
-                            status
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200 border-green-300'
-                                : 'bg-red-100 text-red-800 hover:bg-red-200 border-red-300'
-                        )}
+            {
+                header: "Verified",
+                accessorKey: "verified",
+                cell: ({row}) => {
+                    const verified = row.getValue("verified") as boolean
+                    return (
+                        <Badge
+                            variant={verified ? "default" : "secondary"}
+                            className={cn(
+                                "text-xs whitespace-nowrap",
+                                verified
+                                    ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300"
+                            )}
+                        >
+                            {verified ? "Verified" : "Pending"}
+                        </Badge>
+                    )
+                },
+            },
+            {
+                header: "Status",
+                accessorKey: "status",
+                cell: ({row}) => {
+                    const status = row.getValue("status") as boolean
+                    return (
+                        <Badge
+                            variant={status ? "default" : "secondary"}
+                            className={cn(
+                                "text-xs whitespace-nowrap",
+                                status
+                                    ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                                    : "bg-red-100 text-red-800 hover:bg-red-200 border-red-300"
+                            )}
+                        >
+                            {status ? "Active" : "Inactive"}
+                        </Badge>
+                    )
+                },
+            },
+            {
+                header: "Phone",
+                accessorKey: "mobile_number",
+                cell: ({row}) => (
+                    <div className="text-xs sm:text-sm whitespace-nowrap">
+                        {row.getValue("mobile_number") || "N/A"}
+                    </div>
+                ),
+            },
+            {
+                header: "Store",
+                accessorKey: "store_name",
+                cell: ({row}) => (
+                    <div
+                        className="text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[140px] lg:max-w-[160px]"
+                        title={row.getValue("store_name") as string}
                     >
-                        {status ? "Active" : "Inactive"}
-                    </Badge>
-                )
+                        {row.getValue("store_name") || "N/A"}
+                    </div>
+                ),
             },
-        },
-        {
-            header: "Phone",
-            accessorKey: "mobile_number",
-            cell: ({row}) => (
-                <div className="text-xs sm:text-sm whitespace-nowrap">
-                    {row.getValue("mobile_number") || "N/A"}
-                </div>
-            ),
-        },
-        {
-            header: "Store",
-            accessorKey: "store_name",
-            cell: ({row}) => (
-                <div className="text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[140px] lg:max-w-[160px]"
-                     title={row.getValue("store_name") as string}>
-                    {row.getValue("store_name") || "N/A"}
-                </div>
-            ),
-        },
-        {
-            id: "actions",
-            accessorKey: "actions",
-            header: () => <span className="sr-only">Actions</span>,
-            cell: ({row}) => (
-                <RowActions
-                    row={row}
-                    onEditAction={() => handleEditVendor(row.original)}
-                    onDeleteAction={() => handleDeleteVendor(row.original)}
-                />
-            ),
-            size: 60,
-            enableHiding: false,
-        },
-    ], [handleEditVendor, handleDeleteVendor])
+            {
+                id: "actions",
+                accessorKey: "actions",
+                header: () => <span className="sr-only">Actions</span>,
+                cell: ({row}) => (
+                    <RowActions
+                        row={row}
+                        onEditAction={() => handleEditVendor(row.original)}
+                        onDeleteAction={() => handleDeleteVendor(row.original)}
+                    />
+                ),
+                size: 60,
+                enableHiding: false,
+            },
+        ],
+        [handleEditVendor, handleDeleteVendor]
+    )
+
+    const handleSearch = (searchValue: string) => {
+        setSearchTerm(searchValue)
+    }
 
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-[400px] p-4">
                 <div className="text-center space-y-4">
                     <div className="text-red-500 text-lg font-semibold">Failed to load vendors</div>
-                    <p className="text-gray-600">Please try refreshing the page or contact support if the problem
-                        persists.</p>
+                    <p className="text-gray-600">
+                        Please try refreshing the page or contact support if the problem persists.
+                    </p>
                 </div>
             </div>
         )
@@ -265,7 +296,9 @@ export default function VendorTable() {
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
-                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Vendor Management</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                        Vendor Management
+                    </h1>
                     <p className="text-xs sm:text-sm text-gray-500">
                         Manage your vendors and their details
                         {vendors?.total_items && ` (${vendors.total_items} total)`}

@@ -98,7 +98,6 @@ interface DataTableProps<TData, TValue> {
     searchColumn?: string
     searchPlaceholder?: string
     enableSearch?: boolean
-    onSearchAction?: (searchValue: string) => void
     enableColumnVisibility?: boolean
     enableRowSelection?: boolean
     enableSorting?: boolean

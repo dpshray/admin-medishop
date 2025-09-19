@@ -68,7 +68,7 @@ export default function GlobalTableHoverImage({
                         style={{width: size, height: size}}
                     >
                         <Image
-                            src={cleanUrl(imageSrc) || imageSrc}
+                            src={ imageSrc}
                             alt={alt}
                             fill
                             className="object-cover transition-transform group-hover:scale-105"
@@ -102,7 +102,7 @@ export default function GlobalTableHoverImage({
                         }}
                     >
                         <Image
-                            src={cleanUrl(hoverImageSrc) || hoverImageSrc}
+                            src={ hoverImageSrc}
                             alt={alt}
                             fill
                             className="object-contain"

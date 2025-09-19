@@ -3,7 +3,7 @@ import HttpServices from "@/service/http.service";
 
 class VendorService extends HttpServices {
 
-    async getAllVendor(params?: { per_page?: number; page?: number, verified_vendors?: number }) {
+    async getAllVendor(params?: { per_page?: number; page?: number, verified_vendors?: number,search?: string }) {
         try {
             const response = await this.getRequest({
                 url: "/admin/vendor",

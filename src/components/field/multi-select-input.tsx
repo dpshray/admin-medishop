@@ -60,7 +60,7 @@ export default function MultiSelectField({
 
     const handleValueChange = React.useCallback(
         (newValue: (string | number)[]) => {
-            if (!value) {
+            if (value === undefined) {
                 setInternalValue(newValue)
             }
             onValueChange?.(newValue)
@@ -143,21 +143,21 @@ export default function MultiSelectField({
                         aria-describedby={error ? `${id}-error` : undefined}
                         disabled={disabled}
                         className={cn(
-                            "w-full justify-between  px-3 py-2",
+                            "w-full justify-between min-h-8 h-auto px-3 py-2",
                             error && "border-destructive focus-visible:ring-destructive",
                             !hasSelection && "text-muted-foreground",
                             className
                         )}
                     >
-                        <div className="flex flex-wrap items-center gap-1 overflow-hidden flex-1">
+                        <div className="flex flex-wrap items-center gap-1 overflow-hidden flex-1 min-h-6">
                             {hasSelection ? (
                                 selectedOptions.map((option) => (
                                     <Badge
                                         key={option.value}
                                         variant="secondary"
-                                        className="rounded-sm px-2 py-1 text-xs font-normal"
+                                        className="rounded-sm px-2 py-0.5 text-xs font-normal h-6 flex items-center"
                                     >
-                                        <span className="truncate max-w-[120px]">{option.label}</span>
+                                        <span className="truncate max-w-[100px]">{option.label}</span>
                                         {clearable && !disabled && (
                                             <button
                                                 type="button"

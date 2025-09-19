@@ -32,19 +32,23 @@ class BrandService extends HttpServices {
 
     async updateBrand(id: number, data: any) {
         try {
-            return await this.putRequest({
-                //admin/brand/1
+            return await this.postRequest({
                 url: `/admin/brand/${id}`,
-                data,
+                data: {
+                    ...data,
+                    _method: "PUT",
+                },
                 config: {
                     auth: true,
                     file: true,
-                }
-            })
+                },
+
+            });
         } catch (error) {
             throw error;
         }
     }
+
 
     async createBrand(data: any) {
         try {

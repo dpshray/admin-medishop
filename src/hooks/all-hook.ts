@@ -3,6 +3,7 @@ import tagService from "@/service/tag.service"
 
 import {PaginatedResponse} from "@/types/types"
 import categoriesService from "@/service/categories.service";
+import brandService from "@/service/brand.service";
 
 export interface Tag {
     id: number
@@ -16,10 +17,19 @@ export interface Category {
     slug: string
 }
 
+export interface Brand {
+    id: number
+    name: string
+}
+
 export const useTags = () => {
     const query = useQuery<PaginatedResponse<Tag>, Error>({
         queryKey: ["tags"],
-        queryFn: () => tagService.getAllTags(),
+        queryFn: async () => {
+            const res = await tagService.getAllTags()
+            console.log("Response from tag table", res)
+            return res
+        },
         staleTime: 0,
         refetchOnWindowFocus: false,
     })
@@ -39,10 +49,13 @@ export const useTags = () => {
 }
 
 export const useCategories = () => {
-
     const query = useQuery<PaginatedResponse<Category>, Error>({
         queryKey: ["categories"],
-        queryFn: () => categoriesService.getAllCategories(),
+        queryFn: async () => {
+            const res = await categoriesService.getAllCategories()
+            console.log("Response from category table", res)
+            return res
+        },
         staleTime: 0,
         refetchOnWindowFocus: false,
     })
@@ -55,6 +68,32 @@ export const useCategories = () => {
     return {
         ...query,
         categories,
+        totalPages,
+        totalItems,
+        currentPage,
+    }
+}
+
+
+export const useBrands = () => {
+    const query = useQuery<PaginatedResponse<Brand>, Error>({
+        queryKey: ["brands"],
+        queryFn: async () => {
+            const res = await brandService.getAllBrands()
+            console.log("Response from brand table", res)
+            return res
+        },
+        staleTime: 0,
+        refetchOnWindowFocus: false,
+    })
+    const brands = query.data?.items ?? []
+    const totalPages = query.data?.total_page ?? 1
+    const totalItems = query.data?.total_items ?? 0
+    const currentPage = query.data?.page ?? 1
+
+    return {
+        ...query,
+        brands,
         totalPages,
         totalItems,
         currentPage,

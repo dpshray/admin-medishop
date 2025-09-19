@@ -3,7 +3,7 @@
 import Image from "next/image"
 import {useState} from "react"
 import {HoverCard, HoverCardContent, HoverCardTrigger} from "@/components/ui/hover-card"
-import {cn} from "@/lib/utils"
+import {cleanUrl, cn,} from "@/lib/utils"
 
 interface TableHoverImageProps {
     src?: string | null
@@ -68,7 +68,7 @@ export default function GlobalTableHoverImage({
                         style={{width: size, height: size}}
                     >
                         <Image
-                            src={imageSrc}
+                            src={cleanUrl(imageSrc) || imageSrc}
                             alt={alt}
                             fill
                             className="object-cover transition-transform group-hover:scale-105"
@@ -102,7 +102,7 @@ export default function GlobalTableHoverImage({
                         }}
                     >
                         <Image
-                            src={hoverImageSrc}
+                            src={cleanUrl(hoverImageSrc) || hoverImageSrc}
                             alt={alt}
                             fill
                             className="object-contain"

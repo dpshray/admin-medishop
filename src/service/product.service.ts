@@ -25,6 +25,23 @@ class ProductService extends HttpServices {
     async deleteProduct(uuid: string) {
     }
 
+    async createProduct(data: any) {
+        try {
+            const response = await this.postRequest({
+                url: "/admin/product",
+                data,
+                config: {
+                    auth: true,
+                    file: true,
+                }
+            })
+            console.log('response from createProduct', response?.data)
+            return response
+        } catch (error) {
+            throw error
+        }
+    }
+
 
 }
 

@@ -298,7 +298,6 @@ export default function BrandAdminTable() {
                 enableSorting={true}
                 enableSearch={true}
                 enableColumnVisibility={true}
-                searchColumn="name"
                 searchPlaceholder="Search brands by name..."
                 totalCount={totalItems}
                 noDataText={<NoDataFound/>}

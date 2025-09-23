@@ -323,7 +323,7 @@ export default function VendorTable() {
                     pageSizeOptions: [5, 10, 25, 50, 100],
                 }}
                 totalCount={vendors?.total_items ?? 0}
-                searchColumn="name"
+
                 searchPlaceholder="Search vendors by name..."
                 enableSearch
                 enableColumnVisibility

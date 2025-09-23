@@ -290,7 +290,6 @@ export default function CategoryTable() {
                 enableSorting={true}
                 enableSearch={true}
                 enableColumnVisibility={true}
-                searchColumn="name"
                 searchPlaceholder="Search categories by name..."
                 totalCount={totalItems}
                 noDataText={

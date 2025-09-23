@@ -3,7 +3,7 @@ import HttpServices from "@/service/http.service";
 
 class VendorService extends HttpServices {
 
-    async getAllVendor(params?: { per_page?: number; page?: number, verified_vendors?: number,search?: string }) {
+    async getAllVendor(params?: { per_page?: number; page?: number, verified_vendors?: number, search?: string }) {
         try {
             const response = await this.getRequest({
                 url: "/admin/vendor",
@@ -47,6 +47,41 @@ class VendorService extends HttpServices {
             console.log('Error from createVendor', error)
             throw error;
         }
+    }
+
+    async updateVendor(uuid: string, data: any) {
+        try {
+            return await this.postRequest({
+                url: `admin/vendor/${uuid}`,
+                data: {
+                    ...data,
+                    _method: "PUT",
+                },
+                config: {
+                    auth: true,
+                    file: true,
+                }
+            })
+        } catch (error) {
+            console.log('Error from updateVendor', error)
+            throw error;
+        }
+    }
+
+    async getVendor(uuid: string) {
+        try {
+            return await this.getRequest({
+                url: `admin/vendor/${uuid}`,
+                config: {
+                    auth: true,
+                }
+
+            })
+        } catch (error) {
+            console.log('Error from getVendor', error)
+            throw error;
+        }
+
     }
 
 }

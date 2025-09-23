@@ -1,4 +1,4 @@
-import {User} from "@/components/card/dashboard/users-table";
+import {User} from "@/components/dashboard/users-table";
 import {Download, Package, Settings} from "lucide-react";
 
 export const users: User[] = [

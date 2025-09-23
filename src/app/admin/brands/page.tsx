@@ -2,7 +2,7 @@
 
 import BrandAdminTable from "@/app/admin/brands/brand-admin-table";
 import PageHeader from "@/components/headers/PageHeader";
-import {DashboardCard} from "@/components/card/dashboard/dashboard-card";
+import {DashboardCard} from "@/components/dashboard/dashboard-card";
 import {adminVendorDashboardCards} from "@/data";
 
 export default function BrandPage() {

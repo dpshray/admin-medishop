@@ -1,9 +1,9 @@
 'use client'
-import AdminProductTable from "@/components/table/admin-product-table";
+import AdminProductTable from "@/components/product/admin-product-table";
 import PageHeader from "@/components/headers/PageHeader";
 import {Building2} from "lucide-react";
 import {adminVendorDashboardCards} from "@/data";
-import {DashboardCard} from "@/components/card/dashboard/dashboard-card";
+import {DashboardCard} from "@/components/dashboard/dashboard-card";
 
 export default function ProductPage() {
     return (

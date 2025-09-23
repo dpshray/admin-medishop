@@ -7,7 +7,7 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {Download, Edit3, Eye, MoreHorizontal, Plus, Settings, Users} from "lucide-react"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {adminDashboardData} from "@/data";
-import {DashboardCard} from "@/components/card/dashboard/dashboard-card";
+import {DashboardCard} from "@/components/dashboard/dashboard-card";
 
 export default function AdminPage() {
     const recentActivities = [

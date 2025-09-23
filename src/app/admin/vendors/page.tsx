@@ -2,7 +2,7 @@
 
 import {Building2} from "lucide-react"
 import {adminVendorDashboardCards} from "@/data"
-import {DashboardCard} from "@/components/card/dashboard/dashboard-card"
+import {DashboardCard} from "@/components/dashboard/dashboard-card"
 import VendorTable from "@/app/admin/vendors/VenderTable"
 import PageHeader from "@/components/headers/PageHeader";
 

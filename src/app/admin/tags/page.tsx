@@ -1,7 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/headers/PageHeader";
-import {DashboardCard} from "@/components/card/dashboard/dashboard-card";
+import {DashboardCard} from "@/components/dashboard/dashboard-card";
 import {adminVendorDashboardCards} from "@/data";
 import TagsAdminTable from "@/app/admin/tags/tags-admin-table";
 

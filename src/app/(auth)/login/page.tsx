@@ -8,8 +8,6 @@ import {z} from "zod"
 import {zodResolver} from "@hookform/resolvers/zod"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"
-import {Separator} from "@/components/ui/separator"
-import {Mail} from "lucide-react"
 import TextInputField from "@/components/field/text-input"
 import PasswordInputField from "@/components/field/password-input"
 import {loginSchema} from "@/lib/schema";
@@ -37,7 +35,10 @@ export default function LoginPage() {
             if (response) {
                 localStorage.setItem("_at", response?.data?.token)
                 localStorage.setItem("_role", response?.data?.user?.user_type?.toLowerCase() || "")
-                router.push('/admin')
+                if (response?.data?.user?.user_type?.toLowerCase() === "admin") {
+                    router.push('/admin')
+
+                }
             }
         } catch (error) {
             console.log(error)

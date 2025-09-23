@@ -1,11 +1,10 @@
-
-
-import {z} from "zod";
+import { z } from "zod";
 
 export const variationSchema = z.object({
     size_value: z.number().min(1, "Size value must be at least 1"),
     size_unit: z.string().min(1, "Size unit is required"),
     platform_price: z.number().min(1, "Price must be at least 1"),
+    platform_discount_price: z.number().min(0).optional(),
 });
 
 export const productSchema = z.object({
@@ -19,6 +18,16 @@ export const productSchema = z.object({
     gallery_images: z.array(z.instanceof(File)).min(1, "At least one gallery image is required"),
 });
 
-export const updateProductSchema = productSchema.partial();
+export const updateProductSchema = z.object({
+    brand_id: z.number().optional(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    categories: z.array(z.number()).optional(),
+    tags: z.array(z.number()).optional(),
+    variations: z.array(variationSchema).optional(),
+    featured_image: z.instanceof(File).nullable().optional(),
+    gallery_images: z.array(z.instanceof(File)).optional(),
+});
 
 export type ProductFormValues = z.infer<typeof productSchema>;
+export type UpdateProductFormValues = z.infer<typeof updateProductSchema>;

@@ -70,7 +70,8 @@ export default function VendorTable() {
     const handleEditVendor = useCallback(
         (vendor: Vendor) => {
             setSelectedVendor(vendor)
-            router.push(`/admin/vendors/edit/${vendor.vendor_uuid}`)
+            //admin/vendors/edit-vendors/8006462a-2946-4c5f-b5eb-21578a8af07f
+            router.push(`/admin/vendors/edit-vendors/${vendor.user_uuid}`)
         },
         [router]
     )
@@ -156,7 +157,7 @@ export default function VendorTable() {
                     return (
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                             <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
-                                <AvatarImage src="https://via.placeholder.com/150" alt={name} />
+                                <AvatarImage src="https://via.placeholder.com/150" alt={name}/>
                                 <AvatarFallback className="text-xs">
                                     {name?.charAt(0).toUpperCase()}
                                 </AvatarFallback>
@@ -278,7 +279,6 @@ export default function VendorTable() {
     const handleSearch = (searchValue: string) => {
         setSearchTerm(searchValue)
     }
-
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-[400px] p-4">
@@ -312,6 +312,7 @@ export default function VendorTable() {
                 loading={isLoading}
                 onAddAction={handleAddVendor}
                 onDeleteAction={handleBulkDelete}
+                onSearchAction={handleSearch}
                 actionLabel="Add Vendor"
                 pagination={{
                     page: currentPage,

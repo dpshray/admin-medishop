@@ -10,8 +10,10 @@ import FileInputField from "@/components/field/file-input"
 import {Banknote, FileText, MapPin, Package, Store, User, XCircle} from "lucide-react"
 import vendorService from "@/service/vendor.service";
 import {toast} from "sonner";
+import {useRouter} from "next/navigation";
 
 export default function VendorRegistrationForm() {
+    const router = useRouter()
     const form = useForm<VendorFormValues>({
         resolver: zodResolver(createVendorSchema) as any,
         defaultValues: {
@@ -31,7 +33,7 @@ export default function VendorRegistrationForm() {
             country: "",
             postal_code: "",
             website: "",
-            is_verified: "0",
+            is_verified: "0" as any,
             vendor_citizenship_card: undefined,
             vendor_tax_certificate: undefined,
             vendor_business_license: undefined,
@@ -54,6 +56,7 @@ export default function VendorRegistrationForm() {
                 console.log("Vendor created successfully:", response)
                 toast.success(response?.message || "Vendor created successfully")
                 reset()
+                router.push("/admin/vendors")
             }
         } catch (error) {
             console.error("Form submission error:", error)
@@ -273,22 +276,22 @@ export default function VendorRegistrationForm() {
                                     </div>
                                 </section>
 
-                                <div className="flex gap-4 pt-6">
-                                    <Button
-                                        type="submit"
-                                        className="w-full"
-                                        disabled={isSubmitting}
-                                    >
-                                        {isSubmitting ? "Submitting..." : "Submit"}
-                                    </Button>
+                                <div className="grid grid-cols-2 gap-4 pt-6">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={handleReset}
-                                        className="w-full"
+                                        className="w-full hover:bg-red-500 hover:text-white cursor-pointer"
                                         disabled={isSubmitting}
                                     >
                                         Reset
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        className="w-full cursor-pointer  bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700  "
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? "Submitting..." : "Submit"}
                                     </Button>
                                 </div>
                             </CardContent>

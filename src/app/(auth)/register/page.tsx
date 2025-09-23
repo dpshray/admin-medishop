@@ -3,14 +3,14 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Github, Lock, Mail, User } from "lucide-react"
+import {useForm} from "react-hook-form"
+import {z} from "zod"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
+import {Button} from "@/components/ui/button"
+import {Separator} from "@/components/ui/separator"
+import {Checkbox} from "@/components/ui/checkbox"
+import {Github, Lock, Mail, User} from "lucide-react"
 import TextInputField from "@/components/field/text-input"
 import PasswordInputField from "@/components/field/password-input"
 
@@ -38,10 +38,10 @@ export default function RegisterPage() {
         register,
         handleSubmit,
         watch,
-        formState: { errors, isSubmitting },
+        formState: {errors, isSubmitting},
     } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema) as any,
-        defaultValues: { accountType: "user" },
+        defaultValues: {accountType: "user"},
     })
 
     const onSubmit = async (data: RegisterFormValues) => {
@@ -56,7 +56,8 @@ export default function RegisterPage() {
             <div className="flex w-full lg:w-1/2 items-center justify-center bg-background px-6 py-12">
                 <Card className="w-full shadow-xl border max-w-md">
                     <CardHeader className="space-y-1">
-                        <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        <CardTitle
+                            className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                             Create Account
                         </CardTitle>
                         <p className="text-sm text-muted-foreground text-center">
@@ -135,7 +136,7 @@ export default function RegisterPage() {
                         </form>
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <Separator className="w-full" />
+                                <Separator className="w-full"/>
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground font-medium">
@@ -150,7 +151,7 @@ export default function RegisterPage() {
                                 className="w-full"
                                 onClick={() => console.log("Google signup")}
                             >
-                                <Mail className="mr-2 h-4 w-4" /> Google
+                                <Mail className="mr-2 h-4 w-4"/> Google
                             </Button>
                             <Button
                                 type="button"
@@ -158,7 +159,7 @@ export default function RegisterPage() {
                                 className="w-full"
                                 onClick={() => console.log("GitHub signup")}
                             >
-                                <Github className="mr-2 h-4 w-4" /> GitHub
+                                <Github className="mr-2 h-4 w-4"/> GitHub
                             </Button>
                             <Button
                                 type="button"
@@ -166,7 +167,7 @@ export default function RegisterPage() {
                                 className="w-full"
                                 onClick={() => console.log("Facebook signup")}
                             >
-                                <User className="mr-2 h-4 w-4" /> Facebook
+                                <User className="mr-2 h-4 w-4"/> Facebook
                             </Button>
                         </div>
                         <p className="text-center text-sm text-muted-foreground">
@@ -179,7 +180,7 @@ export default function RegisterPage() {
                 </Card>
             </div>
             <div className="hidden lg:block w-full lg:w-1/2 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-bl from-primary/20 to-primary/5 z-10" />
+                <div className="absolute inset-0 bg-gradient-to-bl from-primary/20 to-primary/5 z-10"/>
                 <Image
                     src="https://images.pexels.com/photos/3184416/pexels-photo-3184416.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
                     alt="Modern office space with collaborative workspace"

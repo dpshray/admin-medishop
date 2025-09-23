@@ -27,19 +27,22 @@ interface Product {
 interface ProductTableParams {
     page: number
     per_page: number
+    search?: string
 }
 
-export default function AdminProductTable(){
+export default function AdminProductTable() {
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [pageSize, setPageSize] = useState<number>(10)
+    const [search, setSearch] = useState<string>("")
     const router = useRouter()
 
-    const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PaginatedResponse<Product>, Error>({
-        queryKey: ["admin-products", currentPage, pageSize] as const,
+    const {data, isLoading, isError, error, refetch, isFetching} = useQuery<PaginatedResponse<Product>, Error>({
+        queryKey: ["admin-products", currentPage, pageSize, search] as const,
         queryFn: async (): Promise<PaginatedResponse<Product>> => {
             const params: ProductTableParams = {
                 page: currentPage,
-                per_page: pageSize
+                per_page: pageSize,
+                search
             }
             return await productService.getAllProducts(params)
         },
@@ -52,9 +55,8 @@ export default function AdminProductTable(){
             await productService.deleteProduct(product.uuid)
             toast.success(`Product "${product.name}" deleted successfully`)
             void refetch()
-        } catch (err) {
+        } catch {
             toast.error("Failed to delete product")
-            console.error("Delete error:", err)
         }
     }, [refetch])
 
@@ -64,9 +66,8 @@ export default function AdminProductTable(){
             await Promise.all(deletePromises)
             toast.success(`${selected.length} product${selected.length > 1 ? 's' : ''} deleted successfully`)
             void refetch()
-        } catch (err) {
+        } catch {
             toast.error("Failed to delete selected products")
-            console.error("Bulk delete error:", err)
         }
     }, [refetch])
 
@@ -79,7 +80,7 @@ export default function AdminProductTable(){
     }, [router])
 
     const handleEditProduct = useCallback((uuid: string): void => {
-        router.push(`/admin/products/edit/${uuid}`)
+        router.push(`/admin/products/edit-product/${uuid}`)
     }, [router])
 
     const handleRefresh = useCallback((): void => {
@@ -96,6 +97,12 @@ export default function AdminProductTable(){
         setCurrentPage(1)
     }, [])
 
+    const handleSearch = useCallback((value: string): void => {
+        console.log('Search value', value)
+        setSearch(value)
+        setCurrentPage(1)
+    }, [])
+
     const formatPrice = useCallback((price: number): string => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -108,7 +115,7 @@ export default function AdminProductTable(){
     const columns: ColumnDef<Product>[] = useMemo(() => [
         {
             id: "select",
-            header: ({ table }) => (
+            header: ({table}) => (
                 <Checkbox
                     checked={
                         table.getIsAllPageRowsSelected() ||
@@ -116,10 +123,9 @@ export default function AdminProductTable(){
                     }
                     onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                     aria-label="Select all products"
-                    className="mx-auto"
                 />
             ),
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -134,7 +140,7 @@ export default function AdminProductTable(){
         {
             header: "Product Name",
             accessorKey: "name",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <div
                     className="font-semibold text-gray-900 truncate max-w-[200px] cursor-pointer hover:text-blue-600"
                     title={row.original.name}
@@ -149,9 +155,9 @@ export default function AdminProductTable(){
         {
             header: "Brand",
             accessorKey: "brand",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <div className="flex items-center space-x-2">
-                    <Building2 size={16} className="text-gray-400" />
+                    <Building2 size={16} className="text-gray-400"/>
                     <span className="truncate max-w-[120px]" title={row.original.brand}>
             {row.original.brand}
           </span>
@@ -162,7 +168,7 @@ export default function AdminProductTable(){
         {
             header: "Price",
             accessorKey: "lowest_variant_price",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <span className="font-medium text-green-600">
           {formatPrice(row.original.lowest_variant_price)}
         </span>
@@ -172,7 +178,7 @@ export default function AdminProductTable(){
         {
             header: "Status",
             accessorKey: "published",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Badge
                     variant={row.original.published ? "default" : "secondary"}
                     className={cn(
@@ -195,12 +201,12 @@ export default function AdminProductTable(){
         {
             header: "Stock",
             accessorKey: "total_stock",
-            cell: ({ row }) => {
+            cell: ({row}) => {
                 const stock = row.original.total_stock
                 if (stock === 0) {
                     return (
                         <Badge variant="destructive" className="flex items-center space-x-1">
-                            <AlertTriangle size={12} />
+                            <AlertTriangle size={12}/>
                             <span>Out of Stock</span>
                         </Badge>
                     )
@@ -208,7 +214,7 @@ export default function AdminProductTable(){
                 if (stock < 10) {
                     return (
                         <Badge variant="outline" className="flex items-center space-x-1 border-orange-300 text-orange-700">
-                            <AlertTriangle size={12} />
+                            <AlertTriangle size={12}/>
                             <span>{stock} Low Stock</span>
                         </Badge>
                     )
@@ -220,7 +226,7 @@ export default function AdminProductTable(){
         {
             id: "actions",
             header: "Actions",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <div className="flex items-center space-x-2">
                     <Button
                         variant="ghost"
@@ -229,7 +235,7 @@ export default function AdminProductTable(){
                         className="h-8 w-8 p-0"
                         title="View product details"
                     >
-                        <Eye size={16} />
+                        <Eye size={16}/>
                     </Button>
                     <RowActions
                         row={row}
@@ -271,7 +277,7 @@ export default function AdminProductTable(){
             <div className="p-6">
                 <div className="rounded-lg border border-red-200 bg-red-50 p-6">
                     <div className="flex items-start space-x-3">
-                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5"/>
                         <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-medium text-red-800 mb-2">Failed to load products</h3>
                             <p className="text-red-700 mb-4">
@@ -320,6 +326,7 @@ export default function AdminProductTable(){
                 loading={isLoading || isFetching}
                 onAddAction={handleAddProduct}
                 onDeleteAction={handleDeleteSelected}
+                onSearchAction={handleSearch}
                 actionLabel="Add Product"
                 enableRowSelection
                 enableSorting
@@ -338,7 +345,6 @@ export default function AdminProductTable(){
                     dataCount: data?.total_items || 0
                 }}
                 noDataText={noDataContent}
-
             />
         </div>
     )

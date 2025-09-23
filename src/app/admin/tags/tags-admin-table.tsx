@@ -205,7 +205,6 @@ export default function TagsAdminTable() {
                 enableSorting
                 enableSearch
                 enableColumnVisibility
-                searchColumn="name"
                 searchPlaceholder="Search tags by name..."
                 totalCount={totalItems}
                 noDataText={<NoDataFound/>}

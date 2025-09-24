@@ -21,6 +21,8 @@ interface TagResponse {
     items: Tag[]
     total_page: number
     total_items?: number
+    page?: number
+    per_page?: number
 }
 
 interface PaginationParams {
@@ -29,19 +31,22 @@ interface PaginationParams {
 }
 
 export default function TagsAdminTable() {
-    const [paginationState, setPaginationState] = useState({currentPage: 1, pageSize: 10})
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
     const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
     const [isFormModalOpen, setFormModalOpen] = useState(false)
 
     const {data, isLoading, refetch} = useQuery<TagResponse, Error>({
-        queryKey: ["admin-tags", paginationState.currentPage, paginationState.pageSize],
+        queryKey: ["admin-tags", currentPage, pageSize],
         queryFn: async () => {
-            const params: PaginationParams = {page: paginationState.currentPage, per_page: paginationState.pageSize}
-            return await tagService.getAllTags(params)
+            const params: PaginationParams = {page: currentPage, per_page: pageSize}
+            const response = await tagService.getAllTags(params)
+            return response
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
+        enabled: true
     })
 
     const deleteMutation = useMutation({
@@ -62,11 +67,12 @@ export default function TagsAdminTable() {
     const totalItems = data?.total_items ?? 0
 
     const handlePageChange = useCallback((page: number) => {
-        setPaginationState(prev => ({...prev, currentPage: page}))
+        setCurrentPage(page)
     }, [])
 
     const handlePageSizeChange = useCallback((newPageSize: number) => {
-        setPaginationState({currentPage: 1, pageSize: newPageSize})
+        setPageSize(newPageSize)
+        setCurrentPage(1)
     }, [])
 
     const handleAddTag = useCallback(() => {
@@ -156,7 +162,6 @@ export default function TagsAdminTable() {
                 accessorKey: "slug",
                 header: "Slug",
                 cell: ({row}) => <div className="font-medium text-gray-900">{row.original.slug}</div>,
-
             },
             {
                 id: "actions",
@@ -193,9 +198,9 @@ export default function TagsAdminTable() {
                 onDeleteAction={handleBulkDelete}
                 actionLabel="Add Tag"
                 pagination={{
-                    page: paginationState.currentPage,
+                    page: currentPage,
                     totalPages,
-                    pageSize: paginationState.pageSize,
+                    pageSize,
                     onPageChange: handlePageChange,
                     onPageSizeChange: handlePageSizeChange,
                     pageSizeOptions: [5, 10, 25, 50],
@@ -233,8 +238,6 @@ export default function TagsAdminTable() {
                 onSubmitAction={handleFormSubmit}
                 initialData={selectedTag ? {name: selectedTag.name} : undefined}
             />
-
-
         </div>
     )
 }

@@ -36,10 +36,10 @@ export default function ReusableSidebar({
                                             currentHref,
                                             logo,
                                             user = {
-                                                name: "Keith Kennedy",
-                                                email: "k.kennedy@originui.com",
+                                                name: "Medishop",
+                                                email: "Medishop",
                                                 avatar: "/placeholder.svg?height=32&width=32",
-                                                fallback: "KK",
+                                                fallback: "MS",
                                             },
                                             dropdownGroups = [],
                                             notifications = [],
@@ -61,7 +61,7 @@ export default function ReusableSidebar({
                     </Breadcrumb>
                     <div className="ml-auto flex items-center gap-1 sm:gap-2">
                         <NotificationComponent notifications={notifications}/>
-                        <UserDropdown user={user} groups={dropdownGroups} onLogout={onLogout}/>
+                        <UserDropdown user={user} groups={dropdownGroups} onLogoutAction={onLogout}/>
                     </div>
                 </header>
                 <main className="flex-1 space-y-4  sm:space-y-4 ">{children}</main>

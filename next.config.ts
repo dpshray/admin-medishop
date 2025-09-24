@@ -1,6 +1,15 @@
 import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
+    // async redirects() {
+    //     return [
+    //         {
+    //             source: '/admin/products/edit-product',
+    //             destination: '/admin/products',
+    //             permanent: true,
+    //         }
+    //     ];
+    // },
     images: {
         remotePatterns: [
             {

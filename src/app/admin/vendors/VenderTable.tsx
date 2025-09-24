@@ -70,8 +70,7 @@ export default function VendorTable() {
     const handleEditVendor = useCallback(
         (vendor: Vendor) => {
             setSelectedVendor(vendor)
-            //admin/vendors/edit-vendors/8006462a-2946-4c5f-b5eb-21578a8af07f
-            router.push(`/admin/vendors/edit-vendors/${vendor.user_uuid}`)
+            router.push(`/admin/vendors/edit-vendor/${vendor.user_uuid}`)
         },
         [router]
     )
@@ -101,25 +100,14 @@ export default function VendorTable() {
         router.push("/admin/vendors/add-vendor")
     }, [router])
 
-    const handleBulkDelete = useCallback(
-        (selectedVendors: Vendor[]) => {
-            if (selectedVendors.length === 0) return
-            const deletePromises = selectedVendors.map((vendor) =>
-                vendorService.deleteVendor(vendor.vendor_uuid)
-            )
-            Promise.all(deletePromises)
-                .then(() => {
-                    toast.success(
-                        `${selectedVendors.length} vendor${selectedVendors.length > 1 ? "s" : ""} deleted successfully`
-                    )
-                    queryClient.invalidateQueries({queryKey: ["admin-vendor"]})
-                })
-                .catch(() => {
-                    toast.error("Some vendors could not be deleted")
-                })
+    const handleViewVendor = useCallback(
+        (vendor: Vendor) => {
+            setSelectedVendor(vendor)
+            router.push(`/admin/vendors/view-vendor/${vendor.user_uuid}`)
         },
-        [queryClient]
+        [router]
     )
+
 
     const columns: ColumnDef<Vendor>[] = useMemo(
         () => [
@@ -267,13 +255,14 @@ export default function VendorTable() {
                         row={row}
                         onEditAction={() => handleEditVendor(row.original)}
                         onDeleteAction={() => handleDeleteVendor(row.original)}
+                        onViewAction={() => handleViewVendor(row.original)}
                     />
                 ),
                 size: 60,
                 enableHiding: false,
             },
         ],
-        [handleEditVendor, handleDeleteVendor]
+        [handleEditVendor, handleDeleteVendor, handleViewVendor]
     )
 
     const handleSearch = (searchValue: string) => {
@@ -311,7 +300,6 @@ export default function VendorTable() {
                 columns={columns}
                 loading={isLoading}
                 onAddAction={handleAddVendor}
-                onDeleteAction={handleBulkDelete}
                 onSearchAction={handleSearch}
                 actionLabel="Add Vendor"
                 pagination={{

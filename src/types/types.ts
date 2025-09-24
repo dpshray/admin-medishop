@@ -23,3 +23,8 @@ export interface OptionType {
     value: ValueType
     label: string
 }
+
+
+ export interface PageParamsProps<T extends Record<string, string>> {
+    params: T
+}

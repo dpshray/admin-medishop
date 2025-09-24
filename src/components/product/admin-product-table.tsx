@@ -1,18 +1,18 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
-import { ColumnDef } from "@tanstack/react-table"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/table/ReusableTable"
-import { RowActions } from "@/lib/helper"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { AlertTriangle, Building2, Eye } from "lucide-react"
-import { PaginatedResponse } from "@/types/types"
+import {useCallback, useMemo, useState} from "react"
+import {useQuery} from "@tanstack/react-query"
+import {useRouter} from "next/navigation"
+import {ColumnDef} from "@tanstack/react-table"
+import {Checkbox} from "@/components/ui/checkbox"
+import {Badge} from "@/components/ui/badge"
+import {Button} from "@/components/ui/button"
+import {DataTable} from "@/components/table/ReusableTable"
+import {RowActions} from "@/lib/helper"
+import {toast} from "sonner"
+import {cn} from "@/lib/utils"
+import {AlertTriangle, Building2, Eye} from "lucide-react"
+import {PaginatedResponse} from "@/types/types"
 import productService from "@/service/product.service"
 
 interface Product {
@@ -36,10 +36,10 @@ export default function AdminProductTable() {
     const [search, setSearch] = useState("")
     const router = useRouter()
 
-    const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PaginatedResponse<Product>, Error>({
+    const {data, isLoading, isError, error, refetch, isFetching} = useQuery<PaginatedResponse<Product>, Error>({
         queryKey: ["admin-products", currentPage, pageSize, search],
         queryFn: async () => {
-            const params: ProductTableParams = { page: currentPage, per_page: pageSize, search }
+            const params: ProductTableParams = {page: currentPage, per_page: pageSize, search}
             return await productService.getAllProducts(params)
         },
         staleTime: 5 * 60 * 1000,
@@ -78,7 +78,7 @@ export default function AdminProductTable() {
 
     const handleViewProduct = useCallback(
         (uuid: string) => {
-            router.push(`/admin/products/view/${uuid}`)
+            router.push(`/admin/products/view-product/${uuid}`)
         },
         [router]
     )
@@ -124,14 +124,14 @@ export default function AdminProductTable() {
         () => [
             {
                 id: "select",
-                header: ({ table }) => (
+                header: ({table}) => (
                     <Checkbox
                         checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
                         onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
                         aria-label="Select all products"
                     />
                 ),
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={value => row.toggleSelected(!!value)}
@@ -146,7 +146,7 @@ export default function AdminProductTable() {
             {
                 header: "Product Name",
                 accessorKey: "name",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div
                         className="font-semibold text-gray-900 truncate max-w-[200px] cursor-pointer hover:text-blue-600"
                         title={row.original.name}
@@ -161,9 +161,9 @@ export default function AdminProductTable() {
             {
                 header: "Brand",
                 accessorKey: "brand",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex items-center space-x-2">
-                        <Building2 size={16} className="text-gray-400" />
+                        <Building2 size={16} className="text-gray-400"/>
                         <span className="truncate max-w-[120px]" title={row.original.brand}>
               {row.original.brand}
             </span>
@@ -174,13 +174,14 @@ export default function AdminProductTable() {
             {
                 header: "Price",
                 accessorKey: "lowest_variant_price",
-                cell: ({ row }) => <span className="font-medium text-green-600">{formatPrice(row.original.lowest_variant_price)}</span>,
+                cell: ({row}) => <span
+                    className="font-medium text-green-600">{formatPrice(row.original.lowest_variant_price)}</span>,
                 size: 120,
             },
             {
                 header: "Status",
                 accessorKey: "published",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <Badge
                         variant={row.original.published ? "default" : "secondary"}
                         className={cn(
@@ -197,20 +198,21 @@ export default function AdminProductTable() {
             {
                 header: "Stock",
                 accessorKey: "total_stock",
-                cell: ({ row }) => {
+                cell: ({row}) => {
                     const stock = row.original.total_stock
                     if (stock === 0) {
                         return (
                             <Badge variant="destructive" className="flex items-center space-x-1">
-                                <AlertTriangle size={12} />
+                                <AlertTriangle size={12}/>
                                 <span>Out of Stock</span>
                             </Badge>
                         )
                     }
                     if (stock < 10) {
                         return (
-                            <Badge variant="outline" className="flex items-center space-x-1 border-orange-300 text-orange-700">
-                                <AlertTriangle size={12} />
+                            <Badge variant="outline"
+                                   className="flex items-center space-x-1 border-orange-300 text-orange-700">
+                                <AlertTriangle size={12}/>
                                 <span>{stock} Low Stock</span>
                             </Badge>
                         )
@@ -222,7 +224,7 @@ export default function AdminProductTable() {
             {
                 id: "actions",
                 header: "Actions",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex items-center space-x-2">
                         <Button
                             variant="ghost"
@@ -231,7 +233,7 @@ export default function AdminProductTable() {
                             className="h-8 w-8 p-0"
                             title="View product details"
                         >
-                            <Eye size={16} />
+                            <Eye size={16}/>
                         </Button>
                         <RowActions
                             row={row}
@@ -252,7 +254,8 @@ export default function AdminProductTable() {
         () => (
             <div className="flex flex-col items-center justify-center py-12">
                 <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
                 <h3 className="mt-4 text-sm font-medium text-gray-900">No products found</h3>
                 <p className="mt-1 text-sm text-gray-500">Get started by creating your first product.</p>
@@ -269,15 +272,17 @@ export default function AdminProductTable() {
             <div className="p-6">
                 <div className="rounded-lg border border-red-200 bg-red-50 p-6">
                     <div className="flex items-start space-x-3">
-                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5"/>
                         <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-medium text-red-800 mb-2">Failed to load products</h3>
                             <p className="text-red-700 mb-4">{error instanceof Error ? error.message : "An unexpected error occurred."}</p>
                             <div className="flex space-x-3">
-                                <Button onClick={handleRefresh} variant="outline" className="border-red-300 text-red-800 hover:bg-red-100">
+                                <Button onClick={handleRefresh} variant="outline"
+                                        className="border-red-300 text-red-800 hover:bg-red-100">
                                     Try Again
                                 </Button>
-                                <Button onClick={() => window.location.reload()} variant="ghost" className="text-red-800 hover:bg-red-100">
+                                <Button onClick={() => window.location.reload()} variant="ghost"
+                                        className="text-red-800 hover:bg-red-100">
                                     Reload Page
                                 </Button>
                             </div>

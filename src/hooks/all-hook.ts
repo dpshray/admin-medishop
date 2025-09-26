@@ -4,11 +4,16 @@ import tagService from "@/service/tag.service"
 import {PaginatedResponse} from "@/types/types"
 import categoriesService from "@/service/categories.service";
 import brandService from "@/service/brand.service";
+import productService from "@/service/product.service";
 
 export interface Tag {
     id: number
     name: string
     slug: string
+}
+
+export interface ProductUnit {
+    name: string
 }
 
 export interface Category {
@@ -97,5 +102,24 @@ export const useBrands = () => {
         totalPages,
         totalItems,
         currentPage,
+    }
+}
+
+
+export const useProductUnits = () => {
+    const query = useQuery<any, Error>({
+        queryKey: ["product-units"],
+        queryFn: async () => {
+            const res = await productService.getProductUnitList()
+            console.log("Response from product unit table", res?.data)
+            return res?.data
+        },
+        staleTime: 0,
+        refetchOnWindowFocus: false,
+    })
+
+    return {
+        ...query,
+        productUnits: query?.data ?? [],
     }
 }

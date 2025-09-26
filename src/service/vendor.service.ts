@@ -1,4 +1,5 @@
 import HttpServices from "@/service/http.service";
+import {ParamsType} from "@/types/types";
 
 
 class VendorService extends HttpServices {
@@ -84,7 +85,35 @@ class VendorService extends HttpServices {
 
     }
 
+    async getProductsByVendor(params: ParamsType) {
+        try {
+            const res = await this.getRequest({
+                url: "vendor/product",
+                config: {
+                    auth: true,
+                    params,
+                }
+            })
+            return res?.data
+        } catch (error) {
+            console.log('Error from getProductsByVendor', error)
+            throw error;
+        }
+    }
+
+    async addProductByVendor(product_uuid: string, data: any) {
+        try {
+            return await this.postRequest({
+                url: `admin/vendor/${product_uuid}/product`,
+                data,
+            })
+        } catch (error) {
+            console.log('Error from addProductByVendor', error)
+            throw error;
+        }
+    }
 }
+
 
 const vendorService = new VendorService();
 export default vendorService;

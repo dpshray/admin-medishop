@@ -315,7 +315,7 @@ const ProductVariantUpdateForm = () => {
                                                     return (
                                                         <Button
                                                             type="button"
-                                                            key={variation.id}
+                                                            key={`available-${variation.id} + ${variation.name}`}
                                                             variant={isSelected ? "secondary" : "outline"}
                                                             className={`h-auto p-4 text-left justify-start transition-all duration-200 hover:shadow-md group ${
                                                                 isSelected

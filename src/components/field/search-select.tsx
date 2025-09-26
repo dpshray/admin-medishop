@@ -108,9 +108,9 @@ export default function SearchSelectField({
                             <CommandEmpty>No options found.</CommandEmpty>
                             <CommandGroup>
                                 {filteredOptions.length > 0 ? (
-                                    filteredOptions.map((option) => (
+                                    filteredOptions.map((option,index) => (
                                         <CommandItem
-                                            key={`${option.value}-${option.label}`}
+                                            key={`${option.value}-${index}`}
                                             value={option.value.toString()}
                                             onSelect={() => handleSelect(option.value)}
                                             className="cursor-pointer"

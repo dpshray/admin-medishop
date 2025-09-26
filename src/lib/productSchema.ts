@@ -3,6 +3,7 @@
 import {z} from "zod"
 
 export const VariationSchema = z.object({
+    variation_id: z.number().optional(),
     name: z.string(),
     size_value: z.number(),
     size_unit: z.string(),

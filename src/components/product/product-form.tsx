@@ -48,7 +48,6 @@ const LoadingSpinner = () => (
 const ProductManageForm = ({
                                mode = "create",
                                productUuid,
-                               initialData,
                                onSuccessAction,
                            }: ProductManageFormProps) => {
     const {categories} = useCategories()
@@ -56,9 +55,9 @@ const ProductManageForm = ({
     const {brands} = useBrands()
     const {productUnits} = useProductUnits()
     const isUpdateMode = mode === "edit"
-
-    const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
+    const [isDataLoaded, setIsDataLoaded] = useState(false)
 
     const categoriesOptions: SelectOption[] = categories.map((category) => ({
         id: category.id,
@@ -95,22 +94,22 @@ const ProductManageForm = ({
     }
 
     const updateDefaultValues: ProductUpdate = {
-        name: initialData?.name ?? "",
-        brand_id: initialData?.brand_id ?? 0,
-        description: initialData?.description ?? "",
-        variations: initialData?.variations ?? [
+        name: "",
+        brand_id: 0,
+        description: "",
+        variations: [
             {
                 name: "",
                 size_value: 1,
-                size_unit: productUnits[0]?.value ?? "mg",
+                size_unit: "mg",
                 platform_price: 1,
             },
         ],
-        categories: initialData?.categories ?? [],
-        tags: initialData?.tags ?? [],
-        featured_image: initialData?.featured_image ?? null,
-        gallery_images: initialData?.gallery_images ?? [],
-        prescription_required: initialData?.prescription_required ?? false,
+        categories: [],
+        tags: [],
+        featured_image: null,
+        gallery_images: [],
+        prescription_required: false,
     }
 
     const defaultValues = isUpdateMode ? updateDefaultValues : createDefaultValues
@@ -130,7 +129,7 @@ const ProductManageForm = ({
         mode: "onBlur",
     })
 
-    const {fields, append, remove} = useFieldArray({
+    const {fields, append, remove, replace} = useFieldArray({
         control,
         name: "variations"
     })
@@ -164,41 +163,41 @@ const ProductManageForm = ({
 
             if (response?.data) {
                 const productData = response.data
-                const formUpdates = {
-                    name: productData.name ?? "",
-                    brand_id: productData.brand_id ?? 0,
-                    description: productData.description ?? "",
-                    variations: productData.variations ?? [
-                        {
-                            name: "",
-                            size_value: 1,
-                            size_unit: productUnits[0]?.value ?? "mg",
-                            platform_price: 1,
-                        },
-                    ],
-                    categories: productData.categories ?? [],
-                    tags: productData.tags ?? [],
-                    featured_image: productData.featured_image ?? null,
-                    gallery_images: productData.gallery_images ?? [],
-                    prescription_required: productData.prescription_required ?? false,
+
+                const mappedVariations = productData.variations?.map((variation: any) => ({
+                    variation_id: variation.variation_id,
+                    name: variation.name || "",
+                    size_value: variation.size_value || 1,
+                    size_unit: variation.size_unit || "mg",
+                    platform_price: variation.admin_price || variation.platform_price || 1,
+                })) || []
+
+                setValue("name", productData.name || "")
+                setValue("brand_id", productData.brand?.id || 0)
+                setValue("description", productData.description || "")
+                setValue("categories", productData.categories?.map((cat: any) => cat.id) || [])
+                setValue("tags", productData.tags?.map((tag: any) => tag.id) || [])
+                setValue("prescription_required", productData.prescription_required || false)
+
+                if (mappedVariations.length > 0) {
+                    replace(mappedVariations)
                 }
 
-                Object.entries(formUpdates).forEach(([key, value]) => {
-                    setValue(key as keyof (ProductCreate | ProductUpdate), value)
-                })
+                setIsDataLoaded(true)
             }
         } catch (error) {
+            console.error("Error fetching product data:", error)
             toast.error("Failed to fetch product data")
         } finally {
             setIsLoading(false)
         }
-    }, [productUuid, isUpdateMode, productUnits, setValue])
+    }, [productUuid, isUpdateMode, setValue, replace])
 
     useEffect(() => {
-        if (isUpdateMode && productUuid) {
+        if (isUpdateMode && productUuid && brands.length > 0 && productUnits.length > 0) {
             fetchProductData()
         }
-    }, [fetchProductData, isUpdateMode, productUuid])
+    }, [fetchProductData, isUpdateMode, productUuid, brands.length, productUnits.length])
 
     const handleBrandChange = useCallback((brandId: string | number) => {
         const numericId = typeof brandId === "string" ? parseInt(brandId, 10) : brandId
@@ -253,18 +252,19 @@ const ProductManageForm = ({
                     data as ProductUpdate
                 )
                 if (response) {
-                    toast.success("Product updated successfully")
+                    toast.success(response?.message || "Product updated successfully")
                     onSuccessAction?.()
+                    router.push("/admin/products")
                 }
             } else {
-                console.log("Product form submitted:", data)
                 const response = await productService.createProduct(data as ProductCreate)
                 if (response) {
-                    toast.success("Product created successfully")
+                    toast.success(response?.message || "Product created successfully")
                     router.push("/admin/products")
                 }
             }
         } catch (error) {
+            console.error("Submit error:", error)
             toast.error(`Error ${isUpdateMode ? "updating" : "creating"} product`)
         }
     }, [isUpdateMode, productUuid, onSuccessAction, reset, defaultValues])
@@ -273,7 +273,9 @@ const ProductManageForm = ({
         reset(defaultValues)
     }, [reset, defaultValues])
 
-    if (isLoading) return <LoadingSpinner/>
+    if (isLoading || (isUpdateMode && !isDataLoaded)) {
+        return <LoadingSpinner/>
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -437,83 +439,88 @@ const ProductManageForm = ({
                                     </header>
 
                                     <div className="space-y-4">
-                                        {fields.map((field, index) => (
-                                            <div
-                                                key={field.id}
-                                                className="border border-slate-200 rounded-xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors"
-                                            >
-                                                <header className="flex items-center justify-between mb-6">
-                                                    <h3 className="font-medium text-slate-700 flex items-center gap-2">
-                                                        <span
-                                                            className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center justify-center font-semibold">
-                                                            {index + 1}
-                                                        </span>
-                                                        Variation {index + 1}
-                                                    </h3>
-                                                    {fields.length > 1 && (
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={handleRemoveVariation(index)}
-                                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        >
-                                                            <X className="w-4 h-4"/>
-                                                        </Button>
-                                                    )}
-                                                </header>
+                                        {fields.map((field, index) => {
+                                            const currentSizeUnit = watch(`variations.${index}.size_unit`)
+                                            const sizeUnitValue = currentSizeUnit ? {
+                                                value: currentSizeUnit,
+                                                label: currentSizeUnit
+                                            } : null
 
-                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                                    <TextInputField
-                                                        label="Variation Name"
-                                                        {...register(`variations.${index}.name`)}
-                                                        error={errors.variations?.[index]?.name?.message}
-                                                        placeholder="Enter variation name"
-                                                        required
-                                                        autoComplete="off"
-                                                    />
-                                                    <TextInputField
-                                                        label="Quantity"
-                                                        {...register(`variations.${index}.size_value`, {
-                                                            valueAsNumber: true
-                                                        })}
-                                                        error={errors.variations?.[index]?.size_value?.message}
-                                                        placeholder="Enter size"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0.01"
-                                                        required
-                                                    />
-                                                    <SearchSelectField
-                                                        label="Size Unit"
-                                                        placeholder="Select unit"
-                                                        options={productUnits}
-                                                        value={(() => {
-                                                            const currentValue = watch(`variations.${index}.size_unit`)
-                                                            return currentValue ? {
-                                                                value: currentValue,
-                                                                label: currentValue
-                                                            } : null
-                                                        })()}
-                                                        onChangeAction={handleSizeUnitChange(index)}
-                                                        error={errors.variations?.[index]?.size_unit?.message}
-                                                        required
-                                                    />
-                                                    <TextInputField
-                                                        label="Price (NRs)"
-                                                        {...register(`variations.${index}.platform_price`, {
-                                                            valueAsNumber: true
-                                                        })}
-                                                        error={errors.variations?.[index]?.platform_price?.message}
-                                                        placeholder="0.00"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0.01"
-                                                        required
-                                                    />
+                                            return (
+                                                <div
+                                                    key={field.id}
+                                                    className="border border-slate-200 rounded-xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                                                >
+                                                    <header className="flex items-center justify-between mb-6">
+                                                        <h3 className="font-medium text-slate-700 flex items-center gap-2">
+                                                            <span
+                                                                className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center justify-center font-semibold">
+                                                                {index + 1}
+                                                            </span>
+                                                            Variation {index + 1}
+                                                        </h3>
+                                                        {fields.length > 1 && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={handleRemoveVariation(index)}
+                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                            >
+                                                                <X className="w-4 h-4"/>
+                                                            </Button>
+                                                        )}
+                                                    </header>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                                        <TextInputField
+                                                            label="Variation Name"
+                                                            {...register(`variations.${index}.name`)}
+                                                            error={errors.variations?.[index]?.name?.message}
+                                                            placeholder="Enter variation name"
+                                                            required
+                                                            autoComplete="off"
+                                                        />
+                                                        <TextInputField
+                                                            label="Quantity"
+                                                            {...register(`variations.${index}.size_value`, {
+                                                                valueAsNumber: true
+                                                            })}
+                                                            error={errors.variations?.[index]?.size_value?.message}
+                                                            placeholder="Enter size"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            required
+                                                        />
+                                                        <SearchSelectField
+                                                            label="Size Unit"
+                                                            placeholder="Select unit"
+                                                            options={productUnits.map((unit: any) => ({
+                                                                value: unit.value,
+                                                                label: unit.label || unit.value
+                                                            }))}
+                                                            value={sizeUnitValue}
+                                                            onChangeAction={handleSizeUnitChange(index)}
+                                                            error={errors.variations?.[index]?.size_unit?.message}
+                                                            required
+                                                        />
+                                                        <TextInputField
+                                                            label="Price (NRs)"
+                                                            {...register(`variations.${index}.platform_price`, {
+                                                                valueAsNumber: true
+                                                            })}
+                                                            error={errors.variations?.[index]?.platform_price?.message}
+                                                            placeholder="0.00"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0.01"
+                                                            required
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 </section>
 

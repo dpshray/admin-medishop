@@ -1,21 +1,27 @@
 "use client"
 
-import {useState} from "react"
+import {useState, useEffect} from "react"
 import {Label} from "@/components/ui/label"
 import {cn} from "@/lib/utils"
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command"
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
 import {Button} from "@/components/ui/button"
 import {CheckIcon, ChevronDownIcon} from "lucide-react"
-import {OptionType} from "@/types/types"
+
+interface OptionType {
+    value: string | number
+    label: string
+}
 
 interface SearchSelectFieldProps {
     label?: string
     required?: boolean
     placeholder?: string
     options: OptionType[]
+    value?: { value: string | number; label: string } | null
     error?: string
     name?: string
+    disabled?: boolean
     onChangeAction?: (value: string | number) => void
     [key: string]: any
 }
@@ -25,37 +31,40 @@ export default function SearchSelectField({
                                               required,
                                               placeholder = "Select option",
                                               options = [],
+                                              value,
                                               error,
+                                              disabled = false,
                                               onChangeAction = () => {},
                                               ...props
                                           }: SearchSelectFieldProps) {
     const [open, setOpen] = useState(false)
-    const [value, setValue] = useState<string | number>("")
+    const [searchTerm, setSearchTerm] = useState("")
 
-    const handleSelect = (currentValue: string | number) => {
-        setValue(currentValue)
-        onChangeAction(currentValue)
+    const filteredOptions = options.filter(option =>
+        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    const handleSelect = (selectedValue: string | number) => {
+        onChangeAction(selectedValue)
         setOpen(false)
+        setSearchTerm("")
     }
 
-    const getOptionKey = (option: OptionType) => {
-        return option.value !== undefined && option.value !== null
-            ? option.value.toString()
-            : `option-${Math.random()}`
-    }
+    const selectedOption = value ? options.find(option => option.value === value.value) : null
+    const displayText = selectedOption?.label || (value?.label) || ""
 
-    const getOptionValue = (option: OptionType) => {
-        return option.value !== undefined && option.value !== null
-            ? option.value.toString()
-            : ""
-    }
+    useEffect(() => {
+        if (!open) {
+            setSearchTerm("")
+        }
+    }, [open])
 
     return (
         <div className="md:space-y-2 w-full space-y-1" {...props}>
             {label && (
                 <Label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {label}
-                    {required && <span className="text-red-500">*</span>}
+                    {required && <span className="text-red-500 ml-1">*</span>}
                 </Label>
             )}
             <Popover open={open} onOpenChange={setOpen}>
@@ -64,45 +73,70 @@ export default function SearchSelectField({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
+                        disabled={disabled}
                         className={cn(
-                            "w-full justify-between text-left",
-                            error && "border-red-500",
-                            !value && "text-muted-foreground",
-                            "data-[placeholder]:text-muted-foreground"
+                            "w-full justify-between text-left font-normal",
+                            error && "border-red-500 focus-visible:ring-red-500",
+                            !displayText && "text-muted-foreground"
                         )}
                     >
-                        <span className={cn("truncate", !value && "text-muted-foreground")}>
-                            {value ? options.find((option) => option.value === value)?.label : placeholder}
+                        <span className={cn("truncate", !displayText && "text-muted-foreground")}>
+                            {displayText || placeholder}
                         </span>
-                        <ChevronDownIcon size={16} className="text-muted-foreground/80 shrink-0" aria-hidden="true"/>
+                        <ChevronDownIcon
+                            size={16}
+                            className={cn(
+                                "text-muted-foreground/80 shrink-0 transition-transform duration-200",
+                                open && "rotate-180"
+                            )}
+                            aria-hidden="true"
+                        />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0" align="start">
-                    <Command>
-                        <CommandInput placeholder={placeholder}/>
+                <PopoverContent
+                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0"
+                    align="start"
+                    sideOffset={4}
+                >
+                    <Command shouldFilter={false}>
+                        <CommandInput
+                            placeholder={`Search ${label?.toLowerCase() || 'options'}...`}
+                            value={searchTerm}
+                            onValueChange={setSearchTerm}
+                        />
                         <CommandList>
-                            <CommandEmpty>No option found.</CommandEmpty>
+                            <CommandEmpty>No options found.</CommandEmpty>
                             <CommandGroup>
-                                {options.length > 0 ? (
-                                    options.map((option) => (
+                                {filteredOptions.length > 0 ? (
+                                    filteredOptions.map((option) => (
                                         <CommandItem
-                                            key={getOptionKey(option)}
-                                            value={getOptionValue(option)}
+                                            key={`${option.value}-${option.label}`}
+                                            value={option.value.toString()}
                                             onSelect={() => handleSelect(option.value)}
+                                            className="cursor-pointer"
                                         >
-                                            {option.label}
-                                            {value === option.value && <CheckIcon size={16} className="ml-auto"/>}
+                                            <span className="flex-1">{option.label}</span>
+                                            {value?.value === option.value && (
+                                                <CheckIcon size={16} className="ml-2 text-primary shrink-0" />
+                                            )}
                                         </CommandItem>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">No options available</p>
+                                    <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                                        No options available
+                                    </div>
                                 )}
                             </CommandGroup>
                         </CommandList>
                     </Command>
                 </PopoverContent>
             </Popover>
-            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+            {error && (
+                <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                    <span className="inline-block w-1 h-1 bg-red-500 rounded-full shrink-0"></span>
+                    {error}
+                </p>
+            )}
         </div>
     )
 }

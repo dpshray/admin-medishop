@@ -1,30 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { useFieldArray, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
+import {useCallback, useEffect, useMemo, useState} from "react"
+import {useFieldArray, useForm} from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {z} from "zod"
+import {Button} from "@/components/ui/button"
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
+import {Separator} from "@/components/ui/separator"
+import {Badge} from "@/components/ui/badge"
+import {Alert, AlertDescription} from "@/components/ui/alert"
+import {Skeleton} from "@/components/ui/skeleton"
 import SearchSelectField from "@/components/field/search-select"
 import TextInputField from "@/components/field/text-input"
 import vendorService from "@/service/vendor.service"
-import { toast } from "sonner"
-import {
-    AlertTriangle,
-    CheckCircle2,
-    Package2,
-    Plus,
-    Save,
-    Search,
-    SquareMenu,
-    TrendingUp,
-    X
-} from "lucide-react"
+import {toast} from "sonner"
+import {AlertTriangle, CheckCircle2, Package2, Plus, Save, Search, SquareMenu, TrendingUp, X} from "lucide-react"
 
 const VendorProductSchema = z.object({
     product_uuid: z.string().min(1, "Please select a product"),
@@ -57,17 +47,17 @@ type VendorProductForm = z.infer<typeof VendorProductSchema>
 const LoadingSkeleton = () => (
     <div className="space-y-6">
         <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
+            <Skeleton className="h-8 w-64"/>
+            <Skeleton className="h-4 w-96"/>
         </div>
         <Card className="border-0 shadow-sm">
             <CardHeader>
-                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-6 w-48"/>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-10 w-full"/>
                 </div>
             </CardContent>
         </Card>
@@ -89,7 +79,7 @@ const ProductVariantUpdateForm = () => {
         watch,
         handleSubmit,
         reset,
-        formState: { errors, isValid, isDirty },
+        formState: {errors, isValid, isDirty},
     } = useForm<VendorProductForm>({
         resolver: zodResolver(VendorProductSchema),
         defaultValues: {
@@ -99,7 +89,7 @@ const ProductVariantUpdateForm = () => {
         mode: "onChange",
     })
 
-    const { fields, append, remove } = useFieldArray({
+    const {fields, append, remove} = useFieldArray({
         control,
         name: "variations",
     })
@@ -158,7 +148,7 @@ const ProductVariantUpdateForm = () => {
         if (addedVariations.has(variation.id)) {
             toast("This variation is already selected", {
                 description: "Each variation can only be added once",
-                icon: <AlertTriangle className="w-4 h-4" />,
+                icon: <AlertTriangle className="w-4 h-4"/>,
             })
             return
         }
@@ -172,7 +162,7 @@ const ProductVariantUpdateForm = () => {
 
         toast.success("Variation added successfully", {
             description: `${variation.name} is now ready for configuration`,
-            icon: <CheckCircle2 className="w-4 h-4" />,
+            icon: <CheckCircle2 className="w-4 h-4"/>,
         })
     }, [addedVariations, append])
 
@@ -233,7 +223,7 @@ const ProductVariantUpdateForm = () => {
         return (
             <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
                 <div className="container mx-auto px-4 py-8 max-w-6xl">
-                    <LoadingSkeleton />
+                    <LoadingSkeleton/>
                 </div>
             </main>
         )
@@ -246,7 +236,7 @@ const ProductVariantUpdateForm = () => {
                     <header className="text-center space-y-3">
                         <div className="flex justify-center">
                             <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl">
-                                <Package2 className="w-8 h-8 text-white" />
+                                <Package2 className="w-8 h-8 text-white"/>
                             </div>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
@@ -262,7 +252,7 @@ const ProductVariantUpdateForm = () => {
                             <CardHeader className="pb-8">
                                 <div className="flex items-center gap-4">
                                     <div className="p-2 bg-blue-50 rounded-lg">
-                                        <Search className="w-5 h-5 text-blue-600" />
+                                        <Search className="w-5 h-5 text-blue-600"/>
                                     </div>
                                     <div>
                                         <CardTitle className="text-xl">Product Selection</CardTitle>
@@ -304,12 +294,12 @@ const ProductVariantUpdateForm = () => {
 
                                 {availableVariations.length > 0 && (
                                     <>
-                                        <Separator />
+                                        <Separator/>
                                         <section className="space-y-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-emerald-50 rounded-lg">
-                                                        <Plus className="w-5 h-5 text-emerald-600" />
+                                                        <Plus className="w-5 h-5 text-emerald-600"/>
                                                     </div>
                                                     <div>
                                                         <h2 className="text-lg font-semibold">Available Variations</h2>
@@ -318,7 +308,8 @@ const ProductVariantUpdateForm = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                <Badge variant="secondary"
+                                                       className="bg-blue-50 text-blue-700 border-blue-200">
                                                     {availableVariations.length} available
                                                 </Badge>
                                             </div>
@@ -343,15 +334,22 @@ const ProductVariantUpdateForm = () => {
                                                         >
                                                             <div className="w-full space-y-2">
                                                                 <div className="flex items-center justify-between">
-                                  <span className="font-medium text-sm group-hover:text-blue-600 transition-colors">
-                                    {variation.name}
-                                  </span>
+                                                                  <span
+                                                                      className="font-medium text-sm group-hover:text-blue-600 transition-colors">
+                                                                    {variation.name}
+                                                                  </span>
+                                                                    <span
+                                                                        className={'text-xs bg-blue-500 p-2 rounded-full text-white'}>
+                                                                        {variation.size_unit}
+                                                                    </span>
                                                                     {isSelected && (
-                                                                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                                                                        <CheckCircle2
+                                                                            className="w-4 h-4 text-blue-600"/>
                                                                     )}
                                                                 </div>
                                                                 {!isSelected && (
-                                                                    <div className="text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div
+                                                                        className="text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                         Click to add →
                                                                     </div>
                                                                 )}
@@ -366,12 +364,12 @@ const ProductVariantUpdateForm = () => {
 
                                 {fields.length > 0 && (
                                     <>
-                                        <Separator />
+                                        <Separator/>
                                         <section className="space-y-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-purple-50 rounded-lg">
-                                                        <TrendingUp className="w-5 h-5 text-purple-600" />
+                                                        <TrendingUp className="w-5 h-5 text-purple-600"/>
                                                     </div>
                                                     <div>
                                                         <h2 className="text-lg font-semibold">Selected Variations</h2>
@@ -380,7 +378,8 @@ const ProductVariantUpdateForm = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                                                <Badge
+                                                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                                                     {fields.length} configured
                                                 </Badge>
                                             </div>
@@ -396,13 +395,21 @@ const ProductVariantUpdateForm = () => {
                                                             <CardContent className="p-6">
                                                                 <div className="flex items-center justify-between mb-6">
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full text-sm flex items-center justify-center font-semibold">
+                                                                        <div
+                                                                            className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full text-sm flex items-center justify-center font-semibold"
+                                                                            title={variationDetails?.name || `Variation ${index + 1}`}
+                                                                        >
                                                                             {index + 1}
                                                                         </div>
                                                                         <div>
                                                                             <h3 className="font-semibold text-gray-900">
                                                                                 {variationDetails?.name}
                                                                             </h3>
+                                                                            {variationDetails?.size_unit && (
+                                                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                                                    {variationDetails.size_unit}
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     <Button
@@ -413,19 +420,19 @@ const ProductVariantUpdateForm = () => {
                                                                         className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                                                                         aria-label={`Remove ${variationDetails?.name ?? "variation"}`}
                                                                     >
-                                                                        <X className="w-4 h-4" />
+                                                                        <X className="w-4 h-4"/>
                                                                     </Button>
                                                                 </div>
 
                                                                 <input
                                                                     type="hidden"
-                                                                    {...register(`variations.${index}.id`, { valueAsNumber: true })}
+                                                                    {...register(`variations.${index}.id`, {valueAsNumber: true})}
                                                                 />
 
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                                     <TextInputField
                                                                         label="Variation Quantity"
-                                                                        {...register(`variations.${index}.size_value`, { valueAsNumber: true })}
+                                                                        {...register(`variations.${index}.size_value`, {valueAsNumber: true})}
                                                                         error={errors.variations?.[index]?.size_value?.message}
                                                                         icon={SquareMenu}
                                                                         type="number"
@@ -435,7 +442,7 @@ const ProductVariantUpdateForm = () => {
 
                                                                     <TextInputField
                                                                         label="Variation Price"
-                                                                        {...register(`variations.${index}.platform_price`, { valueAsNumber: true })}
+                                                                        {...register(`variations.${index}.platform_price`, {valueAsNumber: true})}
                                                                         error={errors.variations?.[index]?.platform_price?.message}
                                                                         icon={SquareMenu}
                                                                         type="number"
@@ -451,7 +458,7 @@ const ProductVariantUpdateForm = () => {
 
                                             {errors.variations?.root && (
                                                 <Alert variant="destructive" role="alert">
-                                                    <AlertTriangle className="h-4 w-4" />
+                                                    <AlertTriangle className="h-4 w-4"/>
                                                     <AlertDescription>{errors.variations.root.message}</AlertDescription>
                                                 </Alert>
                                             )}
@@ -459,9 +466,10 @@ const ProductVariantUpdateForm = () => {
                                     </>
                                 )}
 
-                                <Separator />
+                                <Separator/>
 
-                                <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 pt-6">
+                                <div
+                                    className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 pt-6">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -479,12 +487,13 @@ const ProductVariantUpdateForm = () => {
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                <div
+                                                    className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white/30 border-t-white"/>
                                                 Updating...
                                             </>
                                         ) : (
                                             <>
-                                                <Save className="w-4 h-4 mr-2" />
+                                                <Save className="w-4 h-4 mr-2"/>
                                                 Save Changes ({fields.length})
                                             </>
                                         )}

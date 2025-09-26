@@ -1,29 +1,35 @@
-"use client";
+"use client"
 
-import {useEffect, useState} from "react";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
-import {Label} from "@/components/ui/label";
-import {cn} from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 
-type SelectValueType = string | number;
+type SelectValueType = string | number
 
 interface Option {
-    value: SelectValueType;
-    label: string;
+    value: SelectValueType
+    label: string
 }
 
 interface SelectInputProps {
-    label?: string;
-    placeholder: string;
-    name?: string;
-    required?: boolean;
-    options: Option[];
-    className?: string;
-    error?: string;
-    value?: SelectValueType;
-    onChangeAction: (value: SelectValueType) => void;
-
-    [key: string]: any;
+    label?: string
+    placeholder: string
+    name?: string
+    required?: boolean
+    options: Option[]
+    className?: string
+    error?: string
+    value?: SelectValueType
+    onChangeAction: (value: SelectValueType) => void
+    [key: string]: any
 }
 
 export default function SelectInputField({
@@ -38,22 +44,37 @@ export default function SelectInputField({
                                              onChangeAction,
                                              ...props
                                          }: SelectInputProps) {
-    const stringValue = value !== undefined ? String(value) : undefined;
-    const [selectedValue, setSelectedValue] = useState<string | undefined>(
-        stringValue
-    );
+    const stringValue = value !== undefined ? String(value) : undefined
+    const [selectedValue, setSelectedValue] = useState<string | undefined>(stringValue)
 
     useEffect(() => {
-        setSelectedValue(stringValue);
-    }, [stringValue]);
+        setSelectedValue(stringValue)
+    }, [stringValue])
+
+    const sanitizedOptions = useMemo(
+        () =>
+            Array.from(
+                new Map(
+                    options
+                        .filter((opt) => opt.value !== undefined && opt.value !== null)
+                        .map((opt) => [String(opt.value), opt])
+                ).values()
+            ),
+        [options]
+    )
 
     const handleValueChange = (val: string) => {
-        setSelectedValue(val);
-        const matched = options.find((opt) => String(opt.value) === val);
-        onChangeAction(matched?.value ?? val);
-    };
+        setSelectedValue(val)
+        const matched = sanitizedOptions.find((opt) => String(opt.value) === val)
+        const originalValue = matched?.value
+        if (typeof originalValue === "number") {
+            onChangeAction(Number(val))
+        } else {
+            onChangeAction(originalValue ?? val)
+        }
+    }
 
-    const errorId = error && name ? `${name}-error` : undefined;
+    const errorId = error && name ? `${name}-error` : undefined
 
     return (
         <div className="space-y-2" {...props}>
@@ -66,7 +87,6 @@ export default function SelectInputField({
                     {required && <span className="text-red-500 ml-1">*</span>}
                 </Label>
             )}
-
             <Select value={selectedValue} onValueChange={handleValueChange}>
                 <SelectTrigger
                     id={name}
@@ -80,12 +100,11 @@ export default function SelectInputField({
                         className
                     )}
                 >
-                    <SelectValue placeholder={placeholder}/>
+                    <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
-
                 <SelectContent className="border border-input">
                     <SelectGroup>
-                        {options.map(({value: optionValue, label}) => (
+                        {sanitizedOptions.map(({ value: optionValue, label }) => (
                             <SelectItem key={String(optionValue)} value={String(optionValue)}>
                                 {label}
                             </SelectItem>
@@ -93,12 +112,11 @@ export default function SelectInputField({
                     </SelectGroup>
                 </SelectContent>
             </Select>
-
             {error && (
                 <p id={errorId} className="text-sm text-red-500 mt-1">
                     {error}
                 </p>
             )}
         </div>
-    );
+    )
 }

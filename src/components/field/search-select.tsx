@@ -17,7 +17,6 @@ interface SearchSelectFieldProps {
     error?: string
     name?: string
     onChangeAction?: (value: string | number) => void
-
     [key: string]: any
 }
 
@@ -27,8 +26,7 @@ export default function SearchSelectField({
                                               placeholder = "Select option",
                                               options = [],
                                               error,
-                                              onChangeAction = () => {
-                                              },
+                                              onChangeAction = () => {},
                                               ...props
                                           }: SearchSelectFieldProps) {
     const [open, setOpen] = useState(false)
@@ -40,11 +38,22 @@ export default function SearchSelectField({
         setOpen(false)
     }
 
+    const getOptionKey = (option: OptionType) => {
+        return option.value !== undefined && option.value !== null
+            ? option.value.toString()
+            : `option-${Math.random()}`
+    }
+
+    const getOptionValue = (option: OptionType) => {
+        return option.value !== undefined && option.value !== null
+            ? option.value.toString()
+            : ""
+    }
+
     return (
-        <div className="md:space-y-2 w-full  space-y-1  " {...props}>
+        <div className="md:space-y-2 w-full space-y-1" {...props}>
             {label && (
-                <Label
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {label}
                     {required && <span className="text-red-500">*</span>}
                 </Label>
@@ -62,14 +71,13 @@ export default function SearchSelectField({
                             "data-[placeholder]:text-muted-foreground"
                         )}
                     >
-            <span className={cn("truncate", !value && "text-muted-foreground")}>
-              {value ? options.find((option) => option.value === value)?.label : placeholder}
-            </span>
+                        <span className={cn("truncate", !value && "text-muted-foreground")}>
+                            {value ? options.find((option) => option.value === value)?.label : placeholder}
+                        </span>
                         <ChevronDownIcon size={16} className="text-muted-foreground/80 shrink-0" aria-hidden="true"/>
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0"
-                                align="start">
+                <PopoverContent className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0" align="start">
                     <Command>
                         <CommandInput placeholder={placeholder}/>
                         <CommandList>
@@ -77,8 +85,11 @@ export default function SearchSelectField({
                             <CommandGroup>
                                 {options.length > 0 ? (
                                     options.map((option) => (
-                                        <CommandItem key={option.value.toString()} value={option.value.toString()}
-                                                     onSelect={() => handleSelect(option.value)}>
+                                        <CommandItem
+                                            key={getOptionKey(option)}
+                                            value={getOptionValue(option)}
+                                            onSelect={() => handleSelect(option.value)}
+                                        >
                                             {option.label}
                                             {value === option.value && <CheckIcon size={16} className="ml-auto"/>}
                                         </CommandItem>

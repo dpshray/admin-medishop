@@ -21,21 +21,29 @@ class ProductService extends HttpServices {
 
     async getSingleProduct(uuid: string) {
         try {
-           const res=await this.getRequest({
+            return await this.getRequest({
                 //admin/product/2ed76270-091f-4b9c-b448-d7c2d332a598
                 url: `/admin/product/${uuid}`,
                 config: {
                     auth: true,
                 }
             })
-            console.log('response from getSingleProduct', res?.data)
-            return res
         } catch (error) {
             throw error
         }
     }
 
     async deleteProduct(uuid: string) {
+        try {
+            return await this.deleteRequest({
+                url: `/admin/product/${uuid}`,
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error
+        }
     }
 
     async createProduct(data: any) {
@@ -55,7 +63,7 @@ class ProductService extends HttpServices {
 
     async updateProduct(uuid: string, data: any) {
         try {
-            await this.postRequest({
+            return await this.postRequest({
                 url: `/admin/product/${uuid}`,
                 data: {
                     ...data,
@@ -72,6 +80,19 @@ class ProductService extends HttpServices {
         }
     }
 
+
+    async getProductUnitList() {
+        try {
+            return await this.getRequest({
+                url: "/admin/product-units",
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
 
 }
 

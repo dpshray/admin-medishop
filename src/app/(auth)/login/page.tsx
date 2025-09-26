@@ -37,7 +37,8 @@ export default function LoginPage() {
                 localStorage.setItem("_role", response?.data?.user?.user_type?.toLowerCase() || "")
                 if (response?.data?.user?.user_type?.toLowerCase() === "admin") {
                     router.push('/admin')
-
+                } else if (response?.data?.user?.user_type?.toLowerCase() === "vendor") {
+                    router.push('/vendor')
                 }
             }
         } catch (error) {

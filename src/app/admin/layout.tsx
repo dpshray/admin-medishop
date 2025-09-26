@@ -37,7 +37,6 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
             label: "Products",
             items: [
                 {label: "Brands", href: "/admin/brands", icon: Package},
-                {label: "Suppliers", href: "/admin/suppliers", icon: Truck},
                 {label: "Products", href: "/admin/products", icon: Package},
                 {label: "Categories", href: "/admin/categories", icon: Layers},
                 {label: "Tags", href: "/admin/tags", icon: Tag},

@@ -4,8 +4,9 @@
 import ProductManageForm from "@/components/product/product-form";
 
 export default function ProductFormPage() {
-    return <ProductManageForm
-        mode={'create'}
+    return (
+        <ProductManageForm
+            mode={'create'}
 
-    />
+        />)
 }

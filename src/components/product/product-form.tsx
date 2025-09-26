@@ -1,80 +1,120 @@
-"use client";
+"use client"
 
-import {useFieldArray, useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Separator} from "@/components/ui/separator";
-import {Edit, Layers, Package, Plus, Save, Tags, X, XCircle,} from "lucide-react";
-import {useCallback, useEffect, useState} from "react";
-import SearchSelectField from "@/components/field/search-select";
-import TextInputField from "@/components/field/text-input";
-import SelectInputField from "@/components/field/select-input";
-import MultiSelectField from "@/components/field/multi-select-input";
-import FileInputField from "@/components/field/file-input";
-import {ProductFormValues, productSchema, UpdateProductFormValues, updateProductSchema,} from "@/lib/productSchema";
-import {useBrands, useCategories, useTags} from "@/hooks/all-hook";
-import productService from "@/service/product.service";
-import {toast} from "sonner";
+import {useFieldArray, useForm} from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {Button} from "@/components/ui/button"
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
+import {Separator} from "@/components/ui/separator"
+import {Edit, Layers, Package, Plus, Save, Tags, X, XCircle} from "lucide-react"
+import {useCallback, useEffect, useState} from "react"
+import SearchSelectField from "@/components/field/search-select"
+import TextInputField from "@/components/field/text-input"
+import MultiSelectField from "@/components/field/multi-select-input"
+import FileInputField from "@/components/field/file-input"
+import {createProductSchema, ProductCreate, ProductUpdate, updateProductSchema} from "@/lib/productSchema"
+import {useBrands, useCategories, useProductUnits, useTags} from "@/hooks/all-hook"
+import productService from "@/service/product.service"
+import {toast} from "sonner"
+import {useRouter} from "next/navigation";
 
-interface ProductFormProps {
-    mode?: "create" | "edit";
-    productUuid?: string;
-    initialData?: Partial<ProductFormValues>;
-    onSuccess?: () => void;
+interface ProductManageFormProps {
+    mode?: "create" | "edit"
+    productUuid?: string
+    initialData?: Partial<ProductCreate>
+    onSuccessAction?: () => void
 }
 
-export default function ProductManageForm({
-                                              mode = "create",
-                                              productUuid,
-                                              initialData,
-                                              onSuccess,
-                                          }: ProductFormProps) {
-    const {categories} = useCategories();
-    const {tags} = useTags();
-    const {brands} = useBrands();
-    const isUpdateMode = mode === "edit";
+interface SelectOption {
+    id: number
+    name: string
+}
 
-    const categoriesOptions = categories.map((c) => ({
-        id: c.id,
-        name: c.name,
-    }));
-    const tagsOptions = tags.map((t) => ({id: t.id, name: t.name}));
-    const brandsOptions = brands.map((b) => ({id: b.id, name: b.name}));
+interface BrandSelectValue {
+    value: number
+    label: string
+}
 
-    const sizeUnits = [
-        {id: "kg", name: "Kilogram"},
-        {id: "lb", name: "Pound"},
-        {id: "oz", name: "Ounce"},
-        {id: "g", name: "Gram"},
-        {id: "ml", name: "Milliliter"},
-        {id: "l", name: "Liter"},
-    ];
+const MAX_FILE_SIZE = 5 * 1024 * 1024
 
-    const createDefaultValues: ProductFormValues = {
+const LoadingSpinner = () => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"/>
+            <p className="text-slate-600">Loading product data...</p>
+        </div>
+    </div>
+)
+
+const ProductManageForm = ({
+                               mode = "create",
+                               productUuid,
+                               initialData,
+                               onSuccessAction,
+                           }: ProductManageFormProps) => {
+    const {categories} = useCategories()
+    const {tags} = useTags()
+    const {brands} = useBrands()
+    const {productUnits} = useProductUnits()
+    const isUpdateMode = mode === "edit"
+
+    const [isLoading, setIsLoading] = useState(false)
+    const router = useRouter()
+
+    const categoriesOptions: SelectOption[] = categories.map((category) => ({
+        id: category.id,
+        name: category.name
+    }))
+
+    const tagsOptions: SelectOption[] = tags.map((tag) => ({
+        id: tag.id,
+        name: tag.name
+    }))
+
+    const brandsOptions: SelectOption[] = brands.map((brand) => ({
+        id: brand.id,
+        name: brand.name
+    }))
+
+    const createDefaultValues: ProductCreate = {
         name: "",
-        brand_id: 0,
+        brand_id: brands[0]?.id ?? 0,
         description: "",
-        variations: [{size_value: 1, size_unit: "kg", platform_price: 1}],
+        variations: [
+            {
+                name: "",
+                size_value: 1,
+                size_unit: productUnits[0]?.value ?? "mg",
+                platform_price: 1,
+            },
+        ],
         categories: [],
         tags: [],
-        featured_image: null,
+        featured_image: new File([], ""),
         gallery_images: [],
-    };
+        prescription_required: false,
+    }
 
-    const updateDefaultValues: Partial<UpdateProductFormValues> = {
-        name: initialData?.name,
-        brand_id: initialData?.brand_id,
-        description: initialData?.description,
-        variations: initialData?.variations,
-        categories: initialData?.categories,
-        tags: initialData?.tags,
-        featured_image: initialData?.featured_image,
-        gallery_images: initialData?.gallery_images,
-    };
+    const updateDefaultValues: ProductUpdate = {
+        name: initialData?.name ?? "",
+        brand_id: initialData?.brand_id ?? 0,
+        description: initialData?.description ?? "",
+        variations: initialData?.variations ?? [
+            {
+                name: "",
+                size_value: 1,
+                size_unit: productUnits[0]?.value ?? "mg",
+                platform_price: 1,
+            },
+        ],
+        categories: initialData?.categories ?? [],
+        tags: initialData?.tags ?? [],
+        featured_image: initialData?.featured_image ?? null,
+        gallery_images: initialData?.gallery_images ?? [],
+        prescription_required: initialData?.prescription_required ?? false,
+    }
 
-    const defaultValues = isUpdateMode ? updateDefaultValues : createDefaultValues;
-    const schema = isUpdateMode ? updateProductSchema : productSchema;
+    const defaultValues = isUpdateMode ? updateDefaultValues : createDefaultValues
+    const schema = isUpdateMode ? updateProductSchema : createProductSchema
 
     const {
         register,
@@ -84,131 +124,162 @@ export default function ProductManageForm({
         watch,
         reset,
         formState: {errors, isSubmitting},
-    } = useForm<ProductFormValues | UpdateProductFormValues>({
+    } = useForm<ProductCreate | ProductUpdate>({
         resolver: zodResolver(schema),
         defaultValues,
-    });
+        mode: "onBlur",
+    })
 
     const {fields, append, remove} = useFieldArray({
         control,
-        name: "variations",
-    });
+        name: "variations"
+    })
 
-    const watchCategories = watch("categories") || [];
-    const watchTags = watch("tags") || [];
-    const watchBrandId = watch("brand_id");
+    const watchCategories = watch("categories") as number[] || []
+    const watchTags = watch("tags") as number[] || []
+    const watchBrandId = watch("brand_id")
 
-    const [isLoading, setIsLoading] = useState(false);
+    const brandSelectValue: BrandSelectValue | null = (() => {
+        if (!watchBrandId) return null
+        const brandOption = brandsOptions.find((brand) => brand.id === watchBrandId)
+        return brandOption ? {value: brandOption.id, label: brandOption.name} : null
+    })()
+
+    const categorySelectOptions = categoriesOptions.map((category) => ({
+        value: category.id,
+        label: category.name
+    }))
+
+    const tagSelectOptions = tagsOptions.map((tag) => ({
+        value: tag.id,
+        label: tag.name
+    }))
 
     const fetchProductData = useCallback(async () => {
-        if (!productUuid || !isUpdateMode) return;
-        try {
-            setIsLoading(true);
-            const response = await productService.getSingleProduct(productUuid);
-            if (response && response.data) {
-                const productData = response.data;
+        if (!productUuid || !isUpdateMode) return
 
-                setValue("name", productData.name || "");
-                setValue("brand_id", productData.brand_id || 0);
-                setValue("description", productData.description || "");
-                setValue(
-                    "variations",
-                    productData.variations || [
-                        {size_value: 1, size_unit: "kg", platform_price: 1},
-                    ]
-                );
-                setValue("categories", productData.categories || []);
-                setValue("tags", productData.tags || []);
-                setValue("featured_image", productData.featured_image || null);
-                setValue("gallery_images", productData.gallery_images || []);
+        try {
+            setIsLoading(true)
+            const response = await productService.getSingleProduct(productUuid)
+
+            if (response?.data) {
+                const productData = response.data
+                const formUpdates = {
+                    name: productData.name ?? "",
+                    brand_id: productData.brand_id ?? 0,
+                    description: productData.description ?? "",
+                    variations: productData.variations ?? [
+                        {
+                            name: "",
+                            size_value: 1,
+                            size_unit: productUnits[0]?.value ?? "mg",
+                            platform_price: 1,
+                        },
+                    ],
+                    categories: productData.categories ?? [],
+                    tags: productData.tags ?? [],
+                    featured_image: productData.featured_image ?? null,
+                    gallery_images: productData.gallery_images ?? [],
+                    prescription_required: productData.prescription_required ?? false,
+                }
+
+                Object.entries(formUpdates).forEach(([key, value]) => {
+                    setValue(key as keyof (ProductCreate | ProductUpdate), value)
+                })
             }
         } catch (error) {
-            toast.error("Failed to fetch product data");
-            console.error("Error fetching product data:", error);
+            toast.error("Failed to fetch product data")
         } finally {
-            setIsLoading(false);
+            setIsLoading(false)
         }
-    }, [productUuid, isUpdateMode, setValue]);
+    }, [productUuid, isUpdateMode, productUnits, setValue])
 
     useEffect(() => {
         if (isUpdateMode && productUuid) {
-            fetchProductData();
+            fetchProductData()
         }
-    }, [fetchProductData, isUpdateMode, productUuid]);
+    }, [fetchProductData, isUpdateMode, productUuid])
 
-    const handleBrandChange = (brandId: string | number) =>
-        setValue("brand_id", typeof brandId === "string" ? parseInt(brandId) : brandId, {
-            shouldValidate: true,
-        });
+    const handleBrandChange = useCallback((brandId: string | number) => {
+        const numericId = typeof brandId === "string" ? parseInt(brandId, 10) : brandId
+        setValue("brand_id", numericId, {shouldValidate: true})
+    }, [setValue])
 
-    const handleCategoryChange = (values: (string | number)[]) => {
-        const numeric = values.map((v) => (typeof v === "string" ? parseInt(v) : v));
-        setValue("categories", numeric, {shouldValidate: true});
-    };
+    const handleCategoryChange = useCallback((values: (string | number)[]) => {
+        const numericValues = values.map((value) =>
+            typeof value === "string" ? parseInt(value, 10) : value
+        )
+        setValue("categories", numericValues, {shouldValidate: true})
+    }, [setValue])
 
-    const handleTagChange = (values: (string | number)[]) => {
-        const numeric = values.map((v) => (typeof v === "string" ? parseInt(v) : v));
-        setValue("tags", numeric, {shouldValidate: true});
-    };
+    const handleTagChange = useCallback((values: (string | number)[]) => {
+        const numericValues = values.map((value) =>
+            typeof value === "string" ? parseInt(value, 10) : value
+        )
+        setValue("tags", numericValues, {shouldValidate: true})
+    }, [setValue])
 
-    const handleSizeUnitChange = (index: number, value: string | number) =>
-        setValue(`variations.${index}.size_unit`, value as string, {
-            shouldValidate: true,
-        });
+    const handleSizeUnitChange = useCallback((index: number) => (value: string | number) => {
+        setValue(`variations.${index}.size_unit` as const, value as string, {shouldValidate: true})
+    }, [setValue])
 
-    const handleFeaturedImageChange = (files: File[]) =>
-        setValue("featured_image", files[0] ?? null, {shouldValidate: true});
+    const handleFeaturedImageChange = useCallback((files: File[]) => {
+        setValue("featured_image", files[0] ?? null, {shouldValidate: true})
+    }, [setValue])
 
-    const handleGalleryImagesChange = (files: File[]) =>
-        setValue("gallery_images", files, {shouldValidate: true});
+    const handleGalleryImagesChange = useCallback((files: File[]) => {
+        setValue("gallery_images", files, {shouldValidate: true})
+    }, [setValue])
 
-    const onSubmit = async (data: ProductFormValues | UpdateProductFormValues) => {
+    const handleAddVariation = useCallback(() => {
+        const defaultUnit = productUnits[0]?.value ?? "mg"
+        append({
+            name: "",
+            size_value: 1,
+            size_unit: defaultUnit,
+            platform_price: 1
+        })
+    }, [append, productUnits])
+
+    const handleRemoveVariation = useCallback((index: number) => () => {
+        remove(index)
+    }, [remove])
+
+    const onSubmit = useCallback(async (data: ProductCreate | ProductUpdate) => {
         try {
-            console.log("Form data:", data);
-            let response: any;
             if (isUpdateMode && productUuid) {
-                response = await productService.updateProduct(
+                const response = await productService.updateProduct(
                     productUuid,
-                    data as UpdateProductFormValues
-                );
+                    data as ProductUpdate
+                )
                 if (response) {
-                    toast.success("Product updated successfully");
-                    onSuccess?.();
+                    toast.success("Product updated successfully")
+                    onSuccessAction?.()
                 }
             } else {
-                response = await productService.createProduct(data as ProductFormValues);
+                console.log("Product form submitted:", data)
+                const response = await productService.createProduct(data as ProductCreate)
                 if (response) {
-                    toast.success("Product created successfully");
-                    handleReset();
+                    toast.success("Product created successfully")
+                    router.push("/admin/products")
                 }
             }
         } catch (error) {
-            toast.error(`Error ${isUpdateMode ? "updating" : "creating"} product`);
-            console.error("Error submitting form:", error);
+            toast.error(`Error ${isUpdateMode ? "updating" : "creating"} product`)
         }
-    };
+    }, [isUpdateMode, productUuid, onSuccessAction, reset, defaultValues])
 
-    const handleReset = () => {
-        reset(defaultValues);
-    };
+    const handleReset = useCallback(() => {
+        reset(defaultValues)
+    }, [reset, defaultValues])
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div
-                        className="w-8 h-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-                    <p className="text-slate-600">Loading product data...</p>
-                </div>
-            </div>
-        );
-    }
+    if (isLoading) return <LoadingSpinner/>
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
             <div className="container mx-auto px-4 py-6 lg:px-8">
                 <div className="max-w-6xl mx-auto space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                 {isUpdateMode ? "Update Product" : "Create Product"}
@@ -216,23 +287,17 @@ export default function ProductManageForm({
                             <p className="text-slate-600 mt-1">
                                 {isUpdateMode
                                     ? "Modify the product details and save your changes"
-                                    : "Add a new product to your inventory with detailed information"}
+                                    : "Add a new product to your inventory with detailed information"
+                                }
                             </p>
                         </div>
-                    </div>
+                    </header>
+
                     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                        <form
-                            onSubmit={handleSubmit(onSubmit)}
-                            className="space-y-0"
-                            noValidate
-                        >
+                        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-0">
                             <CardHeader className="pb-6">
                                 <div className="flex items-center gap-3">
-                                    <div
-                                        className={`p-2 rounded-lg ${
-                                            isUpdateMode ? "bg-amber-100" : "bg-blue-100"
-                                        }`}
-                                    >
+                                    <div className={`p-2 rounded-lg ${isUpdateMode ? "bg-amber-100" : "bg-blue-100"}`}>
                                         {isUpdateMode ? (
                                             <Edit className="w-5 h-5 text-amber-600"/>
                                         ) : (
@@ -242,35 +307,31 @@ export default function ProductManageForm({
                                     <CardTitle className="text-xl">Product Information</CardTitle>
                                 </div>
                             </CardHeader>
+
                             <CardContent className="space-y-8">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <TextInputField
                                         {...register("name")}
                                         label="Product Name"
                                         placeholder="Enter product name"
                                         error={errors.name?.message}
                                         required={!isUpdateMode}
+                                        autoComplete="off"
                                     />
                                     <SearchSelectField
-                                        options={brandsOptions.map((b) => ({
-                                            value: b.id,
-                                            label: b.name,
+                                        options={brandsOptions.map((brand) => ({
+                                            value: brand.id,
+                                            label: brand.name
                                         }))}
-                                        value={
-                                            watchBrandId
-                                                ? brandsOptions
-                                                .map((b) => ({value: b.id, label: b.name}))
-                                                .find((opt) => opt.value === watchBrandId) || null
-                                                : null
-                                        }
+                                        value={brandSelectValue}
                                         onChangeAction={handleBrandChange}
                                         placeholder="Select Brand"
                                         label="Brand"
                                         error={errors.brand_id?.message}
                                         required={!isUpdateMode}
                                     />
+                                </section>
 
-                                </div>
                                 <TextInputField
                                     {...register("description")}
                                     textarea
@@ -279,16 +340,17 @@ export default function ProductManageForm({
                                     error={errors.description?.message}
                                     className="min-h-[100px]"
                                 />
+
                                 {!isUpdateMode && (
                                     <>
                                         <Separator className="my-8"/>
-                                        <div className="space-y-6">
-                                            <div className="flex items-center gap-3 mb-4">
+                                        <section className="space-y-6">
+                                            <header className="flex items-center gap-3 mb-4">
                                                 <div className="p-2 bg-orange-100 rounded-lg">
                                                     <Package className="w-5 h-5 text-orange-600"/>
                                                 </div>
-                                                <h3 className="text-lg font-semibold">Product Images</h3>
-                                            </div>
+                                                <h2 className="text-lg font-semibold">Product Images</h2>
+                                            </header>
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                                 <FileInputField
                                                     label="Featured Image"
@@ -297,7 +359,8 @@ export default function ProductManageForm({
                                                     onFileChange={handleFeaturedImageChange}
                                                     error={errors.featured_image?.message}
                                                     showPreviews
-                                                    maxFileSize={5 * 1024 * 1024}
+                                                    maxFileSize={MAX_FILE_SIZE}
+                                                    required
                                                 />
                                                 <FileInputField
                                                     label="Gallery Images"
@@ -306,27 +369,26 @@ export default function ProductManageForm({
                                                     onFileChange={handleGalleryImagesChange}
                                                     error={errors.gallery_images?.message}
                                                     showPreviews
-                                                    maxFileSize={5 * 1024 * 1024}
+                                                    maxFileSize={MAX_FILE_SIZE}
                                                     required
                                                 />
                                             </div>
-                                        </div>
+                                        </section>
                                     </>
                                 )}
+
                                 <Separator className="my-8"/>
-                                <div className="space-y-6">
-                                    <div className="flex items-center gap-3 mb-4">
+
+                                <section className="space-y-6">
+                                    <header className="flex items-center gap-3 mb-4">
                                         <div className="p-2 bg-green-100 rounded-lg">
                                             <Layers className="w-5 h-5 text-green-600"/>
                                         </div>
-                                        <h3 className="text-lg font-semibold">Categories & Tags</h3>
-                                    </div>
+                                        <h2 className="text-lg font-semibold">Categories & Tags</h2>
+                                    </header>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <MultiSelectField
-                                            options={categoriesOptions.map((c) => ({
-                                                value: c.id,
-                                                label: c.name,
-                                            }))}
+                                            options={categorySelectOptions}
                                             value={watchCategories}
                                             onValueChange={handleCategoryChange}
                                             placeholder="Select categories"
@@ -338,10 +400,7 @@ export default function ProductManageForm({
                                             required={!isUpdateMode}
                                         />
                                         <MultiSelectField
-                                            options={tagsOptions.map((t) => ({
-                                                value: t.id,
-                                                label: t.name,
-                                            }))}
+                                            options={tagSelectOptions}
                                             value={watchTags}
                                             onValueChange={handleTagChange}
                                             placeholder="Select tags"
@@ -353,120 +412,124 @@ export default function ProductManageForm({
                                             required={!isUpdateMode}
                                         />
                                     </div>
-                                </div>
+                                </section>
+
                                 <Separator className="my-8"/>
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
+
+                                <section className="space-y-6">
+                                    <header className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-purple-100 rounded-lg">
                                                 <Tags className="w-5 h-5 text-purple-600"/>
                                             </div>
-                                            <h3 className="text-lg font-semibold">
-                                                Product Variations
-                                            </h3>
+                                            <h2 className="text-lg font-semibold">Product Variations</h2>
                                         </div>
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            onClick={() =>
-                                                append({
-                                                    size_value: 1,
-                                                    size_unit: "kg",
-                                                    platform_price: 1,
-                                                })
-                                            }
+                                            onClick={handleAddVariation}
                                             className="hover:bg-blue-50 hover:border-blue-200"
                                         >
-                                            <Plus className="w-4 h-4 mr-2"/> Add Variation
+                                            <Plus className="w-4 h-4 mr-2"/>
+                                            Add Variation
                                         </Button>
-                                    </div>
+                                    </header>
+
                                     <div className="space-y-4">
                                         {fields.map((field, index) => (
                                             <div
                                                 key={field.id}
                                                 className="border border-slate-200 rounded-xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors"
                                             >
-                                                <div className="flex items-center justify-between mb-6">
-                                                    <h4 className="font-medium text-slate-700 flex items-center gap-2">
-                            <span
-                                className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center justify-center font-semibold">
-                              {index + 1}
-                            </span>
+                                                <header className="flex items-center justify-between mb-6">
+                                                    <h3 className="font-medium text-slate-700 flex items-center gap-2">
+                                                        <span
+                                                            className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center justify-center font-semibold">
+                                                            {index + 1}
+                                                        </span>
                                                         Variation {index + 1}
-                                                    </h4>
+                                                    </h3>
                                                     {fields.length > 1 && (
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => remove(index)}
+                                                            onClick={handleRemoveVariation(index)}
                                                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
                                                         >
                                                             <X className="w-4 h-4"/>
                                                         </Button>
                                                     )}
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                </header>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                                     <TextInputField
-                                                        label="Size Value"
+                                                        label="Variation Name"
+                                                        {...register(`variations.${index}.name`)}
+                                                        error={errors.variations?.[index]?.name?.message}
+                                                        placeholder="Enter variation name"
+                                                        required
+                                                        autoComplete="off"
+                                                    />
+                                                    <TextInputField
+                                                        label="Quantity"
                                                         {...register(`variations.${index}.size_value`, {
-                                                            valueAsNumber: true,
+                                                            valueAsNumber: true
                                                         })}
-                                                        error={
-                                                            errors.variations?.[index]?.size_value?.message
-                                                        }
+                                                        error={errors.variations?.[index]?.size_value?.message}
                                                         placeholder="Enter size"
                                                         type="number"
                                                         step="0.01"
-                                                        min="1"
+                                                        min="0.01"
                                                         required
                                                     />
-                                                    <SelectInputField
+                                                    <SearchSelectField
                                                         label="Size Unit"
                                                         placeholder="Select unit"
-                                                        options={sizeUnits.map((unit) => ({
-                                                            value: unit.id,
-                                                            label: unit.name,
-                                                        }))}
-                                                        value={watch(`variations.${index}.size_unit`)}
-                                                        onChangeAction={(val: string | number) =>
-                                                            handleSizeUnitChange(index, val)
-                                                        }
-                                                        error={
-                                                            errors.variations?.[index]?.size_unit?.message
-                                                        }
+                                                        options={productUnits}
+                                                        value={(() => {
+                                                            const currentValue = watch(`variations.${index}.size_unit`)
+                                                            return currentValue ? {
+                                                                value: currentValue,
+                                                                label: currentValue
+                                                            } : null
+                                                        })()}
+                                                        onChangeAction={handleSizeUnitChange(index)}
+                                                        error={errors.variations?.[index]?.size_unit?.message}
                                                         required
                                                     />
                                                     <TextInputField
-                                                        label="Price ($)"
+                                                        label="Price (NRs)"
                                                         {...register(`variations.${index}.platform_price`, {
-                                                            valueAsNumber: true,
+                                                            valueAsNumber: true
                                                         })}
-                                                        error={
-                                                            errors.variations?.[index]?.platform_price?.message
-                                                        }
+                                                        error={errors.variations?.[index]?.platform_price?.message}
                                                         placeholder="0.00"
                                                         type="number"
                                                         step="0.01"
-                                                        min="1"
+                                                        min="0.01"
                                                         required
                                                     />
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </section>
+
                                 <Separator className="my-8"/>
-                                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+
+                                <footer className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         size="lg"
                                         onClick={handleReset}
                                         className="sm:w-auto w-full"
+                                        disabled={isSubmitting}
                                     >
-                                        <XCircle className="w-4 h-4 mr-2"/> Reset
+                                        <XCircle className="w-4 h-4 mr-2"/>
+                                        Reset
                                     </Button>
                                     <Button
                                         type="submit"
@@ -474,9 +537,9 @@ export default function ProductManageForm({
                                         disabled={isSubmitting}
                                         className={`sm:w-auto w-full ${
                                             isUpdateMode
-                                                ? "bg-amber-600 hover:bg-amber-700"
-                                                : "bg-blue-600 hover:bg-blue-700"
-                                        }`}
+                                                ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500"
+                                                : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                                        } focus:ring-2 focus:ring-offset-2`}
                                     >
                                         {isSubmitting ? (
                                             <>
@@ -491,12 +554,14 @@ export default function ProductManageForm({
                                             </>
                                         )}
                                     </Button>
-                                </div>
+                                </footer>
                             </CardContent>
                         </form>
                     </Card>
                 </div>
             </div>
         </div>
-    );
+    )
 }
+
+export default ProductManageForm

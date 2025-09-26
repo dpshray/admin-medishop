@@ -20,9 +20,9 @@ const VendorProductSchema = z.object({
     product_uuid: z.string().min(1, "Please select a product"),
     variations: z.array(
         z.object({
-            id: z.number(),
-            size_value: z.number().min(0, "Size value must be non-negative"),
-            platform_price: z.number().min(0, "Price must be non-negative"),
+            product_variation_id: z.number(),
+            units_in_stock: z.number().min(0, "Size value must be non-negative"),
+            price: z.number().min(0, "Price must be non-negative"),
         })
     ).min(1, "At least one variation is required"),
 })
@@ -115,7 +115,6 @@ const ProductVariantUpdateForm = () => {
             const response = await vendorService.getProductsByVendor({})
             setProducts(response?.items || [])
         } catch (error) {
-            console.error('Failed to fetch products:', error)
             toast.error("Failed to load products. Please try again.")
         } finally {
             setIsLoading(false)
@@ -134,7 +133,6 @@ const ProductVariantUpdateForm = () => {
             setAddedVariations(new Set())
             return
         }
-
         const product = products.find(p => p.product_uuid === watchProductId)
         if (product) {
             setSelectedProductName(product.product_name)
@@ -152,14 +150,12 @@ const ProductVariantUpdateForm = () => {
             })
             return
         }
-
         setAddedVariations(prev => new Set(prev).add(variation.id))
         append({
-            id: variation.id,
-            size_value: 0,
-            platform_price: 0,
+            product_variation_id: variation.id,
+            units_in_stock: 0,
+            price: 0,
         })
-
         toast.success("Variation added successfully", {
             description: `${variation.name} is now ready for configuration`,
             icon: <CheckCircle2 className="w-4 h-4"/>,
@@ -167,11 +163,9 @@ const ProductVariantUpdateForm = () => {
     }, [addedVariations, append])
 
     const handleRemoveVariation = useCallback((index: number) => {
-        const variationId = fields[index]?.id
+        const variationId = fields[index]?.product_variation_id
         const variation = availableVariations.find(v => v.id === variationId)
-
         remove(index)
-
         if (variationId !== undefined) {
             setAddedVariations(prev => {
                 const newSet = new Set(prev)
@@ -179,7 +173,6 @@ const ProductVariantUpdateForm = () => {
                 return newSet
             })
         }
-
         toast("Variation removed", {
             description: `${variation?.name ?? "Variation"} has been removed from selection`,
         })
@@ -200,13 +193,17 @@ const ProductVariantUpdateForm = () => {
 
     const onSubmit = useCallback(async (data: VendorProductForm) => {
         try {
+            console.log('VendorProductForm', data)
             setIsSubmitting(true)
-            await vendorService.addProductByVendor(data.product_uuid, data)
-            toast.success("Product variations updated successfully")
-            handleReset()
-        } catch (error) {
-            console.error('Failed to update product variations:', error)
-            toast.error("Update failed", {
+            const res = await vendorService.addProductByVendor(data.product_uuid, data)
+            console.log('response form VendorProductForm ', res)
+            if (res) {
+                toast.success(res?.message || "Product variations updated successfully")
+                handleReset()
+            }
+
+        } catch (error:any) {
+            toast.error( error?.message ||"Update failed", {
                 description: "Please check your connection and try again",
             })
         } finally {
@@ -282,7 +279,6 @@ const ProductVariantUpdateForm = () => {
                                         placeholder="Search products..."
                                         error={errors.product_uuid?.message}
                                     />
-
                                     <TextInputField
                                         label="Product Name"
                                         name="product_name"
@@ -313,7 +309,6 @@ const ProductVariantUpdateForm = () => {
                                                     {availableVariations.length} available
                                                 </Badge>
                                             </div>
-
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 {availableVariations.map(variation => {
                                                     const isSelected = addedVariations.has(variation.id)
@@ -383,13 +378,12 @@ const ProductVariantUpdateForm = () => {
                                                     {fields.length} configured
                                                 </Badge>
                                             </div>
-
                                             <div className="space-y-4">
                                                 {fields.map((field, index) => {
-                                                    const variationDetails = getVariationDetails(field.id)
+                                                    const variationDetails = getVariationDetails(field.product_variation_id)
                                                     return (
                                                         <Card
-                                                            key={field.id}
+                                                            key={field.product_variation_id}
                                                             className="border border-gray-200 bg-gradient-to-r from-gray-50/50 to-white shadow-sm"
                                                         >
                                                             <CardContent className="p-6">
@@ -406,7 +400,8 @@ const ProductVariantUpdateForm = () => {
                                                                                 {variationDetails?.name}
                                                                             </h3>
                                                                             {variationDetails?.size_unit && (
-                                                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                                                <span
+                                                                                    className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                                                                                     {variationDetails.size_unit}
                                                                                 </span>
                                                                             )}
@@ -423,27 +418,24 @@ const ProductVariantUpdateForm = () => {
                                                                         <X className="w-4 h-4"/>
                                                                     </Button>
                                                                 </div>
-
                                                                 <input
                                                                     type="hidden"
-                                                                    {...register(`variations.${index}.id`, {valueAsNumber: true})}
+                                                                    {...register(`variations.${index}.product_variation_id`, {valueAsNumber: true})}
                                                                 />
-
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                                     <TextInputField
                                                                         label="Variation Quantity"
-                                                                        {...register(`variations.${index}.size_value`, {valueAsNumber: true})}
-                                                                        error={errors.variations?.[index]?.size_value?.message}
+                                                                        {...register(`variations.${index}.units_in_stock`, {valueAsNumber: true})}
+                                                                        error={errors.variations?.[index]?.units_in_stock?.message}
                                                                         icon={SquareMenu}
                                                                         type="number"
                                                                         min="0"
                                                                         step="1"
                                                                     />
-
                                                                     <TextInputField
                                                                         label="Variation Price"
-                                                                        {...register(`variations.${index}.platform_price`, {valueAsNumber: true})}
-                                                                        error={errors.variations?.[index]?.platform_price?.message}
+                                                                        {...register(`variations.${index}.price`, {valueAsNumber: true})}
+                                                                        error={errors.variations?.[index]?.price?.message}
                                                                         icon={SquareMenu}
                                                                         type="number"
                                                                         min="0"
@@ -455,7 +447,6 @@ const ProductVariantUpdateForm = () => {
                                                     )
                                                 })}
                                             </div>
-
                                             {errors.variations?.root && (
                                                 <Alert variant="destructive" role="alert">
                                                     <AlertTriangle className="h-4 w-4"/>
@@ -467,7 +458,6 @@ const ProductVariantUpdateForm = () => {
                                 )}
 
                                 <Separator/>
-
                                 <div
                                     className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 pt-6">
                                     <Button
@@ -479,7 +469,6 @@ const ProductVariantUpdateForm = () => {
                                     >
                                         Reset Form
                                     </Button>
-
                                     <Button
                                         type="submit"
                                         disabled={isSubmitting || !isValid || fields.length === 0}

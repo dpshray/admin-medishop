@@ -104,8 +104,11 @@ class VendorService extends HttpServices {
     async addProductByVendor(product_uuid: string, data: any) {
         try {
             return await this.postRequest({
-                url: `admin/vendor/${product_uuid}/product`,
+                url: `vendor/product/${product_uuid}`,
                 data,
+                config: {
+                    auth: true,
+                }
             })
         } catch (error) {
             console.log('Error from addProductByVendor', error)

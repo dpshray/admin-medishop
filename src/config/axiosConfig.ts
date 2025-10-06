@@ -14,6 +14,7 @@ axiosInstance.interceptors.request.use(
         return config;
     },
     (error: AxiosError) => {
+        console.error("Request Error from axios:", error);
         return Promise.reject(error);
     }
 );

@@ -3,7 +3,7 @@
 import {useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
-import {createVendorSchema, UpdateVendorFormValues, updateVendorSchema, VendorFormValues,} from "@/lib/schema"
+import {createVendorSchema, UpdateVendorFormValues, updateVendorSchema, VendorFormValues} from "@/lib/schema/schema"
 import vendorService from "@/service/vendor.service"
 import {toast} from "sonner"
 import Image from "next/image"
@@ -13,7 +13,7 @@ import {Label} from "@/components/ui/label"
 import {Switch} from "@/components/ui/switch"
 import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
-import {Banknote, FileText, MapPin, Package, Plus, Save, Shield, Store, User, XCircle,} from "lucide-react"
+import {Banknote, FileText, MapPin, Package, Plus, Save, Shield, Store, User, XCircle} from "lucide-react"
 
 interface VendorFormProps {
     mode: "create" | "edit"
@@ -72,12 +72,11 @@ export default function VendorManageForm({
 
     const form = useForm<FormValues>({
         resolver: zodResolver(schema as any),
-        defaultValues: {
+        defaultValues: isEditMode ? {
             name: "",
             store_name: "",
             store_description: "",
             email: "",
-            alternate_email: "",
             mobile_number: "",
             bank_account_holder_name: "",
             bank_name: "",
@@ -88,11 +87,26 @@ export default function VendorManageForm({
             location: "",
             country: "",
             postal_code: "",
-            website: "",
             is_verified: false,
             vendor_citizenship_card: undefined,
             vendor_tax_certificate: undefined,
             vendor_business_license: undefined,
+        } as any : {
+            name: "",
+            store_name: "",
+            store_description: "",
+            email: "",
+            mobile_number: "",
+            bank_account_holder_name: "",
+            bank_name: "",
+            bank_account_number: "",
+            district: "",
+            state: "",
+            municipality: "",
+            location: "",
+            country: "",
+            postal_code: "",
+            is_verified: false,
         } as any,
     })
 
@@ -181,7 +195,7 @@ export default function VendorManageForm({
     }
 
     const handleFileChange = (
-        field: keyof Pick<FormValues, "vendor_citizenship_card" | "vendor_tax_certificate" | "vendor_business_license">,
+        field: "vendor_citizenship_card" | "vendor_tax_certificate" | "vendor_business_license",
         file: File | null
     ) => {
         setValue(field, file || undefined, {shouldValidate: true})
@@ -251,28 +265,22 @@ export default function VendorManageForm({
                                             {...register("name")}
                                             label="Full Name"
                                             error={errors.name?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("email")}
                                             label="Email"
                                             type="email"
                                             error={errors.email?.message}
-                                            required={!isEditMode}
+                                            required
                                             readOnly={isEditMode}
-                                        />
-                                        <TextInputField
-                                            {...register("alternate_email")}
-                                            label="Alternate Email"
-                                            type="email"
-                                            error={errors.alternate_email?.message}
                                         />
                                         <TextInputField
                                             {...register("mobile_number")}
                                             label="Mobile Number"
                                             type="tel"
                                             error={errors.mobile_number?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                     </div>
                                 </section>
@@ -287,7 +295,7 @@ export default function VendorManageForm({
                                             {...register("store_name")}
                                             label="Store Name"
                                             error={errors.store_name?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <div className="md:col-span-2">
                                             <TextInputField
@@ -295,16 +303,9 @@ export default function VendorManageForm({
                                                 label="Store Description"
                                                 error={errors.store_description?.message}
                                                 textarea
-                                                required={!isEditMode}
+                                                required
                                             />
                                         </div>
-                                        <TextInputField
-                                            {...register("website")}
-                                            label="Website"
-                                            type="url"
-                                            placeholder="https://example.com"
-                                            error={errors.website?.message}
-                                        />
                                     </div>
                                 </section>
 
@@ -318,19 +319,19 @@ export default function VendorManageForm({
                                             {...register("bank_account_holder_name")}
                                             label="Account Holder Name"
                                             error={errors.bank_account_holder_name?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("bank_name")}
                                             label="Bank Name"
                                             error={errors.bank_name?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("bank_account_number")}
                                             label="Account Number"
                                             error={errors.bank_account_number?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                     </div>
                                 </section>
@@ -345,37 +346,37 @@ export default function VendorManageForm({
                                             {...register("district")}
                                             label="District"
                                             error={errors.district?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("state")}
                                             label="State"
                                             error={errors.state?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("municipality")}
                                             label="Municipality"
                                             error={errors.municipality?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("location")}
                                             label="Location"
                                             error={errors.location?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("country")}
                                             label="Country"
                                             error={errors.country?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                         <TextInputField
                                             {...register("postal_code")}
                                             label="Postal Code"
                                             error={errors.postal_code?.message}
-                                            required={!isEditMode}
+                                            required
                                         />
                                     </div>
                                 </section>
@@ -431,7 +432,7 @@ export default function VendorManageForm({
                                                 <FileInputField
                                                     name={name}
                                                     label={label}
-                                                    required={!isEditMode && !existingFile}
+                                                    required={!isEditMode}
                                                     error={errors[name]?.message}
                                                     onFileChange={(files: File[]) =>
                                                         handleFileChange(name, files[0] ?? null)

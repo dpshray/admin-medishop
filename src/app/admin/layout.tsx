@@ -16,12 +16,12 @@ import {
     Settings,
     ShoppingCart,
     Tag,
-    Truck,
     UserPen,
     Users,
     Warehouse,
 } from "lucide-react"
 import ReusableSidebar from "@/components/sidebar/resuable-sidebar";
+import {notifications} from "@/data";
 
 
 export default function AdminLayout({children}: { children: React.ReactNode }) {
@@ -40,7 +40,7 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
                 {label: "Products", href: "/admin/products", icon: Package},
                 {label: "Categories", href: "/admin/categories", icon: Layers},
                 {label: "Tags", href: "/admin/tags", icon: Tag},
-                {label: "Inventories", href: "/admin/inventories", icon: Warehouse},
+                {label: "Package", href: "/admin/package", icon: Warehouse},
             ],
         },
         {
@@ -77,56 +77,6 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
         },
     ]
 
-    const notifications = [
-        {
-            id: 1,
-            user: "Chris Tompson",
-            action: "requested review on",
-            target: "PR #42: Feature implementation",
-            timestamp: "15 minutes ago",
-            unread: true,
-        },
-        {
-            id: 2,
-            user: "Emma Davis",
-            action: "shared",
-            target: "New component library",
-            timestamp: "45 minutes ago",
-            unread: true,
-        },
-        {
-            id: 3,
-            user: "James Wilson",
-            action: "assigned you to",
-            target: "API integration task",
-            timestamp: "4 hours ago",
-            unread: false,
-        },
-        {
-            id: 4,
-            user: "Alex Morgan",
-            action: "replied to your comment in",
-            target: "Authentication flow",
-            timestamp: "12 hours ago",
-            unread: false,
-        },
-        {
-            id: 5,
-            user: "Sarah Chen",
-            action: "commented on",
-            target: "Dashboard redesign",
-            timestamp: "2 days ago",
-            unread: false,
-        },
-        {
-            id: 6,
-            user: "Miky Derya",
-            action: "mentioned you in",
-            target: "Origin UI open graph image",
-            timestamp: "2 weeks ago",
-            unread: false,
-        },
-    ]
 
     const dropdownGroups: DropdownGroup[] = [
         {
@@ -141,6 +91,7 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
     ]
 
     return (
+        // <ProtectedRoute requiredRoles={["admin"]}>
         <ReusableSidebar
             navGroups={navGroups}
             title="Admin Dashboard"
@@ -152,5 +103,6 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
         >
             {children}
         </ReusableSidebar>
+        // </ProtectedRoute>
     )
 }

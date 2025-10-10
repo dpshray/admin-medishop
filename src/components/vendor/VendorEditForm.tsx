@@ -3,7 +3,7 @@
 import {useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
-import {createVendorSchema, UpdateVendorFormValues, updateVendorSchema, VendorFormValues} from "@/lib/schema"
+import {createVendorSchema, UpdateVendorFormValues, updateVendorSchema, VendorFormValues} from "@/lib/schema/schema"
 import vendorService from "@/service/vendor.service"
 import {toast} from "sonner"
 import Image from "next/image"

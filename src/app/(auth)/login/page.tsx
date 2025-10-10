@@ -10,7 +10,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"
 import TextInputField from "@/components/field/text-input"
 import PasswordInputField from "@/components/field/password-input"
-import {loginSchema} from "@/lib/schema";
+import {loginSchema} from "@/lib/schema/schema";
 import authService from "@/service/auth.service";
 import {useRouter} from "next/navigation";
 

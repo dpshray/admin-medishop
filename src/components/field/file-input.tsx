@@ -1,11 +1,11 @@
 "use client"
 
-import React, {useEffect, useId, useRef, useState} from "react"
-import {Label} from "@/components/ui/label"
-import {Input} from "@/components/ui/input"
-import {Button} from "@/components/ui/button"
-import {File, Upload, X} from "lucide-react"
-import {cn} from "@/lib/utils"
+import React, { useEffect, useId, useRef, useState, useCallback, memo } from "react"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { File, Upload, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface FileInputFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "onChange"> {
     label?: string
@@ -15,24 +15,27 @@ interface FileInputFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEl
     showFileList?: boolean
     maxFileSize?: number
     allowedTypes?: string[]
+    helperText?: string
 }
 
-export default function FileInputField({
-                                           label,
-                                           required = false,
-                                           multiple = false,
-                                           accept,
-                                           className,
-                                           error,
-                                           disabled,
-                                           onFileChange,
-                                           showPreviews = true,
-                                           showFileList = true,
-                                           maxFileSize,
-                                           allowedTypes,
-                                           ...props
-                                       }: FileInputFieldProps) {
-    const id = useId()
+const FileInputField = memo(({
+                                 label,
+                                 required = false,
+                                 multiple = false,
+                                 accept,
+                                 className,
+                                 error,
+                                 disabled,
+                                 onFileChange,
+                                 showPreviews = true,
+                                 showFileList = true,
+                                 maxFileSize,
+                                 allowedTypes,
+                                 id: propId,
+                                 ...props
+                             }: FileInputFieldProps) => {
+    const generatedId = useId()
+    const id = propId || generatedId
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const [previews, setPreviews] = useState<string[]>([])
     const [dragActive, setDragActive] = useState(false)
@@ -44,7 +47,7 @@ export default function FileInputField({
         }
     }, [previews])
 
-    const validateFile = (file: File): string | null => {
+    const validateFile = useCallback((file: File): string | null => {
         if (maxFileSize && file.size > maxFileSize) {
             return `File size exceeds ${(maxFileSize / (1024 * 1024)).toFixed(1)}MB`
         }
@@ -52,9 +55,9 @@ export default function FileInputField({
             return `File type ${file.type} is not allowed`
         }
         return null
-    }
+    }, [maxFileSize, allowedTypes])
 
-    const processFiles = (files: FileList | File[]) => {
+    const processFiles = useCallback((files: FileList | File[]) => {
         const fileArray = Array.from(files)
         const validFiles: File[] = []
 
@@ -69,60 +72,79 @@ export default function FileInputField({
             validFiles.splice(1)
         }
 
-        setSelectedFiles(prev => multiple ? [...prev, ...validFiles] : validFiles)
+        setSelectedFiles(prev => {
+            const newFiles = multiple ? [...prev, ...validFiles] : validFiles
+            onFileChange?.(newFiles)
+            return newFiles
+        })
 
         const newPreviews = validFiles
             .filter(file => file.type.startsWith("image/"))
             .map(file => URL.createObjectURL(file))
 
         setPreviews(prev => multiple ? [...prev, ...newPreviews] : newPreviews)
+    }, [multiple, validateFile, onFileChange])
 
-        onFileChange?.(multiple ? [...selectedFiles, ...validFiles] : validFiles)
-    }
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             processFiles(e.target.files)
         }
-    }
+    }, [processFiles])
 
-    const removeFile = (index: number) => {
-        const newFiles = selectedFiles.filter((_, i) => i !== index)
-        const newPreviews = previews.filter((_, i) => i !== index)
+    const removeFile = useCallback((index: number) => {
+        setSelectedFiles(prev => {
+            const newFiles = prev.filter((_, i) => i !== index)
+            onFileChange?.(newFiles)
+            return newFiles
+        })
 
-        if (previews[index]) {
-            URL.revokeObjectURL(previews[index])
+        setPreviews(prev => {
+            const newPreviews = prev.filter((_, i) => i !== index)
+            if (prev[index]) {
+                URL.revokeObjectURL(prev[index])
+            }
+            return newPreviews
+        })
+
+        if (inputRef.current) {
+            inputRef.current.value = ""
         }
+    }, [onFileChange])
 
-        setSelectedFiles(newFiles)
-        setPreviews(newPreviews)
-        onFileChange?.(newFiles)
-    }
-
-    const handleDrag = (e: React.DragEvent) => {
+    const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
+        if (disabled) return
+
         if (e.type === "dragenter" || e.type === "dragover") {
             setDragActive(true)
         } else if (e.type === "dragleave") {
             setDragActive(false)
         }
-    }
+    }, [disabled])
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
         setDragActive(false)
 
+        if (disabled) return
+
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             processFiles(e.dataTransfer.files)
         }
-    }
+    }, [disabled, processFiles])
 
-    const isImage = (file: File) => file.type.startsWith("image/")
+    const isImage = useCallback((file: File) => file.type.startsWith("image/"), [])
+
+    const formatFileSize = useCallback((bytes: number): string => {
+        if (bytes < 1024) return `${bytes} B`
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    }, [])
 
     return (
-        <div className="w-full space-y-2">
+        <div className="w-full space-y-2 sm:space-y-3">
             {label && (
                 <Label
                     htmlFor={id}
@@ -132,22 +154,26 @@ export default function FileInputField({
                     )}
                 >
                     {label}
-                    {required && <span className="text-destructive ml-1">*</span>}
+                    {required && <span className="text-destructive ml-1" aria-label="required">*</span>}
                 </Label>
             )}
 
             <div
                 className={cn(
-                    "relative rounded-lg border-2 border-dashed transition-colors",
+                    "relative rounded-lg border-2 border-dashed transition-all duration-200",
                     dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25",
                     error && "border-destructive",
                     disabled && "opacity-50 cursor-not-allowed",
-                    "w-full", className
+                    !disabled && "hover:border-muted-foreground/40",
+                    className
                 )}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                aria-label="File upload area"
             >
                 <Input
                     ref={inputRef}
@@ -158,46 +184,47 @@ export default function FileInputField({
                     required={required}
                     disabled={disabled}
                     onChange={handleFileChange}
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0 z-10"
                     aria-invalid={error ? "true" : "false"}
                     aria-describedby={error ? `${id}-error` : undefined}
                     {...props}
                 />
 
-                <div className="flex flex-col items-center justify-center px-6 py-8 text-center">
-                    <Upload className="h-8 w-8 text-muted-foreground mb-2"/>
-                    <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium text-primary cursor-pointer hover:underline">
-                            Click to upload
-                        </span>
-                        {" "}or drag and drop
+                <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-8 text-center pointer-events-none">
+                    <Upload className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground mb-2 sm:mb-3" />
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+            <span className="font-medium text-primary">
+              Click to upload
+            </span>
+                        <span className="hidden sm:inline"> or drag and drop</span>
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                        {accept ? `Supported formats: ${accept}` : "All file types supported"}
+                    <p className="text-xs text-muted-foreground px-2">
+                        {accept ? `Formats: ${accept.split(',').map(a => a.trim()).join(', ')}` : "All file types"}
                         {maxFileSize && ` (Max ${(maxFileSize / (1024 * 1024)).toFixed(1)}MB)`}
                     </p>
                 </div>
             </div>
 
             {showPreviews && previews.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                     {previews.map((src, index) => (
-                        <div key={src} className="relative group">
+                        <div key={`preview-${index}-${src}`} className="relative group">
                             <img
                                 src={src}
                                 alt={selectedFiles[index]?.name || `Preview ${index + 1}`}
-                                className="h-20 w-20 object-cover rounded-lg border"
+                                className="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-lg border border-border"
+                                loading="lazy"
                             />
                             {!disabled && (
                                 <Button
                                     type="button"
                                     variant="destructive"
                                     size="sm"
-                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                                     onClick={() => removeFile(index)}
                                     aria-label={`Remove ${selectedFiles[index]?.name}`}
                                 >
-                                    <X className="h-3 w-3"/>
+                                    <X className="h-3 w-3" />
                                 </Button>
                             )}
                         </div>
@@ -206,28 +233,32 @@ export default function FileInputField({
             )}
 
             {showFileList && selectedFiles.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2" role="list" aria-label="Selected files">
                     {selectedFiles.map((file, index) => (
                         <div
                             key={`${file.name}-${file.lastModified}-${index}`}
-                            className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                            className="flex items-center justify-between p-2 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                            role="listitem"
                         >
-                            <div className="flex items-center space-x-2 min-w-0 flex-1">
+                            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                                 {isImage(file) ? (
-                                    <div className="h-8 w-8 rounded overflow-hidden flex-shrink-0">
+                                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded overflow-hidden flex-shrink-0 border border-border">
                                         <img
                                             src={previews[index]}
                                             alt={file.name}
                                             className="h-full w-full object-cover"
+                                            loading="lazy"
                                         />
                                     </div>
                                 ) : (
-                                    <File className="h-8 w-8 text-muted-foreground flex-shrink-0"/>
+                                    <File className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground flex-shrink-0" />
                                 )}
-                                <div className="min-w-0 flex-1 ">
-                                    <p className="text-sm font-medium truncate  max-w-md">{file.name}</p>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs sm:text-sm font-medium truncate" title={file.name}>
+                                        {file.name}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {(file.size / 1024).toFixed(1)} KB
+                                        {formatFileSize(file.size)}
                                     </p>
                                 </div>
                             </div>
@@ -237,10 +268,10 @@ export default function FileInputField({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => removeFile(index)}
-                                    className="h-8 w-8 p-0 flex-shrink-0"
+                                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex-shrink-0 hover:bg-muted-foreground/10"
                                     aria-label={`Remove ${file.name}`}
                                 >
-                                    <X className="h-4 w-4"/>
+                                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                             )}
                         </div>
@@ -249,10 +280,14 @@ export default function FileInputField({
             )}
 
             {error && (
-                <p id={`${id}-error`} className="text-sm text-destructive">
+                <p id={`${id}-error`} className="text-xs sm:text-sm text-destructive" role="alert">
                     {error}
                 </p>
             )}
         </div>
     )
-}
+})
+
+FileInputField.displayName = "FileInputField"
+
+export default FileInputField

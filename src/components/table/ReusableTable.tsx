@@ -1,16 +1,20 @@
 "use client"
 
-import {ReactNode, useEffect, useId, useRef, useState} from "react"
+import { type ReactNode, useEffect, useId, useRef, useState } from "react"
 import {
-    ColumnDef,
-    ColumnFiltersState,
+    type ColumnDef,
+    type ColumnFiltersState,
+    type ExpandedState,
     flexRender,
     getCoreRowModel,
+    getExpandedRowModel,
     getFacetedUniqueValues,
     getSortedRowModel,
-    SortingState,
+    type Row,
+    type RowSelectionState,
+    type SortingState,
     useReactTable,
-    VisibilityState,
+    type VisibilityState,
 } from "@tanstack/react-table"
 import {
     ChevronDown,
@@ -26,12 +30,12 @@ import {
     Search,
     Trash2,
 } from "lucide-react"
-import {cn, generatePageRange} from "@/lib/utils"
-import {useDebounce} from "@/hooks/use-debounce"
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {Label} from "@/components/ui/label"
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
+import { cn, generatePageRange } from "@/lib/utils"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -50,8 +54,11 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {Pagination, PaginationContent, PaginationEllipsis, PaginationItem} from "@/components/ui/pagination"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from "@/components/ui/pagination"
+
+import React from "react"
+import {useDebounce} from "@/hooks/use-debounce";
 
 interface DataTablePagination {
     page: number
@@ -84,6 +91,9 @@ interface DataTableProps<TData, TValue> {
     onSearchAction?: (value: string) => void
     totalCount?: number
     actionLabel?: string
+    enableExpanding?: boolean
+    getRowCanExpand?: (row: Row<TData>) => boolean
+    renderSubComponent?: (row: Row<TData>) => ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -103,10 +113,12 @@ export function DataTable<TData, TValue>({
                                              enableColumnVisibility = true,
                                              enableRowSelection = true,
                                              enableSorting = true,
-                                             defaultPageSize = 10,
                                              onSearchAction,
                                              totalCount,
                                              actionLabel = "Add",
+                                             enableExpanding = false,
+                                             getRowCanExpand,
+                                             renderSubComponent,
                                          }: DataTableProps<TData, TValue>) {
     const id = useId()
     const inputRef = useRef<HTMLInputElement>(null)
@@ -115,6 +127,8 @@ export function DataTable<TData, TValue>({
     const [sorting, setSorting] = useState<SortingState>([])
     const [search, setSearch] = useState("")
     const debouncedSearch = useDebounce(search, 500)
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+    const [expanded, setExpanded] = useState<ExpandedState>({})
 
     useEffect(() => {
         if (onSearchAction) {
@@ -127,21 +141,28 @@ export function DataTable<TData, TValue>({
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
+        getExpandedRowModel: enableExpanding ? getExpandedRowModel() : undefined,
         onSortingChange: enableSorting ? setSorting : undefined,
+        onExpandedChange: enableExpanding ? setExpanded : undefined,
         enableSortingRemoval: false,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
         getFacetedUniqueValues: getFacetedUniqueValues(),
         manualPagination: true,
         pageCount: pagination.totalPages,
+        enableRowSelection,
+        onRowSelectionChange: setRowSelection,
+        getRowCanExpand: enableExpanding ? getRowCanExpand : undefined,
         state: {
             sorting: enableSorting ? sorting : [],
+            expanded: enableExpanding ? expanded : {},
             pagination: {
                 pageIndex: pagination.page - 1,
                 pageSize: pagination.pageSize,
             },
             columnFilters,
             columnVisibility,
+            rowSelection,
         },
     })
 
@@ -167,7 +188,7 @@ export function DataTable<TData, TValue>({
     }
 
     const handlePageSizeChange = (newPageSize: string) => {
-        const pageSize = parseInt(newPageSize, 10)
+        const pageSize = Number.parseInt(newPageSize, 10)
         pagination.onPageSizeChange(pageSize)
         pagination.onPageChange(1)
     }
@@ -197,9 +218,8 @@ export function DataTable<TData, TValue>({
                                 type="text"
                                 aria-label="Search table"
                             />
-                            <div
-                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-muted-foreground">
-                                <Search size={16} aria-hidden="true"/>
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-muted-foreground">
+                                <Search size={16} aria-hidden="true" />
                             </div>
                             {hasSearch && (
                                 <Button
@@ -209,7 +229,7 @@ export function DataTable<TData, TValue>({
                                     onClick={clearSearch}
                                     aria-label="Clear search"
                                 >
-                                    <CircleX size={16}/>
+                                    <CircleX size={16} />
                                 </Button>
                             )}
                         </div>
@@ -218,7 +238,7 @@ export function DataTable<TData, TValue>({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    <Columns3 size={16}/> View
+                                    <Columns3 size={16} /> View
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
@@ -231,7 +251,7 @@ export function DataTable<TData, TValue>({
                                             key={column.id}
                                             className="capitalize"
                                             checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                            onCheckedChange={(value) => column.toggleVisibility(value)}
                                             onSelect={(e) => e.preventDefault()}
                                         >
                                             {column.id}
@@ -247,14 +267,13 @@ export function DataTable<TData, TValue>({
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    <Trash2 size={16}/> Delete ({selectedRows.length})
+                                    <Trash2 size={16} /> Delete ({selectedRows.length})
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <div className="flex items-start gap-4">
-                                    <div
-                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10">
-                                        <CircleAlert className="h-5 w-5 text-destructive"/>
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10">
+                                        <CircleAlert className="h-5 w-5 text-destructive" />
                                     </div>
                                     <div className="flex-1">
                                         <AlertDialogHeader>
@@ -282,25 +301,27 @@ export function DataTable<TData, TValue>({
                     )}
                     {onAddAction && (
                         <Button variant="outline" size="sm" onClick={onAddAction}>
-                            <Plus size={16}/> {actionLabel}
+                            <Plus size={16} /> {actionLabel}
                         </Button>
                     )}
                     {extraActions}
                 </div>
             </div>
 
-            <div className={cn("rounded-md border bg-background overflow-x-auto", tableClassName)}>
+            <div className={cn("overflow-x-auto rounded-md border bg-background", tableClassName)}>
                 <Table className="min-w-[600px] sm:min-w-full">
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id} style={{width: header.getSize()}} className="h-12">
+                                    <TableHead key={header.id} style={{ width: header.getSize() }} className="h-12">
                                         {!header.isPlaceholder && (
                                             <div
                                                 className={cn(
                                                     "flex items-center",
-                                                    enableSorting && header.column.getCanSort() && "cursor-pointer select-none hover:text-foreground"
+                                                    enableSorting &&
+                                                    header.column.getCanSort() &&
+                                                    "cursor-pointer select-none hover:text-foreground"
                                                 )}
                                                 onClick={enableSorting ? header.column.getToggleSortingHandler() : undefined}
                                                 tabIndex={enableSorting && header.column.getCanSort() ? 0 : undefined}
@@ -319,10 +340,8 @@ export function DataTable<TData, TValue>({
                                                 {flexRender(header.column.columnDef.header, header.getContext())}
                                                 {enableSorting && header.column.getCanSort() && (
                                                     <div className="ml-2">
-                                                        {header.column.getIsSorted() === "asc" &&
-                                                            <ChevronUp size={16}/>}
-                                                        {header.column.getIsSorted() === "desc" &&
-                                                            <ChevronDown size={16}/>}
+                                                        {header.column.getIsSorted() === "asc" && <ChevronUp size={16} />}
+                                                        {header.column.getIsSorted() === "desc" && <ChevronDown size={16} />}
                                                     </div>
                                                 )}
                                             </div>
@@ -334,28 +353,36 @@ export function DataTable<TData, TValue>({
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            Array.from({length: currentPageSize}).map((_, i) => (
+                            Array.from({ length: currentPageSize }).map((_, i) => (
                                 <TableRow key={`skeleton-${i}`}>
                                     {columns.map((_, j) => (
                                         <TableCell key={`skeleton-cell-${j}`} className="h-12">
-                                            <div className="h-4 w-full animate-pulse rounded bg-muted"/>
+                                            <div className="h-4 w-full animate-pulse rounded bg-muted" />
                                         </TableCell>
                                     ))}
                                 </TableRow>
                             ))
                         ) : table.getRowModel().rows.length > 0 ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() ? "selected" : undefined}
-                                    className={cn("hover:bg-muted/50", row.getIsSelected() && "bg-muted")}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="h-12">
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
+                                <React.Fragment key={row.id}>
+                                    <TableRow
+                                        data-state={row.getIsSelected() ? "selected" : undefined}
+                                        className={cn("hover:bg-muted/50", row.getIsSelected() && "bg-muted")}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id} className="h-12">
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                    {enableExpanding && row.getIsExpanded() && renderSubComponent && (
+                                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                                            <TableCell colSpan={columns.length} className="p-0">
+                                                {renderSubComponent(row)}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </React.Fragment>
                             ))
                         ) : (
                             <TableRow>
@@ -369,18 +396,14 @@ export function DataTable<TData, TValue>({
             </div>
 
             {showPagination && (
-                <div
-                    className={cn("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between", paginationClassName)}>
+                <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between", paginationClassName)}>
                     <div className="flex items-center space-x-2">
                         <Label htmlFor={`${id}-page-size`} className="text-sm font-medium">
                             Rows per page
                         </Label>
-                        <Select
-                            value={currentPageSize.toString()}
-                            onValueChange={handlePageSizeChange}
-                        >
+                        <Select value={currentPageSize.toString()} onValueChange={handlePageSizeChange}>
                             <SelectTrigger id={`${id}-page-size`} className="w-20">
-                                <SelectValue/>
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 {(pagination?.pageSizeOptions || [5, 10, 25, 50, 100]).map((size) => (
@@ -393,7 +416,7 @@ export function DataTable<TData, TValue>({
                     </div>
 
                     <div className="flex items-center justify-end gap-4">
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        <span className="whitespace-nowrap text-sm text-muted-foreground">
                             {startIndex}-{endIndex} of {dataCount}
                         </span>
                         <Pagination>
@@ -404,8 +427,9 @@ export function DataTable<TData, TValue>({
                                         variant="outline"
                                         onClick={() => handlePageClick(1)}
                                         disabled={currentPage === 1}
+                                        aria-label="Go to first page"
                                     >
-                                        <ChevronFirst size={16}/>
+                                        <ChevronFirst size={16} />
                                     </Button>
                                 </PaginationItem>
                                 <PaginationItem>
@@ -414,23 +438,23 @@ export function DataTable<TData, TValue>({
                                         variant="outline"
                                         onClick={() => handlePageClick(currentPage - 1)}
                                         disabled={currentPage === 1}
+                                        aria-label="Go to previous page"
                                     >
-                                        <ChevronLeft size={16}/>
+                                        <ChevronLeft size={16} />
                                     </Button>
                                 </PaginationItem>
                                 {pageRange.map((page, index) => (
                                     <PaginationItem key={index}>
                                         {page === "ellipsis" ? (
-                                            <PaginationEllipsis/>
+                                            <PaginationEllipsis />
                                         ) : (
                                             <Button
                                                 variant={page === currentPage ? "default" : "outline"}
                                                 size="sm"
                                                 onClick={() => handlePageClick(page as number)}
-                                                className={cn(
-                                                    "h-9 w-9",
-                                                    page === currentPage && "bg-primary text-primary-foreground"
-                                                )}
+                                                className={cn("h-9 w-9", page === currentPage && "bg-primary text-primary-foreground")}
+                                                aria-label={`Go to page ${page}`}
+                                                aria-current={page === currentPage ? "page" : undefined}
                                             >
                                                 {page}
                                             </Button>
@@ -443,8 +467,9 @@ export function DataTable<TData, TValue>({
                                         variant="outline"
                                         onClick={() => handlePageClick(currentPage + 1)}
                                         disabled={currentPage === totalPages}
+                                        aria-label="Go to next page"
                                     >
-                                        <ChevronRight size={16}/>
+                                        <ChevronRight size={16} />
                                     </Button>
                                 </PaginationItem>
                                 <PaginationItem>
@@ -453,8 +478,9 @@ export function DataTable<TData, TValue>({
                                         variant="outline"
                                         onClick={() => handlePageClick(totalPages)}
                                         disabled={currentPage === totalPages}
+                                        aria-label="Go to last page"
                                     >
-                                        <ChevronLast size={16}/>
+                                        <ChevronLast size={16} />
                                     </Button>
                                 </PaginationItem>
                             </PaginationContent>

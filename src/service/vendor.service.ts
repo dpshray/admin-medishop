@@ -72,7 +72,7 @@ class VendorService extends HttpServices {
     async getVendor(uuid: string) {
         try {
             return await this.getRequest({
-                url: `admin/vendor/${uuid}`,
+                url: `/admin/vendor/${uuid}`,
                 config: {
                     auth: true,
                 }
@@ -88,7 +88,7 @@ class VendorService extends HttpServices {
     async getProductsByVendor(params: ParamsType) {
         try {
             const res = await this.getRequest({
-                url: "vendor/product",
+                url: "/vendor/product",
                 config: {
                     auth: true,
                     params,
@@ -104,7 +104,7 @@ class VendorService extends HttpServices {
     async addProductByVendor(product_uuid: string, data: any) {
         try {
             return await this.postRequest({
-                url: `vendor/product/${product_uuid}`,
+                url: `/vendor/product/${product_uuid}`,
                 data,
                 config: {
                     auth: true,

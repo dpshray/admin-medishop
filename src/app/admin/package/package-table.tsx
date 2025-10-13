@@ -1,11 +1,10 @@
 "use client"
 
-import {useCallback, useState, useMemo, useTransition} from "react"
+import {useCallback, useMemo, useState, useTransition} from "react"
 import {useRouter} from "next/navigation"
 import {useQuery, useQueryClient} from "@tanstack/react-query"
 import packageService, {PackageParams} from "@/service/package.service"
 import {ColumnDef} from "@tanstack/react-table"
-import {Checkbox} from "@/components/ui/checkbox"
 import {DataTable} from "@/components/table/ReusableTable"
 import {RowActions} from "@/lib/helper"
 import {Button} from "@/components/ui/button"
@@ -47,11 +46,12 @@ export default function PackageTable() {
             setCurrentPage(res.current_page)
             setTotalPages(res.last_page)
             setTotalItems(res.total_items)
+            console.log('Resposne from',res.items)
             return res.items || []
         },
-        staleTime: 1000 * 60 * 5,
-        refetchOnWindowFocus: false,
-        retry: 2
+        refetchOnWindowFocus: true,
+        retry: 2,
+        staleTime: 0,
     })
 
     const handleDelete = useCallback((pkg: Package) => {
@@ -171,7 +171,8 @@ export default function PackageTable() {
             cell: ({row}) => {
                 const rating = parseFloat(row.original.rating)
                 return (
-                    <div className="flex items-center gap-1" role="img" aria-label={`Rating: ${rating.toFixed(1)} out of 5 stars`}>
+                    <div className="flex items-center gap-1" role="img"
+                         aria-label={`Rating: ${rating.toFixed(1)} out of 5 stars`}>
                         <span className="font-medium">{rating.toFixed(1)}</span>
                         <span className="text-yellow-500" aria-hidden="true">★</span>
                     </div>
@@ -186,7 +187,8 @@ export default function PackageTable() {
                     row={row}
                     onViewAction={() => {
                         startTransition(() => {
-                            router.push(`/packages/${row.original.id}`)
+                            toast.success( row.original.slug)
+                            router.push(`/admin/package/${row.original.slug}`)
                         })
                     }}
                     onEditAction={() => {
@@ -200,7 +202,15 @@ export default function PackageTable() {
             enableSorting: false,
             enableHiding: false,
             size: 100,
-        },
+        }, {
+            id: "products",
+            header: "Product",
+            cell: ({row}) => (
+                <Button variant={'default'} className={'bg-primaryColor hover:bg-primaryColor/80'}>
+                    Add product
+                </Button>
+            )
+        }
     ], [router, handleDelete])
 
     const handlePageChange = useCallback((page: number) => {
@@ -239,7 +249,8 @@ export default function PackageTable() {
     const renderSubComponent = useCallback((row: any) => {
         const pkg = row.original as Package
         return (
-            <div className="border-l-4 border-primary/20 bg-muted/30 p-6" role="region" aria-label="Package description">
+            <div className="border-l-4 border-primary/20 bg-muted/30 p-6" role="region"
+                 aria-label="Package description">
                 <h4 className="mb-3 text-sm font-semibold text-foreground">Package Description</h4>
                 <div
                     className="prose prose-sm max-w-none text-sm text-muted-foreground"

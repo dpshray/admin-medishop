@@ -89,6 +89,21 @@ class PackageService extends HttpServices {
 
     }
 
+    async addProductToPackage(slug: string, data: any) {
+        try {
+            return await this.postRequest({
+                url: `/admin/package/${slug}/add-product`,
+                data,
+                config: {
+                    auth: true,
+                    file: true,
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
+    }
+
 }
 
 const packageService = new PackageService();

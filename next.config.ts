@@ -31,7 +31,11 @@ const nextConfig: NextConfig = {
             {
                 protocol: "http",
                 hostname: '192.168.100.23'
-            }
+            },{
+                protocol: "http",
+                hostname: "192.168.100.18",
+                pathname: "/storage/**",
+            },
         ],
     },
 };

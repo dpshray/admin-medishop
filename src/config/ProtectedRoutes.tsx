@@ -1,9 +1,10 @@
+/*
 "use client"
 
 import {type ReactNode, useEffect, useRef, useCallback} from "react"
 import {useRouter, usePathname} from "next/navigation"
 import type {UserRole} from "@/types/user"
-import {useAuth} from "@/hooks/use-auth"
+import useAuth from "@/hooks/use-auth"
 
 interface ProtectedLayoutProps {
     children: ReactNode
@@ -81,4 +82,4 @@ export function ProtectedRoute({
     }
 
     return <>{children}</>
-}
+}*/

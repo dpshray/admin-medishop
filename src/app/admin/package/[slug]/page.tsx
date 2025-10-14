@@ -17,12 +17,12 @@ import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import PackageDetailsCard from "@/components/package/package-details-card";
-
+import PackageDetailsCard from "@/components/package/package-details-card"
 
 interface Product {
     id: number
     quantity: number
+    variant_id: number
     variant_name: string
     product_name: string
     brand: string
@@ -94,7 +94,10 @@ export default function AddProductToPackage() {
 
     const { data, isLoading, error, refetch } = useQuery<PackageDetail>({
         queryKey: ["package", slug],
-        queryFn: () => packageService.getPackageDetail(slug),
+        queryFn: () => packageService.getPackageDetail(slug).then((data) => {
+            console.log('Response from getPackageDetail',data)
+            return data
+        }),
         enabled: !!slug,
     })
 
@@ -125,7 +128,7 @@ export default function AddProductToPackage() {
                 description: `${data.products.length} product${data.products.length > 1 ? 's' : ''} added to the package.`,
             })
             reset()
-            refetch()
+            await refetch()
         } catch (error: any) {
             toast.error("Failed to add products", {
                 description: error?.message || "An error occurred while adding products to the package.",
@@ -143,6 +146,19 @@ export default function AddProductToPackage() {
             description: "All fields have been cleared.",
         })
     }, [reset])
+
+    const handleDeleteProduct = useCallback(async (productVariationId: number) => {
+        if (!slug) return
+
+        try {
+            const response = await packageService.deleteProductFromPackage(slug, productVariationId)
+            toast.success(response?.message || "Product removed successfully")
+            await refetch()
+        } catch (error: any) {
+            console.error("Delete error:", error)
+            toast.error(error?.message || "Failed to remove product")
+        }
+    }, [slug, refetch])
 
     if (isLoading) {
         return (
@@ -186,30 +202,31 @@ export default function AddProductToPackage() {
                     featured_image={data.featured_image}
                     gallery_images={data.gallery_images}
                     products={data.products}
+                    onDeleteAction={handleDeleteProduct}
                 />
             )}
 
-            <Card className="overflow-hidden border-border shadow-sm py-0 pb-4">
+            <Card className="overflow-hidden border-border shadow-lg hover:shadow-xl transition-all duration-300 py-0">
                 <form onSubmit={handleSubmit(handleProductSubmit)} noValidate aria-label="Add products to package form">
-                    <CardHeader className="bg-gradient-to-br from-purple-50 via-purple-50/80 to-background p-6">
+                    <CardHeader className="bg-gradient-to-br from-purple-50 via-purple-50/80 to-background p-5 sm:p-7 border-b">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                             <div
-                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#4a358e] text-white shadow-md sm:h-14 sm:w-14"
+                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4a358e] to-[#6b4db8] text-white shadow-lg sm:h-16 sm:w-16 ring-4 ring-purple-100"
                                 aria-hidden="true"
                             >
-                                <Plus className="h-6 w-6 sm:h-7 sm:w-7" />
+                                <Plus className="h-7 w-7 sm:h-8 sm:w-8" />
                             </div>
-                            <div className="space-y-1">
-                                <CardTitle className="text-xl font-bold sm:text-2xl">Add New Products</CardTitle>
-                                <CardDescription className="text-sm sm:text-base">
+                            <div className="space-y-1.5">
+                                <CardTitle className="text-2xl font-bold sm:text-3xl text-gray-900">Add New Products</CardTitle>
+                                <CardDescription className="text-sm sm:text-base text-gray-600">
                                     Select products, variations and quantities to add to this package
                                 </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
 
-                    <CardContent className="space-y-4 pt-6 sm:space-y-6 sm:pt-8">
-                        <div className="space-y-3 sm:space-y-4" role="list" aria-label="Products to add">
+                    <CardContent className="space-y-5 p-5 sm:p-7 sm:space-y-6">
+                        <div className="space-y-4 sm:space-y-5" role="list" aria-label="Products to add">
                             {fields.map((field, index) => {
                                 const productUuid = watch(`products.${index}.product_uuid`)
                                 const variationId = watch(`products.${index}.product_variation_id`)
@@ -221,12 +238,12 @@ export default function AddProductToPackage() {
                                 })) || []
 
                                 return (
-                                    <Card key={field.id} className="border-2 border-border transition-shadow hover:shadow-md" role="listitem">
+                                    <Card key={field.id} className="border-2 border-border transition-all hover:shadow-lg hover:border-purple-200" role="listitem">
                                         <CardContent className="p-4 sm:p-5 lg:p-6">
                                             <div className="flex flex-col gap-4 sm:gap-5">
                                                 <div className="flex items-start gap-3 sm:gap-4">
                                                     <div
-                                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4a358e] text-sm font-bold text-white shadow-sm sm:h-10 sm:w-10 sm:text-base"
+                                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4a358e] to-[#6b4db8] text-sm font-bold text-white shadow-md sm:h-11 sm:w-11 sm:text-base ring-2 ring-purple-100"
                                                         aria-label={`Product ${index + 1}`}
                                                     >
                                                         {index + 1}
@@ -246,12 +263,12 @@ export default function AddProductToPackage() {
                                                                 required
                                                             />
                                                             {errors.products?.[index]?.product_uuid && (
-                                                                <p className="text-xs font-medium text-destructive">
+                                                                <p className="text-xs font-semibold text-destructive">
                                                                     {errors.products[index].product_uuid?.message}
                                                                 </p>
                                                             )}
                                                             {selectedProduct && (
-                                                                <Badge variant="secondary" className="text-xs font-medium">
+                                                                <Badge variant="secondary" className="text-xs font-semibold shadow-sm">
                                                                     {selectedProduct.brand}
                                                                 </Badge>
                                                             )}
@@ -275,12 +292,12 @@ export default function AddProductToPackage() {
                                                                 required
                                                             />
                                                             {errors.products?.[index]?.product_variation_id && (
-                                                                <p className="text-xs font-medium text-destructive">
+                                                                <p className="text-xs font-semibold text-destructive">
                                                                     {errors.products[index].product_variation_id?.message}
                                                                 </p>
                                                             )}
                                                             {selectedVariation && (
-                                                                <Badge variant="outline" className="text-xs font-medium">
+                                                                <Badge variant="outline" className="text-xs font-semibold border-green-300 bg-green-50 text-green-700">
                                                                     Rs. {selectedVariation.platform_price.toLocaleString()}
                                                                 </Badge>
                                                             )}
@@ -305,10 +322,10 @@ export default function AddProductToPackage() {
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => removeProductRow(index)}
-                                                            className="h-9 w-9 shrink-0 rounded-full border-2 border-transparent text-destructive transition-colors hover:border-destructive hover:bg-destructive/10 hover:text-destructive sm:h-10 sm:w-10"
+                                                            className="h-10 w-10 shrink-0 rounded-full border-2 border-transparent text-destructive transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 sm:h-11 sm:w-11"
                                                             aria-label={`Remove product ${index + 1}`}
                                                         >
-                                                            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                            <X className="h-5 w-5" />
                                                         </Button>
                                                     )}
                                                 </div>
@@ -324,15 +341,15 @@ export default function AddProductToPackage() {
                                 type="button"
                                 variant="outline"
                                 onClick={addProductRow}
-                                className="w-full border-[#4a358e] text-sm font-semibold text-[#4a358e] transition-colors hover:bg-purple-50 sm:text-base"
+                                className="w-full border-2 border-[#4a358e] text-sm font-bold text-[#4a358e] transition-all hover:bg-purple-50 hover:shadow-md sm:text-base"
                                 aria-label="Add another product row"
                             >
-                                <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                                <Plus className="mr-2 h-5 w-5" />
                                 Add Another Product
                             </Button>
                         </div>
 
-                        <Separator className="my-4 sm:my-6" />
+                        <Separator className="my-5 sm:my-7" />
 
                         <div className="flex flex-col-reverse gap-3 pb-2 sm:flex-row sm:justify-end sm:pb-4">
                             <Button
@@ -340,7 +357,7 @@ export default function AddProductToPackage() {
                                 variant="outline"
                                 onClick={resetForm}
                                 disabled={isSubmitting}
-                                className="w-full sm:w-auto"
+                                className="w-full sm:w-auto border-2 hover:bg-gray-50"
                                 size="lg"
                             >
                                 Reset Form
@@ -348,7 +365,7 @@ export default function AddProductToPackage() {
                             <Button
                                 type="submit"
                                 disabled={isSubmitting || validProductCount === 0}
-                                className="w-full bg-[#4a358e] text-white shadow-lg transition-shadow hover:bg-[#3d2d75] hover:shadow-xl sm:w-auto"
+                                className="w-full bg-gradient-to-r from-[#4a358e] to-[#6b4db8] text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50 sm:w-auto"
                                 size="lg"
                                 aria-label={`Add ${validProductCount} product${validProductCount !== 1 ? 's' : ''} to package`}
                             >

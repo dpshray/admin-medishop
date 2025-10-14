@@ -47,6 +47,7 @@ export default function AdminLayout({children}: { children: React.ReactNode }) {
             label: "Orders",
             items: [
                 {label: "Orders", href: "/admin/orders", icon: ShoppingCart},
+                {label: "Vendor Products",href: "/admin/vendor-product", icon: Package},
                 {label: "Order History", href: "/admin/order-history", icon: History},
             ],
         },

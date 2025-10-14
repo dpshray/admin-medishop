@@ -77,7 +77,7 @@ export default function SelectInputField({
     const errorId = error && name ? `${name}-error` : undefined
 
     return (
-        <div className="space-y-2" {...props}>
+        <div className="space-y-2" >
             {label && (
                 <Label
                     htmlFor={name}
@@ -87,7 +87,7 @@ export default function SelectInputField({
                     {required && <span className="text-red-500 ml-1">*</span>}
                 </Label>
             )}
-            <Select value={selectedValue} onValueChange={handleValueChange}>
+            <Select value={selectedValue} onValueChange={handleValueChange} {...props}>
                 <SelectTrigger
                     id={name}
                     aria-label={label}

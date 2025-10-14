@@ -104,6 +104,23 @@ class PackageService extends HttpServices {
         }
     }
 
+    async deleteProductFromPackage(slug: string, productVariationId: number) {
+        try {
+           return  await this.deleteRequest({
+                url: `/admin/package/${slug}/products`,
+                data: {
+                    product_variation_id: productVariationId,
+                },
+                config: {
+                    auth: true,
+                },
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
+
 }
 
 const packageService = new PackageService();

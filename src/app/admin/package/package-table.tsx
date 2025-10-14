@@ -12,12 +12,14 @@ import {ChevronDown, ChevronRight} from "lucide-react"
 import {Badge} from "@/components/ui/badge"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
+import {cn} from "@/lib/utils";
 
 export interface Package {
     id: number
     package_name: string
     slug: string
     description: string
+    status: boolean
     price: string
     discount_percent: number | null
     rating: string
@@ -178,6 +180,17 @@ export default function PackageTable() {
                     </div>
                 )
             },
+        },{
+            accessorKey: "status",
+            header: "Status",
+            cell: ({row}) => {
+                return (
+                    <Badge variant={row.original.status ? "default" : "destructive"}
+                           className={cn(row.original.status ? "bg-green-600 " : "bg-red-500")}>
+                        {row.original.status ? "Active" : "Inactive"}
+                    </Badge>
+                )
+            },
         },
         {
             id: "actions",
@@ -193,7 +206,7 @@ export default function PackageTable() {
                     }}
                     onEditAction={() => {
                         startTransition(() => {
-                            router.push(`/packages/${row.original.id}/edit`)
+                            router.push(`/admin/package/edit-package/${row.original.slug}`)
                         })
                     }}
                     onDeleteAction={() => handleDelete(row.original)}
@@ -202,15 +215,21 @@ export default function PackageTable() {
             enableSorting: false,
             enableHiding: false,
             size: 100,
-        }, {
+        },
+        {
             id: "products",
             header: "Product",
             cell: ({row}) => (
-                <Button variant={'default'} className={'bg-primaryColor hover:bg-primaryColor/80'}>
+                <Button variant={'default'} className={'bg-primaryColor hover:bg-primaryColor/80'}
+                        onClick={() => {
+                            startTransition(() => {
+                                router.push(`/admin/package/${row.original.slug}`)
+                            })
+                        }}>
                     Add product
                 </Button>
             )
-        }
+        },
     ], [router, handleDelete])
 
     const handlePageChange = useCallback((page: number) => {

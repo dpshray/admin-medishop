@@ -452,7 +452,7 @@ export function DataTable<TData, TValue>({
                                                 variant={page === currentPage ? "default" : "outline"}
                                                 size="sm"
                                                 onClick={() => handlePageClick(page as number)}
-                                                className={cn("h-9 w-9", page === currentPage && "bg-primary text-primary-foreground")}
+                                                className={cn("h-9 w-9", page === currentPage && "bg-primaryColor text-primary-foreground")}
                                                 aria-label={`Go to page ${page}`}
                                                 aria-current={page === currentPage ? "page" : undefined}
                                             >

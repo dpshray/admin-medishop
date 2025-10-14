@@ -111,18 +111,14 @@ class HttpServices {
         }
     }
 
-    async deleteRequest<TResponse = any>({
-                                             url,
-                                             config,
-                                         }: Omit<RequestProps, 'data'>): Promise<TResponse> {
-        try {
-            this.setHeaders(config);
-            const axiosConfig = this.buildAxiosConfig(config);
-            return await axiosInstance.delete(url, axiosConfig);
-        } catch (error) {
-            console.error(`DELETE request failed for ${url}:`, error);
-            throw error;
-        }
+    async deleteRequest<TResponse = any, TBody = any>({
+                                                          url,
+                                                          data,
+                                                          config,
+                                                      }: RequestProps<TBody>): Promise<TResponse> {
+        this.setHeaders(config);
+        const axiosConfig = { ...this.buildAxiosConfig(config), data };
+        return axiosInstance.delete(url, axiosConfig);
     }
 
 

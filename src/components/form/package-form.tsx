@@ -1,15 +1,15 @@
 "use client"
 
-import {useForm} from "react-hook-form"
-import {zodResolver} from "@hookform/resolvers/zod"
-import {useCallback, useEffect, useMemo, useState} from "react"
-import {Button} from "@/components/ui/button"
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
-import {GalleryThumbnails, Loader2, Package, XCircle} from "lucide-react"
-import {toast} from "sonner"
-import {useRouter} from "next/navigation"
+import { GalleryThumbnails, Loader2, Package, XCircle } from "lucide-react"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 import packageService from "@/service/package.service"
 import {
     CreatePackageForm,
@@ -26,15 +26,15 @@ interface PackageFormProps {
 
 type PackageFormData = CreatePackageForm | UpdatePackageForm
 
-export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
+export default function PackageForm({ slug, mode = "create" }: PackageFormProps) {
     const router = useRouter()
     const isEditMode = mode === "edit"
     const [isLoading, setIsLoading] = useState(false)
 
     const statusOptions = useMemo(
         () => [
-            {value: 1, label: "Active"},
-            {value: 0, label: "Inactive"},
+            { value: 1, label: "Active" },
+            { value: 0, label: "Inactive" },
         ],
         []
     )
@@ -42,11 +42,11 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
     const schema = useMemo(() => (isEditMode ? updatePackageSchema : createPackageSchema), [isEditMode])
 
     const form = useForm<PackageFormData>({
-        resolver: zodResolver(schema),
+        resolver: zodResolver(schema) as any,
         defaultValues: {
             name: "",
-            price: "0",
-            discount_percent: "0",
+            price: 0,
+            discount_percent: 0,
             status: false,
             description: "",
             featured_image: undefined,
@@ -59,7 +59,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
         setValue,
         reset,
         register,
-        formState: {errors, isSubmitting},
+        formState: { errors, isSubmitting },
     } = form
 
     const fetchPackageDetail = useCallback(async () => {
@@ -67,20 +67,20 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
         setIsLoading(true)
         try {
             const response: any = await packageService.getPackageDetail(slug)
-            if (response?.data) {
-                const packageData = response.data
+            if (response) {
+                const packageData = response
                 reset({
                     name: packageData.name || "",
-                    price: String(packageData.price || 0),
-                    discount_percent: String(packageData.discount_percent || 0),
-                    status: packageData.status || false,
+                    price: packageData.price || 0,
+                    discount_percent: packageData.discount_percent || 0,
+                    status: Boolean(packageData.status),
                     description: packageData.description || "",
                     featured_image: undefined,
                     gallery_images: [],
                     slug: packageData.slug || "",
                 })
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to fetch package details")
             router.push("/admin/packages")
         } finally {
@@ -101,6 +101,8 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                         : await packageService.createPackage(data)
                 if (response) {
                     toast.success(response?.message || `Package ${isEditMode ? "updated" : "created"} successfully`)
+                    reset()
+                    router.push("/admin/package")
                 }
             } catch (error: any) {
                 const errorMessage =
@@ -108,20 +110,20 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                 toast.error(errorMessage)
             }
         },
-        [isEditMode, slug]
+        [isEditMode, reset, router, slug]
     )
 
     const handleFileChange = useCallback(
         (field: keyof PackageFormData, files: File[]) => {
             const file = files[0] || null
-            setValue(field, file || undefined, {shouldValidate: true, shouldDirty: true})
+            setValue(field, file || undefined, { shouldValidate: true, shouldDirty: true })
         },
         [setValue]
     )
 
     const handleMultipleFilesChange = useCallback(
         (field: keyof PackageFormData, files: File[]) => {
-            setValue(field, files, {shouldValidate: true, shouldDirty: true})
+            setValue(field, files, { shouldValidate: true, shouldDirty: true })
         },
         [setValue]
     )
@@ -132,7 +134,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
 
     const handleStatusChange = useCallback(
         (value: string | number) => {
-            setValue("status", value === 1 || value === "1", {shouldValidate: true, shouldDirty: true})
+            setValue("status", value === 1 || value === "1", { shouldValidate: true, shouldDirty: true })
         },
         [setValue]
     )
@@ -149,7 +151,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600"/>
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                     <p className="text-slate-600">Loading package details...</p>
                 </div>
             </div>
@@ -170,7 +172,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                             </p>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={handleCancel}>
-                            <XCircle className="w-4 h-4 mr-2"/>
+                            <XCircle className="w-4 h-4 mr-2" />
                             Cancel
                         </Button>
                     </div>
@@ -180,7 +182,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                             <CardHeader className="pb-4 sm:pb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-blue-100 rounded-lg">
-                                        <Package className="w-5 h-5 text-blue-600"/>
+                                        <Package className="w-5 h-5 text-blue-600" />
                                     </div>
                                     <CardTitle className="text-lg sm:text-xl">Package Information</CardTitle>
                                 </div>
@@ -197,7 +199,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                                         disabled={isSubmitting}
                                     />
                                     <TextInputField
-                                        {...register("price")}
+                                        {...register("price", { valueAsNumber: true })}
                                         label="Price"
                                         type="number"
                                         error={errors.price?.message}
@@ -208,7 +210,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                                         disabled={isSubmitting}
                                     />
                                     <TextInputField
-                                        {...register("discount_percent")}
+                                        {...register("discount_percent", { valueAsNumber: true })}
                                         label="Discount Percent"
                                         type="number"
                                         error={errors.discount_percent?.message}
@@ -224,6 +226,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                                         options={statusOptions}
                                         onChangeAction={handleStatusChange}
                                         disabled={isSubmitting}
+                                        value={form.watch("status") ? 1 : 0}
                                     />
                                 </section>
 
@@ -241,7 +244,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
 
                                 <section>
                                     <div className="flex items-center gap-2 mb-4">
-                                        <GalleryThumbnails className="w-5 h-5 text-blue-600"/>
+                                        <GalleryThumbnails className="w-5 h-5 text-blue-600" />
                                         <h2 className="text-base sm:text-lg font-semibold">Images</h2>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -281,7 +284,7 @@ export default function PackageForm({slug, mode = "create"}: PackageFormProps) {
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <Loader2 className="w-4 h-4 mr-2 animate-spin"/>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                                 Submitting...
                                             </>
                                         ) : isEditMode ? (

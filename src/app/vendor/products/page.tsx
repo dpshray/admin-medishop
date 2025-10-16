@@ -112,7 +112,8 @@ const ProductVariantUpdateForm = () => {
     const fetchProducts = useCallback(async () => {
         try {
             setIsLoading(true)
-            const response = await vendorService.getProductsByVendor({})
+            const response = await vendorService.getProductsByVendor()
+            console.log("Resposne from vendor", response)
             setProducts(response?.items || [])
         } catch (error) {
             toast.error("Failed to load products. Please try again.")

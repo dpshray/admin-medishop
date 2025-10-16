@@ -4,7 +4,7 @@ import tagService from "@/service/tag.service"
 import {PaginatedResponse} from "@/types/types"
 import categoriesService from "@/service/categories.service";
 import brandService from "@/service/brand.service";
-import productService from "@/service/product.service";
+import productService from "@/service/product/product.service";
 
 export interface Tag {
     id: number

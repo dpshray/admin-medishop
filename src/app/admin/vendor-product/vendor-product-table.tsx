@@ -1,19 +1,20 @@
 'use client'
 
-import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { ColumnDef } from "@tanstack/react-table";
-import { RefreshCw } from "lucide-react";
-import productService from "@/service/product.service";
-import { ParamsType } from "@/types/types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DataTable } from "@/components/table/ReusableTable";
+import {useCallback, useMemo, useState, useTransition} from "react";
+import {useRouter} from "next/navigation";
+import {useQuery} from "@tanstack/react-query";
+import {ColumnDef} from "@tanstack/react-table";
+import {RefreshCw} from "lucide-react";
+import {ParamsType} from "@/types/types";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {Checkbox} from "@/components/ui/checkbox";
+import {DataTable} from "@/components/table/ReusableTable";
 import ActionModal from "@/components/modal/ConfirmModal";
-import { cn } from "@/lib/utils";
-import { RowActions } from "@/lib/helper";
+import {cn} from "@/lib/utils";
+import {RowActions} from "@/lib/helper";
+import vendorProductService from "@/service/product/vendor-product.service";
+import {toast} from "sonner";
 
 interface VendorProduct {
     id: number;
@@ -48,8 +49,9 @@ export default function VendorProductTable() {
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isPending, startTransition] = useTransition()
 
-    const { data, isLoading, isFetching, refetch } = useQuery({
+    const {data, isLoading, isFetching, refetch} = useQuery({
         queryKey: ["vendor-product", currentPage, pageSize, search],
         queryFn: async () => {
             const params: ParamsType = {
@@ -57,7 +59,8 @@ export default function VendorProductTable() {
                 per_page: pageSize,
                 search
             };
-            const response = await productService.vendorProductList(params);
+            const response = await vendorProductService.vendorProductList(params);
+            console.log('Response vendor product table', response)
             setCurrentPage(response.page);
             return response;
         },
@@ -69,9 +72,6 @@ export default function VendorProductTable() {
         router.push(`/admin/vendor-products/${product.id}`);
     }, [router]);
 
-    const handleEdit = useCallback((product: VendorProduct) => {
-        router.push(`/admin/vendor-products/${product.id}/edit`);
-    }, [router]);
 
     const handleDeleteClick = useCallback((product: VendorProduct) => {
         setSelectedProduct(product);
@@ -83,7 +83,14 @@ export default function VendorProductTable() {
 
         setIsDeleting(true);
         try {
-           // await productService.deleteVendorProduct(selectedProduct.id);
+            await vendorProductService.deleteVendorProduct(selectedProduct.id).then(
+                (res)=>{
+                    toast('Deleted successfully',{
+                        description: res.message || "Vendor product deleted successfully",
+                    })
+                    console.log('Response delete vendor product', res)
+                }
+            )
             setDeleteModalOpen(false);
             setSelectedProduct(null);
             await refetch();
@@ -97,7 +104,7 @@ export default function VendorProductTable() {
     const columns: ColumnDef<VendorProduct>[] = useMemo(() => [
         {
             id: "select",
-            header: ({ table }) => (
+            header: ({table}) => (
                 <Checkbox
                     checked={
                         table.getIsAllPageRowsSelected() ||
@@ -108,7 +115,7 @@ export default function VendorProductTable() {
                     className="mx-auto"
                 />
             ),
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -123,7 +130,7 @@ export default function VendorProductTable() {
         {
             accessorKey: "product_variation.product_name",
             header: "Product",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <div className="flex flex-col gap-1 min-w-[200px]">
                     <span className="font-medium text-sm">
                         {row.original.product_variation.product_name}
@@ -138,7 +145,7 @@ export default function VendorProductTable() {
         {
             accessorKey: "vendor.name",
             header: "Vendor",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <span className="font-medium text-sm">
                     {row.original.vendor.name}
                 </span>
@@ -146,9 +153,9 @@ export default function VendorProductTable() {
             enableSorting: true,
         },
         {
-            accessorKey: "size",
+            accessorKey: "Unit",
             header: "Size",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <span className="text-sm whitespace-nowrap">
                     {row.original.product_variation.size_value}{" "}
                     {row.original.product_variation.size_unit}
@@ -157,10 +164,10 @@ export default function VendorProductTable() {
         },
         {
             accessorKey: "price",
-            header: "Price",
-            cell: ({ row }) => (
+            header: "Price (Rs.)",
+            cell: ({row}) => (
                 <span className="font-medium text-sm">
-                    ${row.original.price.toFixed(2)}
+                    {row.original.price.toFixed(2)}
                 </span>
             ),
             enableSorting: true,
@@ -170,7 +177,7 @@ export default function VendorProductTable() {
             header: () => (
                 <span className="flex justify-center w-full">Stock</span>
             ),
-            cell: ({ row }) => {
+            cell: ({row}) => {
                 const stock = row.original.units_in_stock;
                 const isLowStock = stock < 10;
                 const isOutOfStock = stock === 0;
@@ -192,7 +199,7 @@ export default function VendorProductTable() {
         {
             accessorKey: "is_approved",
             header: "Approval",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Badge
                     className={cn(
                         "text-xs font-medium",
@@ -210,7 +217,7 @@ export default function VendorProductTable() {
         {
             accessorKey: "status",
             header: "Status",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Badge
                     className={cn(
                         "text-xs font-medium",
@@ -228,18 +235,20 @@ export default function VendorProductTable() {
         {
             id: "actions",
             header: () => <span className="sr-only">Actions</span>,
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <RowActions
                     row={row}
                     onDeleteAction={() => handleDeleteClick(row.original)}
-                    onEditAction={() => handleEdit(row.original)}
+                    onEditAction={() => startTransition(() => {
+                        router.push(`/admin/vendor-product/${row.original.id}`)
+                    })}
                     onViewAction={() => handleView(row.original)}
                 />
             ),
             enableSorting: false,
             enableHiding: false,
         }
-    ], [handleDeleteClick, handleEdit, handleView]);
+    ], [handleDeleteClick, handleView, router]);
 
     const handleSearch = useCallback((value: string) => {
         setSearch(value);

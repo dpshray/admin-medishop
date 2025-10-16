@@ -1,7 +1,7 @@
 import axios, {AxiosError, AxiosInstance, AxiosResponse} from "axios";
 
 const axiosInstance: AxiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL ,
+    baseURL: process.env.NEXT_PUBLIC_BASE_URL,
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
@@ -26,6 +26,11 @@ axiosInstance.interceptors.response.use(
     (error: AxiosError) => {
 
         console.error("Response Error from axios:", error);
+        if (error.status === 401) {
+            window.location.href = "/login";
+
+        }
+
         return Promise.reject(error?.response?.data);
     }
 );

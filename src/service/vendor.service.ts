@@ -85,7 +85,7 @@ class VendorService extends HttpServices {
 
     }
 
-    async getProductsByVendor(params: ParamsType) {
+    async getProductsByVendor(params?: ParamsType) {
         try {
             const res = await this.getRequest({
                 url: "/vendor/product",

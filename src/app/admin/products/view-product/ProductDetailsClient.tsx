@@ -31,7 +31,7 @@ import {
     Users,
     Zap
 } from 'lucide-react'
-import productService from '@/service/product.service'
+import productService from '@/service/product/product.service'
 import { ErrorFallback } from '@/components/Error/error-fallback'
 import ImageGallery from '@/components/product/image-gallery'
 

@@ -95,20 +95,8 @@ class ProductService extends HttpServices {
     }
 
 
-    async vendorProductList(params?: ParamsType) {
-        try {
-            const res = await this.getRequest({
-                url: "/admin/vendorproductlist",
-                config: {
-                    auth: true,
-                    params
-                }
-            })
-            return res?.data
-        } catch (error) {
-            throw error
-        }
-    }
+
+
 
 }
 

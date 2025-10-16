@@ -1,7 +1,7 @@
 "use client"
 
 import {useQuery} from "@tanstack/react-query"
-import productService from "@/service/product.service"
+import productService from "@/service/product/product.service"
 import {PaginatedResponse, ParamsType} from "@/types/types"
 
 interface UseProductsOptions {

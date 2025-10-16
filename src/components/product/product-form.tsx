@@ -13,7 +13,7 @@ import MultiSelectField from "@/components/field/multi-select-input"
 import FileInputField from "@/components/field/file-input"
 import {createProductSchema, ProductCreate, ProductUpdate, updateProductSchema} from "@/lib/schema/productSchema"
 import {useBrands, useCategories, useProductUnits, useTags} from "@/hooks/all-hook"
-import productService from "@/service/product.service"
+import productService from "@/service/product/product.service"
 import {toast} from "sonner"
 import {useRouter} from "next/navigation";
 

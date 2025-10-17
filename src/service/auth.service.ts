@@ -25,8 +25,37 @@ class AuthService extends HttpServices {
         }
     }
 
-    async getLoggedInUser() {}
+    async getLoggedInUser() {
+        try {
+            return await this.getRequest({
+                url: "/user/profile",
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async updateProfile(data: any) {
+        try {
+            return await this.postRequest({
+                url: "/user/profile",
+                data:{
+                    ...data,
+                    "_method": "PUT"
+                },
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error;
+        }
+    }
 }
+
 
 const authService = new AuthService();
 export default authService;

@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { AlertTriangle, Building2, Eye } from "lucide-react"
 import { PaginatedResponse } from "@/types/types"
-import productService from "@/service/product.service"
+import productService from "@/service/product/product.service"
 import ActionModal from "@/components/modal/ConfirmModal"
 
 interface Product {

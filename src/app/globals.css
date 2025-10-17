@@ -124,4 +124,8 @@
     .mainContainer {
         @apply max-w-7xl mx-auto p-2 md:px-4 ;
     }
+
+    .primaryGradient {
+        @apply bg-gradient-to-br from-[#4a358e] to-[#6b4fd8] text-white
+    }
 }

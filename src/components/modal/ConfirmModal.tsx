@@ -7,9 +7,10 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog"
-import {Button} from "@/components/ui/button"
-import {Loader2} from "lucide-react"
+} from '@/components/ui/dialog'
+import {Button} from '@/components/ui/button'
+import {Loader2} from 'lucide-react'
+import {cn} from '@/lib/utils'
 
 interface ActionModalProps {
     open: boolean
@@ -18,8 +19,9 @@ interface ActionModalProps {
     description: string
     confirmLabel?: string
     loading?: boolean
-    confirmVariant?: "default" | "destructive" | "outline" | "secondary"
+    confirmVariant?: 'default' | 'destructive' | 'outline' | 'secondary'
     onConfirm: () => void
+    buttonClassName?: string
 }
 
 export default function ActionModal({
@@ -27,29 +29,39 @@ export default function ActionModal({
                                         setOpen,
                                         title,
                                         description,
-                                        confirmLabel = "Confirm",
+                                        confirmLabel = 'Confirm',
                                         loading = false,
-                                        confirmVariant = "destructive",
+                                        confirmVariant = 'destructive',
                                         onConfirm,
+                                        buttonClassName,
                                     }: ActionModalProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-w-[calc(100%-2rem)] mx-4">
                 <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
+                    <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
+                    <DialogDescription className="text-sm sm:text-base">{description}</DialogDescription>
                 </DialogHeader>
-                <DialogFooter className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+                <DialogFooter className="flex-col sm:flex-row gap-4 sm:gap-0">
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                        disabled={loading}
+                        className="w-full sm:w-auto order-2 sm:order-1 cursor-pointer"
+                    >
                         Cancel
                     </Button>
                     <Button
                         variant={confirmVariant}
                         onClick={onConfirm}
                         disabled={loading}
-                        className="flex items-center justify-center"
+                        className={cn(
+                            'w-full sm:w-auto order-1 sm:order-2 flex items-center justify-center gap-2 ',
+                            "ml-2 cursor-pointer",
+                            buttonClassName
+                        )}
                     >
-                        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin"/>}
+                        {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true"/>}
                         {confirmLabel}
                     </Button>
                 </DialogFooter>

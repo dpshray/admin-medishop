@@ -36,6 +36,10 @@ const nextConfig: NextConfig = {
                 hostname: "192.168.100.18",
                 pathname: "/storage/**",
             },
+            {
+                protocol: "https",
+                hostname: "images.unsplash.com",
+            },
         ],
     },
 };

@@ -267,7 +267,7 @@ const ProductManageForm = ({
             console.error("Submit error:", error)
             toast.error(`Error ${isUpdateMode ? "updating" : "creating"} product`)
         }
-    }, [isUpdateMode, productUuid, onSuccessAction, reset, defaultValues])
+    }, [isUpdateMode, productUuid, onSuccessAction, router])
 
     const handleReset = useCallback(() => {
         reset(defaultValues)
@@ -489,8 +489,6 @@ const ProductManageForm = ({
                                                             error={errors.variations?.[index]?.size_value?.message}
                                                             placeholder="Enter size"
                                                             type="number"
-                                                            step="0.01"
-                                                            min="0.01"
                                                             required
                                                         />
                                                         <SearchSelectField
@@ -513,8 +511,6 @@ const ProductManageForm = ({
                                                             error={errors.variations?.[index]?.platform_price?.message}
                                                             placeholder="0.00"
                                                             type="number"
-                                                            step="0.01"
-                                                            min="0.01"
                                                             required
                                                         />
                                                     </div>

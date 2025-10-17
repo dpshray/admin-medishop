@@ -1,54 +1,91 @@
 'use client'
 
-import {useCallback, useMemo, useState, useTransition} from "react";
-import {useRouter} from "next/navigation";
-import {useQuery} from "@tanstack/react-query";
-import {ColumnDef} from "@tanstack/react-table";
-import {RefreshCw} from "lucide-react";
-import {ParamsType} from "@/types/types";
-import {Button} from "@/components/ui/button";
-import {Badge} from "@/components/ui/badge";
-import {Checkbox} from "@/components/ui/checkbox";
-import {DataTable} from "@/components/table/ReusableTable";
-import ActionModal from "@/components/modal/ConfirmModal";
-import {cn} from "@/lib/utils";
-import {RowActions} from "@/lib/helper";
-import vendorProductService from "@/service/product/vendor-product.service";
-import {toast} from "sonner";
+import {memo, useCallback, useMemo, useState, useTransition} from "react"
+import {useRouter} from "next/navigation"
+import {useQuery} from "@tanstack/react-query"
+import {ColumnDef} from "@tanstack/react-table"
+import {RefreshCw} from "lucide-react"
+import {ParamsType} from "@/types/types"
+import {Button} from "@/components/ui/button"
+import {Checkbox} from "@/components/ui/checkbox"
+import {DataTable} from "@/components/table/ReusableTable"
+import ActionModal from "@/components/modal/ConfirmModal"
+import {cn} from "@/lib/utils"
+import {RowActions} from "@/lib/helper"
+import vendorProductService from "@/service/product/vendor-product.service"
+import {toast} from "sonner"
+import {StatusCell, StockCell} from "@/lib/stock"
+import {DEFAULT_PAGE, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, QUERY_STALE_TIME} from "@/config/app-constant"
 
 interface VendorProduct {
-    id: number;
-    status: boolean;
-    is_approved: boolean;
+    id: number
+    status: string | null
     vendor: {
-        id: number;
-        name: string;
-    };
+        id: number
+        name: string
+    }
     product_variation: {
-        id: number;
-        name: string;
-        product_name: string;
-        size_value: number;
-        size_unit: string;
-    };
-    price: number;
-    units_in_stock: number;
+        id: number
+        variation_name: string
+        product_name: string
+        size_value: number
+        size_unit: string
+    }
+    price: number
+    units_in_stock: number
 }
 
-const DEFAULT_PAGE = 1;
-const DEFAULT_PAGE_SIZE = 10;
-const QUERY_STALE_TIME = 30000;
-const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100] as const;
+const ProductCell = memo(({product}: {product: VendorProduct['product_variation']}) => (
+    <div className="flex items-start gap-3 max-w-[150px]">
+        <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="font-medium text-sm truncate" title={product.product_name}>
+                {product.product_name}
+            </span>
+            <span className="text-xs text-muted-foreground truncate" title={product.variation_name}>
+                {product.variation_name}
+            </span>
+        </div>
+    </div>
+))
+
+ProductCell.displayName = "ProductCell"
+
+const VendorCell = memo(({name}: {name: string}) => (
+    <span className="font-medium text-sm truncate block max-w-[150px]" title={name}>
+        {name}
+    </span>
+))
+
+VendorCell.displayName = "VendorCell"
+
+const SizeCell = memo(({value, unit}: {value: number; unit: string}) => (
+    <span className="text-sm whitespace-nowrap tabular-nums">
+        {value} {unit}
+    </span>
+))
+
+SizeCell.displayName = "SizeCell"
+
+const PriceCell = memo(({price}: {price: number}) => (
+    <div className="text-right font-medium text-sm tabular-nums">
+        {price.toLocaleString('en-NP', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}
+    </div>
+))
+
+PriceCell.displayName = "PriceCell"
 
 export default function VendorProductTable() {
-    const router = useRouter();
+    const router = useRouter()
 
-    const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
-    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-    const [search, setSearch] = useState("");
-    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE)
+    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+    const [search, setSearch] = useState("")
+    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [isPending, startTransition] = useTransition()
 
     const {data, isLoading, isFetching, refetch} = useQuery({
@@ -58,48 +95,79 @@ export default function VendorProductTable() {
                 page: currentPage,
                 per_page: pageSize,
                 search
-            };
-            const response = await vendorProductService.vendorProductList(params);
-            console.log('Response vendor product table', response)
-            setCurrentPage(response.page);
-            return response;
+            }
+            const response = await vendorProductService.vendorProductList(params)
+            setCurrentPage(response.page)
+            return response
         },
         staleTime: QUERY_STALE_TIME,
         refetchOnWindowFocus: false,
-    });
+    })
+
+    const handleAccept = useCallback(async (productId: number) => {
+        const toastId = 'accept-product'
+        try {
+            toast.loading('Processing...', {id: toastId})
+            const response = await vendorProductService.acceptAndRejectVendorProduct(productId, true)
+            toast.success(response?.message || 'Product approved successfully', {id: toastId})
+            await refetch()
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to approve product', {id: toastId})
+            console.error('Failed to accept product:', error)
+        }
+    }, [refetch])
+
+    const handleReject = useCallback(async (productId: number) => {
+        const toastId = 'reject-product'
+        try {
+            toast.loading('Processing...', {id: toastId})
+            const response = await vendorProductService.acceptAndRejectVendorProduct(productId, false)
+            toast.success(response?.message || 'Product rejected successfully', {id: toastId})
+            await refetch()
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to reject product', {id: toastId})
+            console.error('Failed to reject product:', error)
+        }
+    }, [refetch])
 
     const handleView = useCallback((product: VendorProduct) => {
-        router.push(`/admin/vendor-products/${product.id}`);
-    }, [router]);
+        startTransition(() => {
+            router.push(`/admin/vendor-products/${product.id}`)
+        })
+    }, [router])
 
+    const handleEdit = useCallback((productId: number) => {
+        startTransition(() => {
+            router.push(`/admin/vendor-product/${productId}`)
+        })
+    }, [router])
 
     const handleDeleteClick = useCallback((product: VendorProduct) => {
-        setSelectedProduct(product);
-        setDeleteModalOpen(true);
-    }, []);
+        setSelectedProduct(product)
+        setDeleteModalOpen(true)
+    }, [])
 
     const confirmDeleteProduct = useCallback(async () => {
-        if (!selectedProduct) return;
+        if (!selectedProduct) return
 
-        setIsDeleting(true);
+        setIsDeleting(true)
         try {
-            await vendorProductService.deleteVendorProduct(selectedProduct.id).then(
-                (res)=>{
-                    toast('Deleted successfully',{
-                        description: res.message || "Vendor product deleted successfully",
-                    })
-                    console.log('Response delete vendor product', res)
-                }
-            )
-            setDeleteModalOpen(false);
-            setSelectedProduct(null);
-            await refetch();
-        } catch (error) {
-            console.error("Failed to delete vendor product:", error);
+            const response = await vendorProductService.deleteVendorProduct(selectedProduct.id)
+            toast.success('Product deleted', {
+                description: response.message || "Vendor product deleted successfully",
+            })
+            setDeleteModalOpen(false)
+            setSelectedProduct(null)
+            await refetch()
+        } catch (error: any) {
+            toast.error('Failed to delete product', {
+                description: error?.message || 'An error occurred while deleting the product. Please try again.'
+            })
+            console.error("Failed to delete vendor product:", error)
         } finally {
-            setIsDeleting(false);
+            setIsDeleting(false)
         }
-    }, [selectedProduct, refetch]);
+    }, [selectedProduct, refetch])
 
     const columns: ColumnDef<VendorProduct>[] = useMemo(() => [
         {
@@ -119,7 +187,7 @@ export default function VendorProductTable() {
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label={`Select product ${row.original.product_variation.product_name}`}
+                    aria-label={`Select ${row.original.product_variation.product_name}`}
                     className="mx-auto"
                 />
             ),
@@ -130,160 +198,106 @@ export default function VendorProductTable() {
         {
             accessorKey: "product_variation.product_name",
             header: "Product",
-            cell: ({row}) => (
-                <div className="flex flex-col gap-1 min-w-[200px]">
-                    <span className="font-medium text-sm">
-                        {row.original.product_variation.product_name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                        {row.original.product_variation.name}
-                    </span>
-                </div>
-            ),
+            cell: ({row}) => <ProductCell product={row.original.product_variation}/>,
             enableSorting: true,
+            size: 300,
         },
         {
             accessorKey: "vendor.name",
             header: "Vendor",
-            cell: ({row}) => (
-                <span className="font-medium text-sm">
-                    {row.original.vendor.name}
-                </span>
-            ),
+            cell: ({row}) => <VendorCell name={row.original.vendor.name}/>,
             enableSorting: true,
+            size: 200,
         },
         {
-            accessorKey: "Unit",
+            accessorKey: "size",
             header: "Size",
             cell: ({row}) => (
-                <span className="text-sm whitespace-nowrap">
-                    {row.original.product_variation.size_value}{" "}
-                    {row.original.product_variation.size_unit}
-                </span>
+                <SizeCell
+                    value={row.original.product_variation.size_value}
+                    unit={row.original.product_variation.size_unit}
+                />
             ),
+            size: 120,
         },
         {
             accessorKey: "price",
-            header: "Price (Rs.)",
-            cell: ({row}) => (
-                <span className="font-medium text-sm">
-                    {row.original.price.toFixed(2)}
-                </span>
-            ),
+            header: () => <div className="text-right">Price (Rs.)</div>,
+            cell: ({row}) => <PriceCell price={row.original.price}/>,
             enableSorting: true,
+            size: 140,
         },
         {
             accessorKey: "units_in_stock",
-            header: () => (
-                <span className="flex justify-center w-full">Stock</span>
-            ),
-            cell: ({row}) => {
-                const stock = row.original.units_in_stock;
-                const isLowStock = stock < 10;
-                const isOutOfStock = stock === 0;
-
-                return (
-                    <span
-                        className={cn(
-                            "text-sm font-medium flex justify-center w-full",
-                            isOutOfStock && "text-red-600",
-                            isLowStock && !isOutOfStock && "text-yellow-600"
-                        )}
-                    >
-                        {stock}
-                    </span>
-                );
-            },
+            header: () => <div className="flex justify-center w-full">Stock</div>,
+            cell: ({row}) => <StockCell stock={row.original.units_in_stock}/>,
             enableSorting: true,
-        },
-        {
-            accessorKey: "is_approved",
-            header: "Approval",
-            cell: ({row}) => (
-                <Badge
-                    className={cn(
-                        "text-xs font-medium",
-                        row.original.is_approved
-                            ? "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-300"
-                            : "bg-orange-100 text-orange-800 hover:bg-orange-100 dark:bg-orange-900 dark:text-orange-300"
-                    )}
-                    variant="secondary"
-                >
-                    {row.original.is_approved ? "Approved" : "Pending"}
-                </Badge>
-            ),
-            enableSorting: true,
+            size: 120,
         },
         {
             accessorKey: "status",
             header: "Status",
             cell: ({row}) => (
-                <Badge
-                    className={cn(
-                        "text-xs font-medium",
-                        row.original.status
-                            ? "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-300"
-                            : "bg-gray-100 text-gray-800 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300"
-                    )}
-                    variant="secondary"
-                >
-                    {row.original.status ? "Active" : "Inactive"}
-                </Badge>
+                <StatusCell
+                    status={row.original.status}
+                    onAcceptAction={handleAccept}
+                    onRejectAction={handleReject}
+                    productId={row.original.id}
+                />
             ),
             enableSorting: true,
+            size: 150,
         },
         {
             id: "actions",
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="">Actions</span>,
             cell: ({row}) => (
                 <RowActions
                     row={row}
                     onDeleteAction={() => handleDeleteClick(row.original)}
-                    onEditAction={() => startTransition(() => {
-                        router.push(`/admin/vendor-product/${row.original.id}`)
-                    })}
+                    onEditAction={() => handleEdit(row.original.id)}
                     onViewAction={() => handleView(row.original)}
                 />
             ),
             enableSorting: false,
             enableHiding: false,
+            size: 80,
         }
-    ], [handleDeleteClick, handleView, router]);
+    ], [handleDeleteClick, handleView, handleEdit, handleAccept, handleReject])
 
     const handleSearch = useCallback((value: string) => {
-        setSearch(value);
-        setCurrentPage(DEFAULT_PAGE);
-    }, []);
+        setSearch(value)
+    }, [])
 
     const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page);
-    }, []);
+        setCurrentPage(page)
+    }, [])
 
     const handlePageSizeChange = useCallback((size: number) => {
-        setPageSize(size);
-        setCurrentPage(DEFAULT_PAGE);
-    }, []);
+        setPageSize(size)
+        setCurrentPage(DEFAULT_PAGE)
+    }, [])
 
     const handleRefresh = useCallback(() => {
-        refetch();
-    }, [refetch]);
+        refetch()
+    }, [refetch])
 
     const handleModalClose = useCallback((open: boolean) => {
         if (!isDeleting) {
-            setDeleteModalOpen(open);
+            setDeleteModalOpen(open)
             if (!open) {
-                setSelectedProduct(null);
+                setSelectedProduct(null)
             }
         }
-    }, [isDeleting]);
+    }, [isDeleting])
 
-    const isTableLoading = isLoading || isFetching;
+    const isTableLoading = isLoading || isFetching
 
     return (
-        <div className="">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-6 w-full">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         Vendor Products
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -296,16 +310,16 @@ export default function VendorProductTable() {
                     size="sm"
                     disabled={isFetching}
                     aria-label="Refresh vendor products list"
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto h-10 gap-2"
                 >
                     <RefreshCw
                         className={cn(
-                            "h-4 w-4 mr-2",
+                            "h-4 w-4",
                             isFetching && "animate-spin"
                         )}
                         aria-hidden="true"
                     />
-                    {isFetching ? "Refreshing..." : "Refresh"}
+                    <span>{isFetching ? "Refreshing..." : "Refresh"}</span>
                 </Button>
             </div>
 
@@ -347,5 +361,5 @@ export default function VendorProductTable() {
                 confirmVariant="destructive"
             />
         </div>
-    );
+    )
 }

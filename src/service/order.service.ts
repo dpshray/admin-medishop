@@ -18,10 +18,25 @@ class OrderService extends HttpServices {
             throw error
         }
     }
+
     async deleteOrder(order_uuid: string) {
         try {
             const response = await this.deleteRequest({
                 url: `/admin/user-order/${order_uuid}`,
+                config: {
+                    auth: true,
+                }
+            })
+            return response?.data
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getOrderDetails(uuid: string) {
+        try {
+            const response = await this.getRequest({
+                url: `admin/user-order/${uuid}`,
                 config: {
                     auth: true,
                 }

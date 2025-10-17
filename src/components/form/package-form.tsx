@@ -67,6 +67,7 @@ export default function PackageForm({ slug, mode = "create" }: PackageFormProps)
         setIsLoading(true)
         try {
             const response: any = await packageService.getPackageDetail(slug)
+            console.log("Response", response)
             if (response) {
                 const packageData = response
                 reset({
@@ -95,6 +96,7 @@ export default function PackageForm({ slug, mode = "create" }: PackageFormProps)
     const onSubmit = useCallback(
         async (data: PackageFormData) => {
             try {
+                console.log("Form data ")
                 const response =
                     isEditMode && slug
                         ? await packageService.updatePackage(slug, data)

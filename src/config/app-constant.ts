@@ -1,0 +1,19 @@
+const LOW_STOCK_THRESHOLD = 10;
+const OUT_OF_STOCK = 0;
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 10;
+const QUERY_STALE_TIME = 30000;
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100] as const;
+
+const PAYMENT_PREFIX = "Rs" satisfies string
+
+
+export {
+    LOW_STOCK_THRESHOLD,
+    OUT_OF_STOCK,
+    DEFAULT_PAGE,
+    DEFAULT_PAGE_SIZE,
+    QUERY_STALE_TIME,
+    PAGE_SIZE_OPTIONS,
+    PAYMENT_PREFIX
+}

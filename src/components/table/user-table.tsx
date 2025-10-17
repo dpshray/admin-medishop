@@ -1,18 +1,20 @@
 'use client'
 
-import { useQuery } from "@tanstack/react-query"
-import { useCallback, useMemo, useState } from "react"
-import { ColumnDef } from "@tanstack/react-table"
+import {useQuery} from "@tanstack/react-query"
+import {useCallback, useMemo, useState} from "react"
+import {ColumnDef} from "@tanstack/react-table"
 import userService from "@/service/user.service"
-import { DataTable } from "@/components/table/ReusableTable"
+import {DataTable} from "@/components/table/ReusableTable"
 import ActionModal from "@/components/modal/ConfirmModal"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { RowActions } from "@/lib/helper"
-import { toast } from "sonner"
-import { ParamsType, PaginatedResponse } from "@/types/types"
-import { AlertTriangle } from "lucide-react"
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
+import {Badge} from "@/components/ui/badge"
+import {Button} from "@/components/ui/button"
+import {RowActions} from "@/lib/helper"
+import {toast} from "sonner"
+import {PaginatedResponse, ParamsType} from "@/types/types"
+import {AlertTriangle} from "lucide-react"
+import {Checkbox} from "@/components/ui/checkbox";
+import {cn} from "@/lib/utils";
 
 interface User {
     id: number
@@ -34,10 +36,10 @@ export default function UserTable() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
 
-    const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PaginatedResponse<User>, Error>({
+    const {data, isLoading, isError, error, refetch, isFetching} = useQuery<PaginatedResponse<User>, Error>({
         queryKey: ["users", currentPage, pageSize, search],
         queryFn: async () => {
-            const params: ParamsType = { page: currentPage, per_page: pageSize, search }
+            const params: ParamsType = {page: currentPage, per_page: pageSize, search}
             return await userService.getAllUser(params)
         },
     })
@@ -46,7 +48,7 @@ export default function UserTable() {
         async (user: User) => {
             setIsDeleting(true)
             try {
-                // await userService.deleteUser(user.id)
+                await userService.deleteUser(user.id)
                 toast.success(`User "${user.name}" deleted successfully`)
                 await refetch()
             } catch (error) {
@@ -67,31 +69,7 @@ export default function UserTable() {
         }
     }, [selectedUser, handleDeleteUser])
 
-    const handleDeleteSelected = useCallback(
-        async (selected: User[]) => {
-            try {
-                const results = await Promise.allSettled(
-                    selected.map((user) => userService.deleteUser(user.id))
-                )
 
-                const successful = results.filter((r) => r.status === 'fulfilled').length
-                const failed = results.filter((r) => r.status === 'rejected').length
-
-                if (successful > 0) {
-                    toast.success(`${successful} user${successful > 1 ? 's' : ''} deleted successfully`)
-                }
-                if (failed > 0) {
-                    toast.error(`Failed to delete ${failed} user${failed > 1 ? 's' : ''}`)
-                }
-
-                await refetch()
-            } catch (error) {
-                console.error('Bulk delete failed:', error)
-                toast.error("Failed to delete selected users")
-            }
-        },
-        [refetch]
-    )
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page)
@@ -112,7 +90,6 @@ export default function UserTable() {
     }, [])
 
 
-
     const handleEditUser = useCallback((id: number) => {
         console.log("Edit user:", id)
     }, [])
@@ -123,21 +100,36 @@ export default function UserTable() {
     }, [refetch])
 
 
-
     const columns: ColumnDef<User>[] = useMemo(
         () => [
             {
-                accessorKey: "id",
-                header: "ID",
-                size: 80,
+                id: "select",
+                header: ({table}) => (
+                    <Checkbox
+                        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                        aria-label="Select all products"
+                    />
+                ),
+                cell: ({row}) => (
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                        aria-label={`Select product ${row.original.name}`}
+                        className="mx-auto"
+                    />
+                ),
+                size: 50,
+                enableSorting: false,
+                enableHiding: false,
             },
             {
                 accessorKey: "name",
-                header: "User",
-                cell: ({ row }) => (
+                header: "Name",
+                cell: ({row}) => (
                     <div className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarImage src={row.original.image} alt={row.original.name} />
+                            <AvatarImage src={row.original.image} alt={row.original.name}/>
                             <AvatarFallback>{row.original.name.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
@@ -152,7 +144,7 @@ export default function UserTable() {
             {
                 accessorKey: "mobile_number",
                 header: "Mobile Number",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <span className="text-gray-700">{row.original.mobile_number}</span>
                 ),
                 size: 150,
@@ -160,9 +152,9 @@ export default function UserTable() {
             {
                 accessorKey: "status",
                 header: "Status",
-                cell: ({ row }) => (
-                    <Badge variant={row.original.status ? "default" : "secondary"}>
-                        {row.original.status ? "Active" : "Inactive"}
+                cell: ({row}) => (
+                    <Badge className={cn("", row.original.status ? "bg-green-500" : "bg-red-500")}>
+                        {row.original.status ? "Verified" : "Unverified"}
                     </Badge>
                 ),
                 size: 100,
@@ -170,7 +162,7 @@ export default function UserTable() {
             {
                 accessorKey: "total_orders",
                 header: "Orders",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <span className="font-medium">{row.original.total_orders}</span>
                 ),
                 size: 100,
@@ -178,7 +170,7 @@ export default function UserTable() {
             {
                 accessorKey: "total_items_purchased",
                 header: "Items Purchased",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <span className="text-gray-700">{row.original.total_items_purchased}</span>
                 ),
                 size: 150,
@@ -186,7 +178,7 @@ export default function UserTable() {
             {
                 accessorKey: "total_purchase_amount",
                 header: "Total Purchase (Rs.)",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <span className="font-medium text-green-600">
                        {row.original.total_purchase_amount}
                     </span>
@@ -196,7 +188,7 @@ export default function UserTable() {
             {
                 id: "actions",
                 header: "Actions",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <RowActions
                         row={row}
                         onDeleteAction={() => {
@@ -218,7 +210,8 @@ export default function UserTable() {
         () => (
             <div className="flex flex-col items-center justify-center py-12">
                 <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
                 <h3 className="mt-4 text-sm font-medium text-gray-900">No users found</h3>
                 <p className="mt-1 text-sm text-gray-500">Get started by adding your first user.</p>
@@ -235,7 +228,7 @@ export default function UserTable() {
             <div className="p-6">
                 <div className="rounded-lg border border-red-200 bg-red-50 p-6">
                     <div className="flex items-start space-x-3">
-                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5"/>
                         <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-medium text-red-800 mb-2">Failed to load users</h3>
                             <p className="text-red-700 mb-4">
@@ -281,7 +274,6 @@ export default function UserTable() {
                 columns={columns}
                 loading={isLoading || isFetching}
                 onAddAction={handleAddUser}
-                onDeleteAction={handleDeleteSelected}
                 onSearchAction={handleSearch}
                 actionLabel="Add User"
                 enableRowSelection

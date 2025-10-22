@@ -132,14 +132,14 @@ const SkeletonRow = memo(({columnCount}: {columnCount: number}) => (
 
 SkeletonRow.displayName = "SkeletonRow"
 
-const EmptyRow = memo(({columnCount, noDataText}: {columnCount: number; noDataText: ReactNode}) => (
+const EmptyRow = memo(({ columnCount, noDataText }: { columnCount: number; noDataText: ReactNode }) => (
     <TableRow className="hover:bg-transparent">
         <TableCell colSpan={columnCount} className="h-32 text-center">
             <div className="flex flex-col items-center justify-center gap-2">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <Search className="h-6 w-6 text-gray-500" aria-hidden="true"/>
+                    <Search className="h-6 w-6 text-gray-500" aria-hidden="true" />
                 </div>
-                <p className="text-sm text-gray-600">{noDataText}</p>
+                <div className="text-sm text-gray-600">{noDataText}</div>
             </div>
         </TableCell>
     </TableRow>

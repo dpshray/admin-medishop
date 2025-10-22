@@ -6,13 +6,14 @@ import {DataTable} from "@/components/table/ReusableTable"
 import brandService from "@/service/brand.service"
 import {ColumnDef} from "@tanstack/react-table"
 import {Checkbox} from "@/components/ui/checkbox"
-import {NoDataFound, RowActions} from "@/lib/helper"
+import {NoDataFound,} from "@/lib/helper"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
 import {BrandFormModal} from "@/components/brand/BrandFormModal"
 import {Badge} from "@/components/ui/badge"
 import {cn} from "@/lib/utils"
 import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage";
+import {RowActions} from "@/lib/action-button"
 
 interface Brand {
     id: number

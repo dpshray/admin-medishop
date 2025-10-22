@@ -1,19 +1,20 @@
 'use client'
 
-import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { ColumnDef } from "@tanstack/react-table";
-import { RefreshCw } from "lucide-react";
+import {useCallback, useMemo, useState} from "react";
+import {useRouter} from "next/navigation";
+import {useQuery} from "@tanstack/react-query";
+import {ColumnDef} from "@tanstack/react-table";
+import {RefreshCw} from "lucide-react";
 import orderService from "@/service/order.service";
-import { ParamsType } from "@/types/types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DataTable } from "@/components/table/ReusableTable";
+import {ParamsType} from "@/types/types";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {Checkbox} from "@/components/ui/checkbox";
+import {DataTable} from "@/components/table/ReusableTable";
 import ActionModal from "@/components/modal/ConfirmModal";
-import { cn } from "@/lib/utils";
-import { RowActions } from "@/lib/helper";
+import {cn} from "@/lib/utils";
+import {NoDataFound, } from "@/lib/helper";
+import {RowActions} from "@/lib/action-button"
 
 type OrderType = {
     order_uuid: string;
@@ -57,7 +58,7 @@ export default function AdminOrderTable() {
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const { data, isLoading, isFetching, refetch } = useQuery({
+    const {data, isLoading, isFetching, refetch} = useQuery({
         queryKey: ["admin-orders", currentPage, pageSize, search],
         queryFn: async () => {
             const params: ParamsType = {
@@ -105,7 +106,7 @@ export default function AdminOrderTable() {
     const columns: ColumnDef<OrderType>[] = useMemo(() => [
         {
             id: "select",
-            header: ({ table }) => (
+            header: ({table}) => (
                 <Checkbox
                     checked={
                         table.getIsAllPageRowsSelected() ||
@@ -116,7 +117,7 @@ export default function AdminOrderTable() {
                     className="mx-auto"
                 />
             ),
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -131,7 +132,7 @@ export default function AdminOrderTable() {
         {
             accessorKey: "order_code",
             header: "Order Code",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <span className="font-medium text-sm whitespace-nowrap">
                     {row.original.order_code}
                 </span>
@@ -141,7 +142,7 @@ export default function AdminOrderTable() {
         {
             accessorKey: "name",
             header: "Customer",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <div className="flex flex-col gap-1 min-w-[150px] max-w-[250px]">
                     <span className="font-medium text-sm truncate">
                         {row.original.name}
@@ -158,7 +159,7 @@ export default function AdminOrderTable() {
             header: () => (
                 <span className="flex justify-center w-full">Items</span>
             ),
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <span className="text-sm font-medium flex justify-center w-full">
                     {row.original.no_of_ordered_items}
                 </span>
@@ -168,7 +169,7 @@ export default function AdminOrderTable() {
         {
             accessorKey: "payment_status",
             header: "Payment",
-            cell: ({ row }) => {
+            cell: ({row}) => {
                 const status = row.original.payment_status;
                 return (
                     <Badge
@@ -187,7 +188,7 @@ export default function AdminOrderTable() {
         {
             accessorKey: "status",
             header: "Order Status",
-            cell: ({ row }) => {
+            cell: ({row}) => {
                 const status = row.original.status;
                 return (
                     <Badge
@@ -206,7 +207,7 @@ export default function AdminOrderTable() {
         {
             accessorKey: "address",
             header: "Delivery Info",
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <div className="flex flex-col gap-1 min-w-[180px] max-w-[250px]">
                     <span
                         className="text-sm truncate"
@@ -223,7 +224,7 @@ export default function AdminOrderTable() {
         {
             id: "actions",
             header: () => <span className="sr-only">Actions</span>,
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <RowActions
                     row={row}
                     onDeleteAction={() => handleDeleteClick(row.original)}
@@ -315,7 +316,12 @@ export default function AdminOrderTable() {
                     pageSizeOptions: [...PAGE_SIZE_OPTIONS],
                     dataCount: data?.total_items ?? 0,
                 }}
-                noDataText="No orders found. Orders will appear here once customers place them."
+                noDataText={
+                    <NoDataFound
+                        title="No orders found"
+                        description="Orders will appear here once customers place them."
+                    />
+                }
             />
 
             <ActionModal

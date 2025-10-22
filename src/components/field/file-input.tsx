@@ -16,6 +16,8 @@ interface FileInputFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputEl
     maxFileSize?: number
     allowedTypes?: string[]
     helperText?: string
+    existingImageUrl?: string
+    existingImageAlt?: string
 }
 
 const FileInputField = memo(({
@@ -31,6 +33,9 @@ const FileInputField = memo(({
                                  showFileList = true,
                                  maxFileSize,
                                  allowedTypes,
+                                 helperText,
+                                 existingImageUrl,
+                                 existingImageAlt = "Current image",
                                  id: propId,
                                  ...props
                              }: FileInputFieldProps) => {
@@ -39,7 +44,12 @@ const FileInputField = memo(({
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const [previews, setPreviews] = useState<string[]>([])
     const [dragActive, setDragActive] = useState(false)
+    const [showExistingImage, setShowExistingImage] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        setShowExistingImage(!!existingImageUrl && selectedFiles.length === 0)
+    }, [existingImageUrl, selectedFiles.length])
 
     useEffect(() => {
         return () => {
@@ -70,6 +80,10 @@ const FileInputField = memo(({
 
         if (!multiple && validFiles.length > 0) {
             validFiles.splice(1)
+        }
+
+        if (validFiles.length > 0) {
+            setShowExistingImage(false)
         }
 
         setSelectedFiles(prev => {
@@ -109,6 +123,11 @@ const FileInputField = memo(({
         if (inputRef.current) {
             inputRef.current.value = ""
         }
+    }, [onFileChange])
+
+    const removeExistingImage = useCallback(() => {
+        setShowExistingImage(false)
+        onFileChange?.([])
     }, [onFileChange])
 
     const handleDrag = useCallback((e: React.DragEvent) => {
@@ -158,6 +177,31 @@ const FileInputField = memo(({
                 </Label>
             )}
 
+            {showExistingImage && existingImageUrl && (
+                <div className="mb-3">
+                    <p className="text-xs text-muted-foreground mb-2">Current Image:</p>
+                    <div className="relative inline-block group">
+                        <img
+                            src={existingImageUrl}
+                            alt={existingImageAlt}
+                            className="h-32 w-auto max-w-full rounded-lg border-2 border-border object-contain bg-muted/30"
+                        />
+                        {!disabled && (
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                onClick={removeExistingImage}
+                                aria-label="Remove current image"
+                            >
+                                <X className="h-3 w-3" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div
                 className={cn(
                     "relative rounded-lg border-2 border-dashed transition-all duration-200",
@@ -181,21 +225,21 @@ const FileInputField = memo(({
                     type="file"
                     multiple={multiple}
                     accept={accept}
-                    required={required}
+                    required={required && !showExistingImage}
                     disabled={disabled}
                     onChange={handleFileChange}
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0 z-10"
                     aria-invalid={error ? "true" : "false"}
-                    aria-describedby={error ? `${id}-error` : undefined}
+                    aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
                     {...props}
                 />
 
                 <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-8 text-center pointer-events-none">
                     <Upload className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground mb-2 sm:mb-3" />
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-            <span className="font-medium text-primary">
-              Click to upload
-            </span>
+                        <span className="font-medium text-primary">
+                            Click to upload
+                        </span>
                         <span className="hidden sm:inline"> or drag and drop</span>
                     </p>
                     <p className="text-xs text-muted-foreground px-2">
@@ -230,6 +274,12 @@ const FileInputField = memo(({
                         </div>
                     ))}
                 </div>
+            )}
+
+            {helperText && !error && (
+                <p id={`${id}-helper`} className="text-xs text-muted-foreground">
+                    {helperText}
+                </p>
             )}
 
             {showFileList && selectedFiles.length > 0 && (

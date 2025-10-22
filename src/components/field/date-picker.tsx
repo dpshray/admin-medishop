@@ -48,7 +48,6 @@ export function DatePickerField({
                                     dateFormat = "PPP",
                                     helperText,
                                     showTime = false,
-                                    timeFormat = "24h",
                                     name,
                                     id: providedId,
                                 }: DatePickerFieldProps) {
@@ -118,8 +117,8 @@ export function DatePickerField({
         (date: Date) => {
             if (disabled) return true
             if (minDate && date < minDate) return true
-            if (maxDate && date > maxDate) return true
-            return false
+            return !!(maxDate && date > maxDate);
+
         },
         [disabled, minDate, maxDate]
     )

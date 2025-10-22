@@ -20,7 +20,8 @@ class UserService extends HttpServices {
         }
 
     }
-   async deleteUser(id: number) {
+
+    async deleteUser(id: number) {
         try {
             const res = await this.deleteRequest({
                 url: `/admin/users/${id}`,
@@ -29,6 +30,19 @@ class UserService extends HttpServices {
                 },
             })
             return res.data;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getUserById(uuid: string) {
+        try {
+            return await this.getRequest({
+                url: `/admin/users/${uuid}`,
+                config: {
+                    auth: true,
+                },
+            })
         } catch (error) {
             throw error;
         }

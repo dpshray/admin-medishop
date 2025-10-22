@@ -1,5 +1,5 @@
 import {memo, useMemo} from "react";
-import {AlertCircle, Check, Package, X} from "lucide-react";
+import {AlertCircle, Check, X} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {cn} from "@/lib/utils";
 import {Badge} from "@/components/ui/badge";
@@ -108,7 +108,8 @@ const StatusCell = memo<StatusCellProps>(({
                     size="sm"
                     onClick={handleReject}
                     disabled={isLoading}
-                    className="h-8  text-xs font-medium hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-950 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                    className={cn('h-8  text-xs font-medium bg-red-500 text-white hover:bg-red-600 hover:text-white dark:hover:bg-red-950 dark:hover:text-red-400 transition-colors disabled:opacity-50', isLoading && 'opacity-50 cursor-not-allowed',
+                        'border border-red-200 dark:border-red-800 ')}
                     aria-label="Reject product"
                 >
                     <X className="h-3.5 w-3.5 " aria-hidden="true"/>

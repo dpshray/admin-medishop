@@ -1,70 +1,55 @@
 'use client'
-import type {Row} from "@tanstack/react-table"
-import {Button} from "@/components/ui/button"
-import {Edit, Eye, Trash2} from "lucide-react"
+
+import {CheckCircle, Clock, PackageOpen, XCircle} from "lucide-react"
 import {cn} from "@/lib/utils"
+import React, {memo} from "react"
 
-interface RowActionsProps<TData> {
-    row: Row<TData>
-    onEditAction?: (row: Row<TData>) => void
-    onDeleteAction?: (row: Row<TData>) => void
-    onViewAction?: (row: Row<TData>) => void
+
+interface NoDataFoundProps {
+    title?: string
+    description?: string
+    icon?: React.ReactNode
+    className?: string
 }
 
-export function RowActions<TData>({
-                                      row,
-                                      onEditAction,
-                                      onDeleteAction,
-                                      onViewAction,
-                                  }: RowActionsProps<TData>) {
-    const commonClassName = "h-7 w-7 sm:h-8 sm:w-8 transition-colors duration-300 cursor-pointer"
+const NoDataFound = memo(
+    ({
+         title = "No data found",
+         description = "Get started by creating your first item.",
+         icon,
+         className
+     }: NoDataFoundProps) => {
+        return (
+            <div className={cn("flex flex-col items-center justify-center py-12", className)}>
+                {icon || <PackageOpen className="h-12 w-12 text-muted-foreground" aria-hidden="true"/>}
+                <h3 className="mt-4 text-sm font-semibold text-foreground">{title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            </div>
+        )
+    }
+)
 
-    return (
-        <div className={cn("flex items-center gap-1")}>
-            {onEditAction && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(commonClassName, "hover:bg-blue-600 hover:text-white")}
-                    onClick={() => onEditAction(row)}
-                >
-                    <Edit size={16}/>
-                </Button>
-            )}
-            {onDeleteAction && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(commonClassName, "hover:bg-red-600 hover:text-white")}
-                    onClick={() => onDeleteAction(row)}
-                >
-                    <Trash2 size={16}/>
-                </Button>
-            )}
-            {onViewAction && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(commonClassName, "hover:bg-green-600 hover:text-white")}
-                    onClick={() => onViewAction(row)}
-                >
-                    <Eye size={16}/>
-                </Button>
-            )}
-        </div>
-    )
+
+const GetStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+        case "delivered":
+            return "bg-green-100 text-green-800 border-green-200"
+        case "cancelled":
+            return "bg-red-100 text-red-800 border-red-200"
+        default:
+            return "bg-yellow-100 text-yellow-800 border-yellow-200"
+    }
+}
+const GetStatusIcon = (status: string) => {
+    const normalized = status.toLowerCase()
+    if (normalized === 'delivered') return <CheckCircle className="w-4 h-4 text-green-600" aria-hidden="true"/>
+    if (normalized === 'cancelled') return <XCircle className="w-4 h-4 text-red-600" aria-hidden="true"/>
+    return <Clock className="w-4 h-4 text-yellow-600" aria-hidden="true"/>
 }
 
 
-export function NoDataFound() {
-    return (
-        <div className="flex flex-col items-center justify-center py-12">
-            <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
-            <h3 className="mt-4 text-sm font-medium text-gray-900">No products found</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating your first product.</p>
-        </div>
-    )
-}
+NoDataFound.displayName = "NoDataFound"
+
+
+export {NoDataFound, GetStatusColor, GetStatusIcon}
+

@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import {useState} from 'react'
 import Image from 'next/image'
-import {Dialog, DialogContent, DialogTrigger, DialogClose, DialogTitle} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { X, ChevronLeft, ChevronRight, Maximize2, ZoomIn } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import {Dialog, DialogClose, DialogContent, DialogTitle} from '@/components/ui/dialog'
+import {Button} from '@/components/ui/button'
+import {Badge} from '@/components/ui/badge'
+import {ChevronLeft, ChevronRight, Maximize2, X, ZoomIn} from 'lucide-react'
+import {cn} from '@/lib/utils'
 
 interface GalleryImage {
     id: number | string
@@ -121,9 +121,10 @@ export default function ImageGallery({
                         />
 
                         {enableLightbox && (
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div
+                                className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                                 <div className="bg-white/90 backdrop-blur-sm rounded-full p-2">
-                                    <Maximize2 className="h-4 w-4 text-gray-800" />
+                                    <Maximize2 className="h-4 w-4 text-gray-800"/>
                                 </div>
                             </div>
                         )}
@@ -157,7 +158,7 @@ export default function ImageGallery({
                                     className="absolute top-4 right-4 z-50 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20"
                                     aria-label="Close gallery"
                                 >
-                                    <X className="h-4 w-4 text-white" />
+                                    <X className="h-4 w-4 text-white"/>
                                 </Button>
                             </DialogClose>
 
@@ -170,7 +171,7 @@ export default function ImageGallery({
                                         onClick={() => navigateImage('prev')}
                                         aria-label="Previous image"
                                     >
-                                        <ChevronLeft className="h-4 w-4 text-white" />
+                                        <ChevronLeft className="h-4 w-4 text-white"/>
                                     </Button>
 
                                     <Button
@@ -180,7 +181,7 @@ export default function ImageGallery({
                                         onClick={() => navigateImage('next')}
                                         aria-label="Next image"
                                     >
-                                        <ChevronRight className="h-4 w-4 text-white" />
+                                        <ChevronRight className="h-4 w-4 text-white"/>
                                     </Button>
                                 </>
                             )}
@@ -198,15 +199,17 @@ export default function ImageGallery({
 
                             {showImageCount && images.length > 1 && (
                                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-                                    <Badge variant="secondary" className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+                                    <Badge variant="secondary"
+                                           className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
                                         {selectedImageIndex + 1} of {images.length}
                                     </Badge>
                                 </div>
                             )}
 
                             <div className="absolute bottom-4 right-4">
-                                <Badge variant="secondary" className="bg-white/10 backdrop-blur-sm border-white/20 text-white text-xs">
-                                    <ZoomIn className="h-3 w-3 mr-1" />
+                                <Badge variant="secondary"
+                                       className="bg-white/10 backdrop-blur-sm border-white/20 text-white text-xs">
+                                    <ZoomIn className="h-3 w-3 mr-1"/>
                                     Click & drag to zoom
                                 </Badge>
                             </div>

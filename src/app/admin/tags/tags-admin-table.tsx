@@ -6,10 +6,11 @@ import {DataTable} from "@/components/table/ReusableTable"
 import tagService from "@/service/tag.service"
 import {ColumnDef} from "@tanstack/react-table"
 import {Checkbox} from "@/components/ui/checkbox"
-import {NoDataFound, RowActions} from "@/lib/helper"
+import {NoDataFound,} from "@/lib/helper"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
 import TagFormModal from "@/components/modal/tag-modal-from"
+import {RowActions} from "@/lib/action-button";
 
 interface Tag {
     id: number

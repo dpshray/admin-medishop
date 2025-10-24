@@ -9,14 +9,17 @@ import { Button } from "@/components/ui/button"
 import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 const createCategorySchema = z.object({
     name: z.string().min(1, "Category name is required").max(100, "Category name must be less than 100 characters"),
+    discount_percent: z.string().optional(),
     image: z.instanceof(File).optional(),
 })
 
 const updateCategorySchema = z.object({
     name: z.string().max(100, "Category name must be less than 100 characters").optional(),
+    discount_percent: z.string().optional(),
     image: z.instanceof(File).optional(),
 })
 
@@ -31,6 +34,7 @@ interface CategoryFormModalProps {
     initialData?: {
         name: string
         image?: string
+        discount_percent?: string
     }
 }
 
@@ -49,43 +53,28 @@ export function CategoryFormModal({
         handleSubmit,
         setValue,
         reset,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting }
     } = useForm<CategoryFormValues>({
         resolver: zodResolver(isEditMode ? updateCategorySchema : createCategorySchema),
-        defaultValues: {
-            name: "",
-            image: undefined,
-        }
+        defaultValues: { name: "", image: undefined }
     })
 
     const disabled = isLoading || isSubmitting
 
     useEffect(() => {
         if (open && initialData) {
-            reset({
-                name: initialData.name,
-                image: undefined,
-            })
+            reset({ name: initialData.name, image: undefined })
         } else if (open && !initialData) {
-            reset({
-                name: "",
-                image: undefined,
-            })
+            reset({ name: "", image: undefined })
         }
     }, [open, initialData, reset])
 
     const handleDialogChange = (isOpen: boolean) => {
-        if (!isOpen && !disabled) {
-            onCloseAction()
-        }
+        if (!isOpen && !disabled) onCloseAction()
     }
 
     const handleFormSubmit = async (data: CategoryFormValues) => {
-        try {
-            await onSubmitAction(data)
-        } catch (error) {
-            console.error("Form submission error:", error)
-        }
+        await onSubmitAction(data)
     }
 
     const handleFileChange = (files: File[]) => {
@@ -94,7 +83,7 @@ export function CategoryFormModal({
 
     return (
         <Dialog open={open} onOpenChange={handleDialogChange}>
-            <DialogContent className="w-full max-w-xl mx-auto p-6 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[95vw] md:max-w-[600px] max-h-[90vh] flex flex-col overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl font-semibold">
                         {isEditMode ? "Edit Category" : "Create New Category"}
@@ -108,6 +97,13 @@ export function CategoryFormModal({
                         error={errors.name?.message}
                         disabled={disabled}
                         required={!isEditMode}
+                    />
+                    <TextInputField
+                        {...register("discount_percent")}
+                        label="Discount Percent"
+                        placeholder="Enter discount percent"
+                        error={errors.discount_percent?.message}
+                        disabled={disabled}
                     />
                     <FileInputField
                         label={`Category Image${isEditMode ? " (Optional)" : ""}`}
@@ -131,18 +127,10 @@ export function CategoryFormModal({
                         </div>
                     )}
                     <div className="flex items-center justify-end gap-2 pt-4 border-t">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onCloseAction}
-                            disabled={disabled}
-                        >
+                        <Button type="button" variant="outline" onClick={onCloseAction} disabled={disabled}>
                             Cancel
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={disabled}
-                        >
+                        <Button type="submit" disabled={disabled} className={cn("bg-primaryColor hover:bg-primaryColor/80")}>
                             {disabled ? "Saving..." : isEditMode ? "Update Category" : "Create Category"}
                         </Button>
                     </div>

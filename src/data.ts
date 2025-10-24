@@ -216,95 +216,89 @@ export   const notifications = [
     },
 ]
 
-export const userDetailsData = {
-    id: 1,
-    uuid: "123e4567-e89b-12d3-a456-426614174000",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    mobile_number: "+1-555-123-4567",
-    status: true,
-    email_verified: "2025-10-01T12:30:00Z",
-    role: "customer",
-    profile_image: "https://randomuser.me/api/portraits/men/32.jpg",
-    date_joined: "2023-05-15T09:00:00Z",
-    last_login: "2025-10-20T18:45:00Z",
-    account_status: "active",
-    total_orders: 15,
-    total_items_purchased: 42,
-    total_purchase_amount: 1240.5,
-    preferred_payment_method: "Credit Card",
-    shipping_address: {
-        full_name: "John Doe",
-        phone: "+1-555-123-4567",
-        address_line_1: "123 Main St",
-        address_line_2: "Apt 4B",
-        city: "Los Angeles",
-        state: "CA",
-        country: "USA",
-        postal_code: "90001"
-    },
-    billing_address: {
-        full_name: "John Doe",
-        phone: "+1-555-123-4567",
-        address_line_1: "123 Main St",
-        address_line_2: "Apt 4B",
-        city: "Los Angeles",
-        state: "CA",
-        country: "USA",
-        postal_code: "90001"
-    },
-    orders: [
+export const userDetailsData ={
+    "id": 3,
+    "uuid": "22eb9d4a-3b11-4373-9d67-ea3ef374a8b6",
+    "name": "user00",
+    "email": "user@gmail.com",
+    "mobile_number": "9828285118",
+    "status": true,
+    "email_verified": "Verified",
+    "orders": [
         {
-            order_id: "ORD-1001",
-            date: "2025-09-20T14:30:00Z",
-            status: "delivered",
-            items_count: 3,
-            total_amount: 250.75,
-            payment_method: "Credit Card",
-            delivery_date: "2025-09-25T16:00:00Z"
-        },
-        {
-            order_id: "ORD-1002",
-            date: "2025-10-01T11:15:00Z",
-            status: "pending",
-            items_count: 1,
-            total_amount: 99.99,
-            payment_method: "PayPal",
-            delivery_date: null
+            "order_id": 1,
+            "order_code": "I1q1k4pIf3L88f0zf1GB",
+            "price": 9258.5,
+            "payment_method": "Cash on Delivery",
+            "payment_status": "UNPAID",
+            "order_address": "Shyambhu, Kathmandu",
+            "status": "PENDING",
+            "created_at": "2025-10-24 10:56:46",
+            "order_items_detail": [
+                {
+                    "item_type": "Product",
+                    "product_name": "Fugiat sit molestias sit.",
+                    "variant_name": "Variant-6",
+                    "quantity": 1,
+                    "price": 3258.5,
+                    "total": 3258.5,
+                    "featured_image": "http://192.168.100.18:8000/storage/516/tablets.jpg",
+                    "gallery_images": "http://192.168.100.18:8000/storage/517/cream.jpg"
+                },
+                {
+                    "item_type": "Package",
+                    "product_name": null,
+                    "variant_name": null,
+                    "quantity": 1,
+                    "price": 6000,
+                    "total": 6000,
+                    "featured_image": null,
+                    "gallery_images": null
+                }
+            ]
         }
     ],
-    wishlist: [
+    "user_favourite": [
         {
-            product_id: 101,
-            name: "Wireless Headphones",
-            category: "Electronics",
-            price: 149.99,
-            in_stock: true,
-            image_url: "https://example.com/products/headphones.jpg"
-        },
-        {
-            product_id: 102,
-            name: "Smart Watch",
-            category: "Wearables",
-            price: 199.99,
-            in_stock: false,
-            image_url: "https://example.com/products/smartwatch.jpg"
+            "type": "Product",
+            "id": 138,
+            "name": "Esse vel delectus omnis.",
+            "slug": "esse-vel-delectus-omnis",
+            "description": "<p>Doloribus voluptatibus sit dignissimos et hic. Tempore aut porro ut at. Sit maxime cum sunt quia voluptatem.</p><p>Aut sunt omnis asperiores omnis eius quo. Omnis fugiat sequi autem voluptas.</p><p>Odit officiis reprehenderit qui et. Placeat fugiat et blanditiis sit. Omnis et reprehenderit iure possimus impedit nesciunt consequatur. Sit incidunt eum ad dicta sed nihil. Dolorum eos iure incidunt.</p>",
+            "featured_image": "http://192.168.100.18:8000/storage/776/visc-inhaler.jpg"
         }
     ],
-    payment_methods: [
+    "user_wishlist": [
         {
-            type: "Credit Card",
-            last_used: "2025-09-25T16:00:00Z"
+            "type": "Product",
+            "id": 86,
+            "name": "Fugiat sit molestias sit.",
+            "slug": "fugiat-sit-molestias-sit",
+            "description": "<p>Sunt animi nulla corrupti rerum iure harum. Pariatur aspernatur natus voluptatibus sequi placeat aliquam.</p><p>Aliquid distinctio minus amet at. Illum optio debitis soluta reprehenderit exercitationem ea non illo. Accusamus iste tempore vero unde blanditiis alias sequi iste.</p><p>Soluta iusto iure accusantium neque velit beatae natus. Animi commodi laudantium quaerat autem. Dolore omnis optio eum et.</p>",
+            "featured_image": "http://192.168.100.18:8000/storage/516/tablets.jpg"
         },
         {
-            type: "PayPal",
-            last_used: "2025-10-01T11:15:00Z"
+            "type": "Package",
+            "id": 5,
+            "name": "Smart Kit",
+            "slug": "smart-kit",
+            "description": "<p>Aperiam quia sit non perspiciatis voluptates sit. Est quo distinctio est et ad nam. Blanditiis suscipit sit est amet et atque.</p><p>Velit hic atque voluptatem dolores consequatur. Voluptatibus est sed deserunt quasi qui ullam. Aut quis corporis velit odit qui ea vel.</p><p>Voluptas vitae accusamus sed consequatur est voluptatem nam velit. Nihil magni voluptatibus quaerat iure voluptatem excepturi. Officia eum consequatur vel ut magni repellendus dolorum. Consequatur ipsa expedita voluptatem qui et minima.</p>",
+            "featured_image": "http://192.168.100.18:8000/storage/2611/package-1.jpg"
         }
     ],
-    notifications: {
-        email_notifications: true,
-        sms_notifications: false,
-        push_notifications: true
-    }
+    "User_cart": [
+        {
+            "cart_id": 1,
+            "item_name": "Esse vel delectus omnis.",
+            "item_slug": "esse-vel-delectus-omnis",
+            "brand_name": "Sanofi",
+            "variant_name": "Variant-2",
+            "image": "http://192.168.100.18:8000/storage/776/visc-inhaler.jpg",
+            "quantity": 1,
+            "price": 1342,
+            "subtotal": 1342
+        }
+    ]
 }
+
 

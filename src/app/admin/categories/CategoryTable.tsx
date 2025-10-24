@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {useCallback, useMemo, useState} from "react"
 import {ColumnDef} from "@tanstack/react-table"
@@ -10,14 +10,16 @@ import {RowActions} from "@/lib/action-button"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {Badge} from "@/components/ui/badge"
 import {toast} from "sonner"
-import {CategoryFormModal, CategoryFormValues} from "@/components/categories/CategoryFromModal";
-import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage";
+import {CategoryFormModal, CategoryFormValues} from "@/components/categories/CategoryFromModal"
+import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
+import {DEFAULT_PAGE} from "@/config/app-constant"
 
 interface Category {
     id: number
     slug: string
     name: string
     image: string
+    discount_percent?: number
 }
 
 interface CategoryResponse {
@@ -32,57 +34,50 @@ interface PaginationParams {
 }
 
 export default function CategoryTable() {
-    const [paginationState, setPaginationState] = useState({
-        currentPage: 1,
-        pageSize: 10,
-    })
-
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
+    const [totalPages, setTotalPages] = useState(1)
+    const [totalItems, setTotalItems] = useState(0)
+    const [search, setSearch] = useState("")
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
     const [isFormModalOpen, setFormModalOpen] = useState(false)
 
     const {data, isLoading, isError, error, refetch} = useQuery<CategoryResponse, Error>({
-        queryKey: ["admin-categories", paginationState.currentPage, paginationState.pageSize],
+        queryKey: ["admin-categories", currentPage, pageSize, search],
         queryFn: async () => {
-            const params: PaginationParams = {
-                page: paginationState.currentPage,
-                per_page: paginationState.pageSize
-            }
-            return await categoriesService.getAllCategories(params)
+            const params: PaginationParams = {page: currentPage, per_page: pageSize}
+            return categoriesService.getAllCategories(params).then(response => {
+                setCurrentPage(response.page)
+                setTotalPages(response.total_page)
+                setTotalItems(response.total_items || 0)
+                return response
+            })
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
     })
 
+    const categories = useMemo(() => data?.items || [], [data?.items])
+
     const deleteMutation = useMutation({
         mutationFn: (id: number) => categoriesService.deleteCategory(id),
-        onSuccess: (response: any) => {
-            toast.success(response?.message || "Category deleted successfully")
+        onSuccess: (res: any) => {
+            toast.success(res?.message || "Category deleted successfully")
             setDeleteModalOpen(false)
             setSelectedCategory(null)
             refetch()
         },
-        onError: (error: any) => {
-            toast.error(error?.message || "Failed to delete category")
+        onError: (err: any) => {
+            toast.error(err?.message || "Failed to delete category")
         },
     })
 
-    const categories = data?.items ?? []
-    const totalPages = data?.total_page ?? 1
-    const totalItems = data?.total_items ?? 0
-
-    const handlePageChange = useCallback((page: number) => {
-        setPaginationState(prev => ({
-            ...prev,
-            currentPage: page
-        }))
-    }, [])
-
-    const handlePageSizeChange = useCallback((newPageSize: number) => {
-        setPaginationState({
-            currentPage: 1,
-            pageSize: newPageSize
-        })
+    const handleSearch = useCallback((value: string) => setSearch(value), [])
+    const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
+    const handlePageSizeChange = useCallback((size: number) => {
+        setPageSize(size)
+        setCurrentPage(DEFAULT_PAGE)
     }, [])
 
     const handleAddCategory = useCallback(() => {
@@ -108,43 +103,34 @@ export default function CategoryTable() {
     const handleFormSubmit = useCallback(async (formData: CategoryFormValues) => {
         try {
             if (selectedCategory) {
-                await categoriesService.updateCategory(selectedCategory.id, formData).then(
-                    (response) => {
-                        toast.success(response?.message || "Category updated successfully")
-                        refetch()
-                        setFormModalOpen(false)
-                        setSelectedCategory(null)
-                    }
-                )
-
+                await categoriesService.updateCategory(selectedCategory.id, formData).then(res => {
+                    toast.success(res?.message || "Category updated successfully")
+                    refetch()
+                    setFormModalOpen(false)
+                    setSelectedCategory(null)
+                })
             } else {
-                await categoriesService.createCategory(formData).then(
-                    (response) => {
-                        toast.success(response?.message || "Category created successfully")
-                        refetch()
-                    }
-                )
-
+                await categoriesService.createCategory(formData).then(res => {
+                    toast.success(res?.message || "Category created successfully")
+                    refetch()
+                })
             }
-
             setFormModalOpen(false)
             setSelectedCategory(null)
             refetch()
-        } catch (error: any) {
-            toast.error(error?.message || "Failed to save category")
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to save category")
         }
     }, [selectedCategory, refetch])
 
     const handleBulkDelete = useCallback(async (selectedCategories: Category[]) => {
-        if (selectedCategories.length === 0) return
-
+        if (!selectedCategories.length) return
         try {
-            const promises = selectedCategories.map(category => categoriesService.deleteCategory(category.id))
-            await Promise.all(promises)
+            await Promise.all(selectedCategories.map(cat => categoriesService.deleteCategory(cat.id)))
             toast.success(`Successfully deleted ${selectedCategories.length} categor${selectedCategories.length > 1 ? 'ies' : 'y'}`)
             refetch()
-        } catch (error: any) {
-            toast.error(error?.message || "Failed to delete selected categories")
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to delete selected categories")
         }
     }, [refetch])
 
@@ -153,21 +139,16 @@ export default function CategoryTable() {
             id: "select",
             header: ({table}) => (
                 <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                    onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
                     aria-label="Select all categories"
-                    className=""
                 />
             ),
             cell: ({row}) => (
                 <Checkbox
                     checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    onCheckedChange={value => row.toggleSelected(!!value)}
                     aria-label={`Select category ${row.original.name}`}
-                    className=""
                 />
             ),
             size: 50,
@@ -178,42 +159,28 @@ export default function CategoryTable() {
             accessorKey: "id",
             header: "ID",
             size: 80,
-            cell: ({row}) => (
-                <Badge variant="outline" className="font-mono">
-                    #{row.original.id}
-                </Badge>
-            ),
+            cell: ({row}) => <Badge variant="outline" className="font-mono">#{row.original.id}</Badge>
         },
         {
             accessorKey: "name",
             header: "Category Name",
             size: 200,
-            cell: ({row}) => (
-                <div className="font-medium text-gray-900">
-                    {row.original.name}
-                </div>
-            ),
+            cell: ({row}) => <div className="font-medium text-gray-900">{row.original.name}</div>
         },
         {
-            accessorKey: "slug",
-            header: "Slug",
+            accessorKey: "discount_percent",
+            header: "Discount Percent",
             size: 180,
-            cell: ({row}) => (
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                    {row.original.slug}
-                </code>
-            ),
+            cell: ({row}) =>
+                <span
+                    className="text-sm bg-gray-100 px-2 py-1 rounded">{row.original.discount_percent || "-"}</span>
         },
         {
             accessorKey: "image",
             header: "Image",
             size: 120,
             cell: ({row}) => (
-                <GlobalTableHoverImage
-                    src={row.original.image}
-                    alt={`${row.original.name} category image`}
-                    size={32}
-                />
+                <GlobalTableHoverImage src={row.original.image} alt={`${row.original.name} category image`} size={32}/>
             ),
             enableSorting: false,
         },
@@ -230,29 +197,21 @@ export default function CategoryTable() {
             ),
             enableSorting: false,
             enableHiding: false,
-        },
+        }
     ], [handleEditCategory, handleDeleteCategory])
 
     if (isError) {
         return (
             <div className="p-6">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                      clipRule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">
-                                Failed to load categories
-                            </h3>
-                            <p className="mt-1 text-sm text-red-700">
-                                {error?.message || "An unexpected error occurred"}
-                            </p>
-                        </div>
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-center">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"/>
+                    </svg>
+                    <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">Failed to load categories</h3>
+                        <p className="mt-1 text-sm text-red-700">{error?.message || "An unexpected error occurred"}</p>
                     </div>
                 </div>
             </div>
@@ -264,9 +223,7 @@ export default function CategoryTable() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Category Management</h1>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Manage your product categories and organization
-                    </p>
+                    <p className="mt-1 text-sm text-gray-500">Manage your product categories and organization</p>
                 </div>
             </div>
 
@@ -276,20 +233,21 @@ export default function CategoryTable() {
                 loading={isLoading}
                 onAddAction={handleAddCategory}
                 onDeleteAction={handleBulkDelete}
+                onSearchAction={handleSearch}
                 actionLabel="Add Category"
                 pagination={{
-                    page: paginationState.currentPage,
-                    totalPages: totalPages,
-                    pageSize: paginationState.pageSize,
+                    page: currentPage,
+                    totalPages,
+                    pageSize,
                     onPageChange: handlePageChange,
                     onPageSizeChange: handlePageSizeChange,
                     pageSizeOptions: [5, 10, 25, 50],
                     dataCount: totalItems,
                 }}
-                enableRowSelection={true}
-                enableSorting={true}
-                enableSearch={true}
-                enableColumnVisibility={true}
+                enableRowSelection
+                enableSorting
+                enableSearch
+                enableColumnVisibility
                 searchPlaceholder="Search categories by name..."
                 totalCount={totalItems}
                 noDataText={
@@ -308,11 +266,7 @@ export default function CategoryTable() {
                 open={isDeleteModalOpen}
                 setOpen={setDeleteModalOpen}
                 title="Delete Category"
-                description={
-                    selectedCategory
-                        ? `Are you sure you want to delete "${selectedCategory.name}"? This action cannot be undone.`
-                        : "Are you sure you want to delete this category?"
-                }
+                description={selectedCategory ? `Are you sure you want to delete "${selectedCategory.name}"? This action cannot be undone.` : "Are you sure you want to delete this category?"}
                 confirmLabel="Delete Category"
                 onConfirm={confirmDeleteCategory}
                 loading={deleteMutation.isPending}
@@ -321,7 +275,7 @@ export default function CategoryTable() {
             <CategoryFormModal
                 open={isFormModalOpen}
                 onCloseAction={() => {
-                    setFormModalOpen(false)
+                    setFormModalOpen(false);
                     setSelectedCategory(null)
                 }}
                 onSubmitAction={handleFormSubmit}

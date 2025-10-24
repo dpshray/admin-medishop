@@ -1,244 +1,396 @@
 'use client'
 
-import {useParams} from "next/navigation";
-import {
-    CheckCircle,
-    Clock,
-    Heart,
-    Mail,
-    MapPin,
-    Package,
-    Phone,
-    ShoppingBag,
-    TrendingUp,
-    User as UserIcon,
-    XCircle
-} from "lucide-react";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Badge} from "@/components/ui/badge";
-import {Separator} from "@/components/ui/separator";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Skeleton} from "@/components/ui/skeleton";
-import {userDetailsData} from "@/data";
+import {useParams} from "next/navigation"
+import {Heart, Mail, Package, Phone, ShoppingBag, ShoppingCart, Star, TrendingUp} from "lucide-react"
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
+import {Badge} from "@/components/ui/badge"
+import {Separator} from "@/components/ui/separator"
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
+import {Skeleton} from "@/components/ui/skeleton"
+import {userDetailsData} from "@/data"
+import {FormatCurrency, FormatDate, StatusBadge, StripHtml} from "@/lib/helper"
+import {cn} from "@/lib/utils"
+import {memo} from "react"
+import Image from "next/image";
 
-interface Address {
-    full_name: string;
-    phone: string;
-    address_line_1: string;
-    address_line_2: string;
-    city: string;
-    state: string;
-    country: string;
-    postal_code: string;
+export interface UserDetails {
+    id: number
+    uuid: string
+    name: string
+    email: string
+    mobile_number: string
+    status: boolean
+    email_verified: "Verified" | "Unverified" | string
+    orders?: Order[]
+    user_favourite?: FavouriteItem[]
+    user_wishlist?: WishlistItem[]
+    User_cart?: CartItem[]
 }
 
-interface Order {
-    order_id: string;
-    date: string;
-    status: string;
-    items_count: number;
-    total_amount: number;
-    payment_method: string;
-    delivery_date: string | null;
+export interface Order {
+    order_id: number
+    order_code: string
+    price: number
+    payment_method: string
+    payment_status: "PAID" | "UNPAID" | string
+    order_address: string
+    status: "PENDING" | "CONFIRMED" | "CANCELLED" | "DELIVERED" | string
+    created_at: string
+    order_items_detail: OrderItemDetail[]
 }
 
-interface WishlistItem {
-    product_id: number;
-    name: string;
-    category: string;
-    price: number;
-    in_stock: boolean;
-    image_url: string;
+export interface OrderItemDetail {
+    item_type: "Product" | "Package" | string
+    product_name: string | null
+    variant_name: string | null
+    quantity: number
+    price: number
+    total: number
+    featured_image: string | null
+    gallery_images: string | null
 }
 
-interface RecentlyViewedItem {
-    product_id: number;
-    name: string;
-    category: string;
-    price: number;
+export interface FavouriteItem {
+    type: "Product" | "Package" | string
+    id: number
+    name: string
+    slug: string
+    description: string
+    featured_image: string
 }
 
-interface ActivityLog {
-    action: string;
-    timestamp: string;
+export interface WishlistItem {
+    type: "Product" | "Package" | string
+    id: number
+    name: string
+    slug: string
+    description: string
+    featured_image: string
 }
 
-interface PaymentMethod {
-    type: string;
-    last_used: string;
-}
-
-interface User {
-    id: number;
-    uuid: string;
-    name: string;
-    email: string;
-    mobile_number: string;
-    status: boolean;
-    email_verified: string;
-    role: string;
-    profile_image: string;
-    date_joined: string;
-    last_login: string;
-    account_status: string;
-    total_orders: number;
-    total_items_purchased: number;
-    total_purchase_amount: number;
-    preferred_payment_method?: string;
-    shipping_address: Address;
-    billing_address: Address;
-    orders: Order[];
-    wishlist: WishlistItem[];
-    recently_viewed: RecentlyViewedItem[];
-    activity_log: ActivityLog[];
-    payment_methods: PaymentMethod[];
-    notifications: {
-        email_notifications: boolean;
-        sms_notifications: boolean;
-        push_notifications: boolean;
-    };
+export interface CartItem {
+    cart_id: number
+    item_name: string
+    item_slug: string
+    brand_name: string
+    variant_name: string
+    image: string
+    quantity: number
+    price: number
+    subtotal: number
 }
 
 
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-};
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(amount);
-};
-
-const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-        case 'delivered':
-            return <CheckCircle className="h-4 w-4"/>;
-        case 'cancelled':
-            return <XCircle className="h-4 w-4"/>;
-        default:
-            return <Clock className="h-4 w-4"/>;
-    }
-};
-
-const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status.toLowerCase()) {
-        case 'delivered':
-            return "default";
-        case 'cancelled':
-            return "destructive";
-        default:
-            return "secondary";
-    }
-};
-
-export default function UserDetailPage() {
-    const {slug} = useParams();
-    const uuid = slug as string;
-
-    const isLoading = false;
-    const isError = false;
-    const error = null;
-    const data = userDetailsData;
-
-    if (isLoading) {
-        return (
-            <div
-                className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4 sm:p-6 lg:p-8">
-                <div className="mx-auto max-w-7xl space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex flex-col sm:flex-row items-start gap-6">
-                                <Skeleton className="h-24 w-24 rounded-full"/>
-                                <div className="flex-1 space-y-3">
-                                    <Skeleton className="h-8 w-48"/>
-                                    <Skeleton className="h-4 w-64"/>
-                                    <Skeleton className="h-4 w-32"/>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <Skeleton key={i} className="h-32"/>
-                        ))}
+const LoadingSkeleton = memo(() => (
+    <div
+        className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-slate-100 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+            <Card className="border-purple-200 dark:border-purple-800">
+                <CardContent className="p-6">
+                    <div className="flex flex-col sm:flex-row items-start gap-6">
+                        <Skeleton className="h-24 w-24 rounded-full"/>
+                        <div className="flex-1 space-y-3 w-full">
+                            <Skeleton className="h-8 w-48"/>
+                            <Skeleton className="h-4 w-64"/>
+                            <Skeleton className="h-4 w-32"/>
+                        </div>
                     </div>
+                </CardContent>
+            </Card>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-32"/>
+                ))}
+            </div>
+        </div>
+    </div>
+))
+
+LoadingSkeleton.displayName = "LoadingSkeleton"
+
+const StatsCard = memo(({title, value, icon: Icon, gradient}: {
+    title: string
+    value: string | number
+    icon: typeof Package
+    gradient: string
+}) => (
+    <Card className={cn("transition-all hover:shadow-lg hover:-translate-y-1 duration-300", gradient)}>
+        <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                    <p className="text-sm font-medium opacity-90">{title}</p>
+                    <p className="text-3xl font-bold">{value}</p>
+                </div>
+                <Icon className="h-10 w-10 opacity-80" aria-hidden="true"/>
+            </div>
+        </CardContent>
+    </Card>
+))
+
+StatsCard.displayName = "StatsCard"
+
+const OrderCard = memo(({order}: { order: Order }) => (
+    <Card
+        className="overflow-hidden transition-all hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-700 duration-300">
+        <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="space-y-1">
+                    <h3 className="font-semibold text-lg">Order #{order.order_code}</h3>
+                    <p className="text-sm text-muted-foreground">{FormatDate(order.created_at)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <StatusBadge status={order.status}/>
+                    <Badge variant={order.payment_status === 'PAID' ? 'default' : 'secondary'} className="capitalize">
+                        {order.payment_status.toLowerCase()}
+                    </Badge>
                 </div>
             </div>
-        );
+
+            <Separator className="my-4"/>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="space-y-1">
+                    <p className="text-muted-foreground font-medium">Total Amount</p>
+                    <p className="font-semibold text-base">{FormatCurrency(order.price)}</p>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-muted-foreground font-medium">Items</p>
+                    <p className="font-semibold text-base">{order.order_items_detail.length}</p>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-muted-foreground font-medium">Payment Method</p>
+                    <p className="font-semibold text-base">{order.payment_method}</p>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-muted-foreground font-medium">Address</p>
+                    <p className="font-semibold text-base truncate"
+                       title={order.order_address}>{order.order_address}</p>
+                </div>
+            </div>
+
+            {order.order_items_detail.length > 0 && (
+                <>
+                    <Separator className="my-4"/>
+                    <div className="space-y-3">
+                        <p className="font-medium text-sm">Order Items</p>
+                        <div className="space-y-2">
+                            {order.order_items_detail.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                                    {item.featured_image && (
+                                        <Image
+                                            src={item.featured_image}
+                                            alt={item.product_name || 'Product'}
+                                            className="h-12 w-12 object-cover rounded-md"
+                                            loading="lazy"
+                                            onError={
+                                                (e) => {
+                                                    e.currentTarget.src = '/placeholder.png';
+                                                }
+                                            }
+                                            width={200}
+                                            height={200}
+                                        />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm truncate">
+                                            {item.product_name || item.item_type}
+                                            {item.variant_name &&
+                                                <span className="text-muted-foreground"> - {item.variant_name}</span>}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">Qty: {item.quantity} × {FormatCurrency(item.price)}</p>
+                                    </div>
+                                    <p className="font-semibold text-sm">{FormatCurrency(item.total)}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )}
+        </CardContent>
+    </Card>
+))
+
+OrderCard.displayName = "OrderCard"
+
+const WishlistCard = memo(({item}: { item: WishlistItem }) => (
+    <Card
+        className="overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 hover:border-purple-300 dark:hover:border-purple-700 duration-300 group">
+        <div className="relative aspect-square overflow-hidden bg-muted">
+            <Image
+                src={item.featured_image}
+                alt={item.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                loading="lazy"
+                onError={
+                    (e) => {
+                        e.currentTarget.src = '/placeholder.png';
+                    }
+                }
+                width={200}
+                height={200}
+            />
+            <Badge className="absolute top-2 right-2 bg-purple-600 text-white border-0">
+                {item.type}
+            </Badge>
+        </div>
+        <CardContent className="p-4">
+            <h3 className="font-semibold mb-2 line-clamp-2 min-h-[2.5rem]" title={item.name}>{item.name}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{StripHtml(item.description)}</p>
+        </CardContent>
+    </Card>
+))
+
+WishlistCard.displayName = "WishlistCard"
+
+const FavouriteCard = memo(({item}: { item: FavouriteItem }) => (
+    <Card
+        className="overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 hover:border-purple-300 dark:hover:border-purple-700 duration-300 group">
+        <div className="relative aspect-square overflow-hidden bg-muted">
+            <Image
+                src={item.featured_image}
+                alt={item.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                loading="lazy"
+                onError={
+                    (e) => {
+                        e.currentTarget.src = '/placeholder.png';
+                    }
+                }
+                width={200}
+                height={200}
+            />
+            <div className="absolute top-2 right-2">
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" aria-label="Favourite"/>
+            </div>
+        </div>
+        <CardContent className="p-4">
+            <h3 className="font-semibold mb-2 line-clamp-2 min-h-[2.5rem]" title={item.name}>{item.name}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2">{StripHtml(item.description)}</p>
+        </CardContent>
+    </Card>
+))
+
+FavouriteCard.displayName = "FavouriteCard"
+
+const CartItemCard = memo(({item}: { item: CartItem }) => (
+    <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-all duration-300">
+        <Image
+            src={item.image}
+            alt={item.item_name}
+            className="h-20 w-20 object-cover rounded-md"
+            loading="lazy"
+            onError={
+                (e) => {
+                    e.currentTarget.src = '/placeholder.png';
+                }
+            }
+            width={200}
+            height={200}
+        />
+        <div className="flex-1 min-w-0">
+            <h4 className="font-semibold truncate" title={item.item_name}>{item.item_name}</h4>
+            <p className="text-sm text-muted-foreground">{item.brand_name} - {item.variant_name}</p>
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-muted-foreground">Qty: {item.quantity}</span>
+                <Separator orientation="vertical" className="h-4"/>
+                <span className="text-sm font-medium">{FormatCurrency(item.price)}</span>
+            </div>
+        </div>
+        <p className="font-bold text-lg">{FormatCurrency(item.subtotal)}</p>
+    </div>
+))
+
+CartItemCard.displayName = "CartItemCard"
+
+export default function UserDetailPage() {
+    const {slug} = useParams()
+    const uuid = slug as string
+
+    const isLoading = false
+    const isError = false
+    const data = userDetailsData
+
+    if (isLoading) {
+        return <LoadingSkeleton/>
     }
 
     if (isError) {
         return (
             <div
-                className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+                className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-slate-100 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900 p-4">
                 <Card className="w-full max-w-md border-destructive">
                     <CardHeader>
                         <CardTitle className="text-destructive">Error Loading User</CardTitle>
-                        <CardDescription>
-                            {"User not found"}
-                        </CardDescription>
+                        <p className="text-sm text-muted-foreground">User not found</p>
                     </CardHeader>
                 </Card>
             </div>
-        );
+        )
     }
 
     if (!data) {
         return (
             <div
-                className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+                className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-slate-100 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900 p-4">
                 <p className="text-muted-foreground">No user data found</p>
             </div>
-        );
+        )
     }
+
+    const totalOrders = data.orders?.length || 0
+    const totalItems = data.orders?.reduce((sum, order) => sum + order.order_items_detail.length, 0) || 0
+    const totalSpent = data.orders?.reduce((sum, order) => sum + order.price, 0) || 0
 
     return (
         <div
-            className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4 sm:p-6 lg:p-8">
+            className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-slate-100 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900 p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl space-y-6">
-                <Card className="overflow-hidden">
-                    <CardContent className="p-6">
+                <Card className="overflow-hidden border-purple-200 dark:border-purple-800 shadow-lg">
+                    <CardContent className="p-6 sm:p-8">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                            <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
-                                <AvatarImage src={data.profile_image} alt={data.name}/>
-                                <AvatarFallback>
-                                    <UserIcon className="h-12 w-12"/>
+                            <Avatar
+                                className="h-24 w-24 border-4 border-purple-200 dark:border-purple-800 shadow-xl ring-4 ring-purple-100 dark:ring-purple-900">
+                                <AvatarImage src="" alt={data.name}/>
+                                <AvatarFallback
+                                    className="bg-gradient-to-br from-purple-500 to-purple-700 text-white text-2xl">
+                                    {data.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 space-y-3">
+                            <div className="flex-1 space-y-3 w-full">
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{data.name}</h1>
-                                    <Badge variant={data.account_status === 'active' ? 'default' : 'secondary'}>
-                                        {data.account_status}
-                                    </Badge>
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-purple-900 dark:from-purple-400 dark:to-purple-600 bg-clip-text text-transparent">
+                                        {data.name}
+                                    </h1>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Badge variant={data.status ? 'default' : 'secondary'}
+                                               className="bg-purple-600">
+                                            {data.status ? 'Active' : 'Inactive'}
+                                        </Badge>
+                                        <Badge variant={data.email_verified === 'Verified' ? 'default' : 'secondary'}>
+                                            {data.email_verified}
+                                        </Badge>
+                                    </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4"/>
-                                        <a href={`mailto:${data.email}`}
-                                           className="hover:text-primary transition-colors">
-                                            {data.email}
-                                        </a>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4"/>
-                                        <a href={`tel:${data.mobile_number}`}
-                                           className="hover:text-primary transition-colors">
-                                            {data.mobile_number}
-                                        </a>
-                                    </div>
+                                    <a
+                                        href={`mailto:${data.email}`}
+                                        className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                        aria-label={`Email ${data.name}`}
+                                    >
+                                        <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true"/>
+                                        <span className="truncate">{data.email}</span>
+                                    </a>
+                                    <a
+                                        href={`tel:${data.mobile_number}`}
+                                        className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                        aria-label={`Call ${data.name}`}
+                                    >
+                                        <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true"/>
+                                        <span>{data.mobile_number}</span>
+                                    </a>
                                 </div>
-                                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                                    <span>Joined: {formatDate(data.date_joined)}</span>
-                                    <span>Last login: {formatDate(data.last_login)}</span>
+                                <div className="text-xs text-muted-foreground">
+                                    <span>User ID: {data.uuid}</span>
                                 </div>
                             </div>
                         </div>
@@ -246,164 +398,139 @@ export default function UserDetailPage() {
                 </Card>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card
-                        className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Orders</p>
-                                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{data.total_orders}</p>
-                                </div>
-                                <Package className="h-10 w-10 text-blue-600 dark:text-blue-400"/>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card
-                        className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-green-700 dark:text-green-300">Items
-                                        Purchased</p>
-                                    <p className="text-3xl font-bold text-green-900 dark:text-green-100">{data.total_items_purchased}</p>
-                                </div>
-                                <ShoppingBag className="h-10 w-10 text-green-600 dark:text-green-400"/>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card
-                        className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800 sm:col-span-2">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Total
-                                        Spent</p>
-                                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
-                                        {formatCurrency(data.total_purchase_amount)}
-                                    </p>
-                                </div>
-                                <TrendingUp className="h-10 w-10 text-purple-600 dark:text-purple-400"/>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <StatsCard
+                        title="Total Orders"
+                        value={totalOrders}
+                        icon={Package}
+                        gradient="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100"
+                    />
+                    <StatsCard
+                        title="Items Purchased"
+                        value={totalItems}
+                        icon={ShoppingBag}
+                        gradient="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800 text-green-900 dark:text-green-100"
+                    />
+                    <StatsCard
+                        title="Cart Items"
+                        value={data.User_cart?.length || 0}
+                        icon={ShoppingCart}
+                        gradient="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800 text-orange-900 dark:text-orange-100"
+                    />
+                    <StatsCard
+                        title="Total Spent"
+                        value={FormatCurrency(totalSpent)}
+                        icon={TrendingUp}
+                        gradient="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-100"
+                    />
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     <div className="lg:col-span-2 space-y-6">
-                        <Card>
+                        <Card className="border-purple-200 dark:border-purple-800">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Package className="h-5 w-5"/>
-                                    Recent Orders
+                                    <Package className="h-5 w-5 text-purple-600" aria-hidden="true"/>
+                                    Recent Orders ({totalOrders})
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {data.orders.length > 0 ? (
+                                {data.orders && data.orders.length > 0 ? (
                                     data.orders.map((order) => (
-                                        <Card key={order.order_id}
-                                              className="overflow-hidden transition-all hover:shadow-md">
-                                            <CardContent className="p-4">
-                                                <div
-                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                                                    <h3 className="font-semibold text-lg">{order.order_id}</h3>
-                                                    <Badge variant={getStatusVariant(order.status)} className="w-fit">
-                                                        <span className="flex items-center gap-1">
-                                                            {getStatusIcon(order.status)}
-                                                            {order.status}
-                                                        </span>
-                                                    </Badge>
-                                                </div>
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                                                    <div>
-                                                        <p className="text-muted-foreground">Date</p>
-                                                        <p className="font-medium">{new Date(order.date).toLocaleDateString()}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-muted-foreground">Items</p>
-                                                        <p className="font-medium">{order.items_count}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-muted-foreground">Amount</p>
-                                                        <p className="font-medium">{formatCurrency(order.total_amount)}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-muted-foreground">Payment</p>
-                                                        <p className="font-medium">{order.payment_method}</p>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                                        <OrderCard key={order.order_id} order={order}/>
                                     ))
                                 ) : (
-                                    <p className="text-center py-8 text-muted-foreground">No orders found</p>
+                                    <div className="text-center py-12">
+                                        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4"
+                                                 aria-hidden="true"/>
+                                        <p className="text-muted-foreground">No orders found</p>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="border-purple-200 dark:border-purple-800">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Heart className="h-5 w-5"/>
-                                    Wishlist ({data.wishlist?.length || 0})
+                                    <Heart className="h-5 w-5 text-purple-600" aria-hidden="true"/>
+                                    Wishlist ({data.user_wishlist?.length || 0})
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    {data.wishlist?.map((item) => (
-                                        <Card key={item.product_id}
-                                              className="overflow-hidden transition-all hover:shadow-md">
-                                            <CardContent className="p-4">
-                                                <img
-                                                    src={item.image_url}
-                                                    alt={item.name}
-                                                    className="w-full h-40 object-cover rounded-md mb-3"
-                                                />
-                                                <h3 className="font-semibold mb-1 line-clamp-2">{item.name}</h3>
-                                                <p className="text-sm text-muted-foreground mb-2">{item.category}</p>
-                                                <div className="flex items-center justify-between">
-                                                    <p className="font-bold text-lg">{formatCurrency(item.price)}</p>
-                                                    <Badge variant={item.in_stock ? 'default' : 'destructive'}>
-                                                        {item.in_stock ? 'In Stock' : 'Out of Stock'}
-                                                    </Badge>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
+                                {data.user_wishlist && data.user_wishlist.length > 0 ? (
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {data.user_wishlist.map((item) => (
+                                            <WishlistCard key={item.id} item={item}/>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4"
+                                               aria-hidden="true"/>
+                                        <p className="text-muted-foreground">No items in wishlist</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-purple-200 dark:border-purple-800">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Star className="h-5 w-5 text-purple-600" aria-hidden="true"/>
+                                    Favourites ({data.user_favourite?.length || 0})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {data.user_favourite && data.user_favourite.length > 0 ? (
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {data.user_favourite.map((item) => (
+                                            <FavouriteCard key={item.id} item={item}/>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4"
+                                              aria-hidden="true"/>
+                                        <p className="text-muted-foreground">No favourite items</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
 
                     <div className="space-y-6">
-                        <Card>
+                        <Card className="border-purple-200 dark:border-purple-800">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <MapPin className="h-5 w-5"/>
-                                    Shipping Address
+                                    <ShoppingCart className="h-5 w-5 text-purple-600" aria-hidden="true"/>
+                                    Shopping Cart ({data.User_cart?.length || 0})
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <address className="not-italic text-sm space-y-1 text-muted-foreground">
-                                    <p className="font-semibold text-foreground text-base">{data.shipping_address.full_name}</p>
-                                    <p>{data.shipping_address.address_line_1}</p>
-                                    <p>{data.shipping_address.address_line_2}</p>
-                                    <p>{data.shipping_address.city}, {data.shipping_address.state}</p>
-                                    <p>{data.shipping_address.country} - {data.shipping_address.postal_code}</p>
-                                    <Separator className="my-2"/>
-                                    <a href={`tel:${data.shipping_address.phone}`}
-                                       className="text-primary hover:underline inline-block mt-2">
-                                        {data.shipping_address.phone}
-                                    </a>
-                                </address>
+                                {data.User_cart && data.User_cart.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {data.User_cart.map((item) => (
+                                            <CartItemCard key={item.cart_id} item={item}/>
+                                        ))}
+                                        <Separator/>
+                                        <div className="flex items-center justify-between pt-2">
+                                            <span className="font-semibold">Total:</span>
+                                            <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                        {FormatCurrency(data.User_cart.reduce((sum, item) => sum + item.subtotal, 0))}
+                      </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4"
+                                                      aria-hidden="true"/>
+                                        <p className="text-muted-foreground">Cart is empty</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
-
-
                     </div>
                 </div>
             </div>
         </div>
-    );
+    )
 }

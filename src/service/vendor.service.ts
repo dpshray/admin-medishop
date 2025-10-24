@@ -4,7 +4,7 @@ import {ParamsType} from "@/types/types";
 
 class VendorService extends HttpServices {
 
-    async getAllVendor(params?: { per_page?: number; page?: number, verified_vendors?: number, search?: string }) {
+    async getAllVendor(params?: ParamsType) {
         try {
             const response = await this.getRequest({
                 url: "/admin/vendor",

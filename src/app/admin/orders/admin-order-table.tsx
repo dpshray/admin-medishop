@@ -1,107 +1,113 @@
 'use client'
 
-import {useCallback, useMemo, useState} from "react";
-import {useRouter} from "next/navigation";
-import {useQuery} from "@tanstack/react-query";
-import {ColumnDef} from "@tanstack/react-table";
-import {RefreshCw} from "lucide-react";
-import orderService from "@/service/order.service";
-import {ParamsType} from "@/types/types";
-import {Button} from "@/components/ui/button";
-import {Badge} from "@/components/ui/badge";
-import {Checkbox} from "@/components/ui/checkbox";
-import {DataTable} from "@/components/table/ReusableTable";
-import ActionModal from "@/components/modal/ConfirmModal";
-import {cn} from "@/lib/utils";
-import {NoDataFound, } from "@/lib/helper";
+import {useCallback, useMemo, useState} from "react"
+import {useRouter} from "next/navigation"
+import {useQuery} from "@tanstack/react-query"
+
+import {RefreshCw} from "lucide-react"
+import orderService from "@/service/order.service"
+import {ParamsType} from "@/types/types"
+import {Button} from "@/components/ui/button"
+import {Checkbox} from "@/components/ui/checkbox"
+import {DataTable} from "@/components/table/ReusableTable"
+import ActionModal from "@/components/modal/ConfirmModal"
+import {cn} from "@/lib/utils"
+import {NoDataFound, StatusBadge} from "@/lib/helper"
 import {RowActions} from "@/lib/action-button"
+import {
+    DEFAULT_PAGE,
+    DEFAULT_PAGE_SIZE,
+    PAGE_SIZE_OPTIONS,
+    QUERY_REFETCH_INTERVAL,
+    QUERY_STALE_TIME
+} from "@/config/app-constant"
+import {ColumnDef} from "@tanstack/react-table";
+import SearchSelectField from "@/components/field/search-select";
+import useVendor from "@/hooks/use-vendor";
 
-type OrderType = {
-    order_uuid: string;
-    payment_method: string;
-    payment_status: "PAID" | "UNPAID" | "PENDING";
-    status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-    no_of_ordered_items: number;
-    order_code: string;
-    name: string;
-    email: string;
-    mobile: string;
-    address: string;
-};
 
-const PAYMENT_STATUS_VARIANTS: Record<OrderType['payment_status'], string> = {
-    PAID: "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-300",
-    UNPAID: "bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900 dark:text-red-300",
-    PENDING: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300"
-};
+type PaymentStatus = "PAID" | "UNPAID" | "PENDING"
+type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED"
 
-const ORDER_STATUS_VARIANTS: Record<OrderType['status'], string> = {
-    PENDING: "bg-gray-100 text-gray-800 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300",
-    PROCESSING: "bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300",
-    SHIPPED: "bg-purple-100 text-purple-800 hover:bg-purple-100 dark:bg-purple-900 dark:text-purple-300",
-    DELIVERED: "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-300",
-    CANCELLED: "bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900 dark:text-red-300"
-};
+interface OrderType {
+    order_uuid: string
+    payment_method: string
+    payment_status: PaymentStatus
+    status: OrderStatus
+    no_of_ordered_items: number
+    order_code: string
+    name: string
+    email: string
+    mobile: string
+    address: string
+    assigned_to: string
+}
 
-const DEFAULT_PAGE = 1;
-const DEFAULT_PAGE_SIZE = 10;
-const QUERY_STALE_TIME = 30000;
-const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100] as const;
+interface OrdersResponse {
+    items: OrderType[]
+    total_items: number
+    total_page: number
+    page: number
+}
 
 export default function AdminOrderTable() {
-    const router = useRouter();
+    const router = useRouter()
 
-    const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
-    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-    const [search, setSearch] = useState("");
-    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [currentPage, setCurrentPage] = useState<number>(DEFAULT_PAGE)
+    const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
+    const [search, setSearch] = useState<string>("")
+    const [isDeleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
+    const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null)
+    const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
-    const {data, isLoading, isFetching, refetch} = useQuery({
+    const {data, isLoading, isFetching, refetch} = useQuery<OrdersResponse>({
         queryKey: ["admin-orders", currentPage, pageSize, search],
         queryFn: async () => {
             const params: ParamsType = {
                 page: currentPage,
                 per_page: pageSize,
                 search
-            };
-            const response = await orderService.getAllOrders(params);
-            setCurrentPage(response.page);
-            return response;
+            }
+            const response = await orderService.getAllOrders(params)
+            setCurrentPage(response.page)
+            return response
         },
         staleTime: QUERY_STALE_TIME,
         refetchOnWindowFocus: false,
-    });
+        refetchInterval: QUERY_REFETCH_INTERVAL,
+    })
+    const {vendors}=useVendor( {
+        per_page:100
+    })
+    console.log("vendors",vendors)
+    const handleView = useCallback((order: OrderType): void => {
+        router.push(`/admin/orders/${order.order_uuid}`)
+    }, [router])
 
-    const handleView = useCallback((order: OrderType) => {
-        router.push(`/admin/orders/${order.order_uuid}`);
-    }, [router]);
+    const handleEdit = useCallback((order: OrderType): void => {
+        router.push(`/admin/orders/${order.order_uuid}/edit`)
+    }, [router])
 
-    const handleEdit = useCallback((order: OrderType) => {
-        router.push(`/admin/orders/${order.order_uuid}/edit`);
-    }, [router]);
+    const handleDeleteClick = useCallback((order: OrderType): void => {
+        setSelectedOrder(order)
+        setDeleteModalOpen(true)
+    }, [])
 
-    const handleDeleteClick = useCallback((order: OrderType) => {
-        setSelectedOrder(order);
-        setDeleteModalOpen(true);
-    }, []);
+    const confirmDeleteOrder = useCallback(async (): Promise<void> => {
+        if (!selectedOrder) return
 
-    const confirmDeleteOrder = useCallback(async () => {
-        if (!selectedOrder) return;
-
-        setIsDeleting(true);
+        setIsDeleting(true)
         try {
-            await orderService.deleteOrder(selectedOrder.order_uuid);
-            setDeleteModalOpen(false);
-            setSelectedOrder(null);
-            await refetch();
+            await orderService.deleteOrder(selectedOrder.order_uuid)
+            setDeleteModalOpen(false)
+            setSelectedOrder(null)
+            await refetch()
         } catch (error) {
-            console.error("Failed to delete order:", error);
+            console.error("Failed to delete order:", error)
         } finally {
-            setIsDeleting(false);
+            setIsDeleting(false)
         }
-    }, [selectedOrder, refetch]);
+    }, [selectedOrder, refetch])
 
     const columns: ColumnDef<OrderType>[] = useMemo(() => [
         {
@@ -114,7 +120,6 @@ export default function AdminOrderTable() {
                     }
                     onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                     aria-label="Select all orders on this page"
-                    className="mx-auto"
                 />
             ),
             cell: ({row}) => (
@@ -122,10 +127,9 @@ export default function AdminOrderTable() {
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
                     aria-label={`Select order ${row.original.order_code}`}
-                    className="mx-auto"
                 />
             ),
-            size: 50,
+            size: 40,
             enableSorting: false,
             enableHiding: false,
         },
@@ -133,97 +137,100 @@ export default function AdminOrderTable() {
             accessorKey: "order_code",
             header: "Order Code",
             cell: ({row}) => (
-                <span className="font-medium text-sm whitespace-nowrap">
+                <div className="font-medium text-sm">
                     {row.original.order_code}
-                </span>
+                </div>
             ),
             enableSorting: true,
+            size: 180,
         },
         {
             accessorKey: "name",
             header: "Customer",
             cell: ({row}) => (
-                <div className="flex flex-col gap-1 min-w-[150px] max-w-[250px]">
-                    <span className="font-medium text-sm truncate">
+                <div className="flex flex-col gap-0.5">
+                    <div className="font-medium text-sm">
                         {row.original.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate">
+                    </div>
+                    <div className="text-xs text-muted-foreground">
                         {row.original.email}
-                    </span>
+                    </div>
                 </div>
             ),
             enableSorting: true,
+            size: 200,
         },
         {
             accessorKey: "no_of_ordered_items",
-            header: () => (
-                <span className="flex justify-center w-full">Items</span>
-            ),
+            header: "Items",
             cell: ({row}) => (
-                <span className="text-sm font-medium flex justify-center w-full">
+                <div className="text-sm font-medium text-center">
                     {row.original.no_of_ordered_items}
-                </span>
+                </div>
             ),
             enableSorting: true,
+            size: 80,
         },
         {
             accessorKey: "payment_status",
             header: "Payment",
-            cell: ({row}) => {
-                const status = row.original.payment_status;
-                return (
-                    <Badge
-                        className={cn(
-                            "text-xs font-medium capitalize",
-                            PAYMENT_STATUS_VARIANTS[status]
-                        )}
-                        variant="secondary"
-                    >
-                        {status.toLowerCase()}
-                    </Badge>
-                );
-            },
+            cell: ({row}) => (
+                <StatusBadge status={row.original.payment_status}/>
+            ),
             enableSorting: true,
+            size: 120,
         },
         {
             accessorKey: "status",
             header: "Order Status",
-            cell: ({row}) => {
-                const status = row.original.status;
-                return (
-                    <Badge
-                        className={cn(
-                            "text-xs font-medium capitalize",
-                            ORDER_STATUS_VARIANTS[status]
-                        )}
-                        variant="secondary"
-                    >
-                        {status.toLowerCase()}
-                    </Badge>
-                );
-            },
+            cell: ({row}) => (
+                <StatusBadge status={row.original.status}/>
+            ),
             enableSorting: true,
+            size: 140,
         },
         {
             accessorKey: "address",
             header: "Delivery Info",
             cell: ({row}) => (
-                <div className="flex flex-col gap-1 min-w-[180px] max-w-[250px]">
-                    <span
-                        className="text-sm truncate"
-                        title={row.original.address}
-                    >
+                <div className="flex flex-col gap-0.5">
+                    <div className="text-sm">
                         {row.original.address}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
+                    </div>
+                    <div className="text-xs text-muted-foreground">
                         {row.original.mobile}
-                    </span>
+                    </div>
                 </div>
             ),
+            size: 250,
+        },
+        {
+            accessorKey: "assigned_to",
+            header: "Assign To",
+            cell: ({row}) => (
+                <div>
+                    <SearchSelectField
+                        options={[
+                            {value: "", label: "Select"},
+                            {value: "1", label: "User 1"},
+                            {value: "2", label: "User 2"},
+                            {value: "3", label: "User 3"},
+                            {value: "4", label: "User 4"},
+                            {value: "5", label: "User 5"},
+                        ]} onChangeAction={(value) => console.log(value)}
+                        placeholder={'Assign To'}
+
+                    />
+
+
+                </div>
+            ),
+            enableSorting: true,
+            size: 150,
         },
         {
             id: "actions",
-            header: () => <span className="sr-only">Actions</span>,
+            header: "Actions",
             cell: ({row}) => (
                 <RowActions
                     row={row}
@@ -234,40 +241,41 @@ export default function AdminOrderTable() {
             ),
             enableSorting: false,
             enableHiding: false,
+            size: 80,
         }
-    ], [handleDeleteClick, handleEdit, handleView]);
+    ], [handleDeleteClick, handleEdit, handleView])
 
-    const handleSearch = useCallback((value: string) => {
-        setSearch(value);
-        setCurrentPage(DEFAULT_PAGE);
-    }, []);
+    const handleSearch = useCallback((value: string): void => {
+        setSearch(value)
+        setCurrentPage(DEFAULT_PAGE)
+    }, [])
 
-    const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page);
-    }, []);
+    const handlePageChange = useCallback((page: number): void => {
+        setCurrentPage(page)
+    }, [])
 
-    const handlePageSizeChange = useCallback((size: number) => {
-        setPageSize(size);
-        setCurrentPage(DEFAULT_PAGE);
-    }, []);
+    const handlePageSizeChange = useCallback((size: number): void => {
+        setPageSize(size)
+        setCurrentPage(DEFAULT_PAGE)
+    }, [])
 
-    const handleRefresh = useCallback(() => {
-        refetch();
-    }, [refetch]);
+    const handleRefresh = useCallback((): void => {
+        refetch()
+    }, [refetch])
 
-    const handleModalClose = useCallback((open: boolean) => {
+    const handleModalClose = useCallback((open: boolean): void => {
         if (!isDeleting) {
-            setDeleteModalOpen(open);
+            setDeleteModalOpen(open)
             if (!open) {
-                setSelectedOrder(null);
+                setSelectedOrder(null)
             }
         }
-    }, [isDeleting]);
+    }, [isDeleting])
 
-    const isTableLoading = isLoading || isFetching;
+    const isTableLoading = isLoading || isFetching
 
     return (
-        <div className="">
+        <div className="w-full space-y-6 ">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
@@ -296,48 +304,52 @@ export default function AdminOrderTable() {
                 </Button>
             </div>
 
-            <DataTable
-                data={data?.items ?? []}
-                columns={columns}
-                loading={isTableLoading}
-                onSearchAction={handleSearch}
-                enableRowSelection
-                enableSorting
-                enableSearch
-                enableColumnVisibility
-                searchPlaceholder="Search by customer name, email, or order code..."
-                totalCount={data?.total_items ?? 0}
-                pagination={{
-                    page: currentPage,
-                    totalPages: data?.total_page ?? 1,
-                    pageSize,
-                    onPageChange: handlePageChange,
-                    onPageSizeChange: handlePageSizeChange,
-                    pageSizeOptions: [...PAGE_SIZE_OPTIONS],
-                    dataCount: data?.total_items ?? 0,
-                }}
-                noDataText={
-                    <NoDataFound
-                        title="No orders found"
-                        description="Orders will appear here once customers place them."
-                    />
-                }
-            />
+            <div className={'w-fit'}>
+                <DataTable
+                    data={data?.items ?? []}
+                    columns={columns}
+                    loading={isTableLoading}
+                    onSearchAction={handleSearch}
+                    enableRowSelection={true}
+                    enableSorting={true}
+                    enableSearch={true}
+                    enableColumnVisibility={true}
+                    searchPlaceholder="Search by customer name, email, or order code..."
+                    totalCount={data?.total_items ?? 0}
+                    className="w-full"
+                    tableClassName="w-full"
+                    pagination={{
+                        page: currentPage,
+                        totalPages: data?.total_page ?? 1,
+                        pageSize,
+                        onPageChange: handlePageChange,
+                        onPageSizeChange: handlePageSizeChange,
+                        pageSizeOptions: [...PAGE_SIZE_OPTIONS],
+                        dataCount: data?.total_items ?? 0,
+                    }}
+                    noDataText={
+                        <NoDataFound
+                            title="No orders found"
+                            description="Orders will appear here once customers place them."
+                        />
+                    }
+                />
 
-            <ActionModal
-                open={isDeleteModalOpen}
-                setOpen={handleModalClose}
-                title="Delete Order"
-                description={
-                    selectedOrder
-                        ? `Are you sure you want to delete order "${selectedOrder.order_code}"? This action cannot be undone and will permanently remove all order data.`
-                        : "Are you sure you want to delete this order? This action cannot be undone."
-                }
-                confirmLabel={isDeleting ? "Deleting..." : "Delete Order"}
-                onConfirm={confirmDeleteOrder}
-                loading={isDeleting}
-                confirmVariant="destructive"
-            />
+                <ActionModal
+                    open={isDeleteModalOpen}
+                    setOpen={handleModalClose}
+                    title="Delete Order"
+                    description={
+                        selectedOrder
+                            ? `Are you sure you want to delete order "${selectedOrder.order_code}"? This action cannot be undone and will permanently remove all order data.`
+                            : "Are you sure you want to delete this order? This action cannot be undone."
+                    }
+                    confirmLabel={isDeleting ? "Deleting..." : "Delete Order"}
+                    onConfirm={confirmDeleteOrder}
+                    loading={isDeleting}
+                    confirmVariant="destructive"
+                />
+            </div>
         </div>
-    );
+    )
 }

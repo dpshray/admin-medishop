@@ -98,6 +98,15 @@ const statusConfigMap: Record<string, StatusConfig> = {
         icon: Clock,
         className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
     },
+    [STATUS_TYPE.PROCESSING]: {
+        icon: Clock,
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    },
+    [STATUS_TYPE.SHIPPED]: {
+        icon: Clock,
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    },
+
 }
 
 const defaultStatusConfig: StatusConfig = {

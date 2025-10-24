@@ -5,6 +5,7 @@ import {PaginatedResponse} from "@/types/types"
 import categoriesService from "@/service/categories.service";
 import brandService from "@/service/brand.service";
 import productService from "@/service/product/product.service";
+import vendorService from "@/service/vendor.service";
 
 export interface Tag {
     id: number
@@ -27,7 +28,7 @@ export interface Brand {
     name: string
 }
 
-export const useTags = () => {
+const useTags = () => {
     const query = useQuery<PaginatedResponse<Tag>, Error>({
         queryKey: ["tags"],
         queryFn: async () => {
@@ -53,7 +54,7 @@ export const useTags = () => {
     }
 }
 
-export const useCategories = () => {
+const useCategories = () => {
     const query = useQuery<PaginatedResponse<Category>, Error>({
         queryKey: ["categories"],
         queryFn: async () => {
@@ -80,7 +81,7 @@ export const useCategories = () => {
 }
 
 
-export const useBrands = () => {
+const useBrands = () => {
     const query = useQuery<PaginatedResponse<Brand>, Error>({
         queryKey: ["brands"],
         queryFn: async () => {
@@ -106,7 +107,7 @@ export const useBrands = () => {
 }
 
 
-export const useProductUnits = () => {
+const useProductUnits = () => {
     const query = useQuery<any, Error>({
         queryKey: ["product-units"],
         queryFn: async () => {
@@ -122,4 +123,12 @@ export const useProductUnits = () => {
         ...query,
         productUnits: query?.data ?? [],
     }
+}
+
+
+export {
+    useTags,
+    useCategories,
+    useBrands,
+    useProductUnits,
 }

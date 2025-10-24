@@ -13,6 +13,7 @@ export interface PaginatedResponse<T> {
 export interface ParamsType extends PaginationParams {
     search?: string
     status?: number
+    verified_vendors?: number
 
     [key: string]: any
 }

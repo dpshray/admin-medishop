@@ -1,10 +1,10 @@
 'use client'
 
-import {AlertCircle, Ban, CheckCircle, Clock, Package, PackageOpen, XCircle} from "lucide-react"
+import {AlertCircle, CheckCircle, Clock, LucideIcon, Package, PackageOpen, XCircle} from "lucide-react"
 import {cn} from "@/lib/utils"
-import React, {memo, useMemo} from "react"
-import {OrderStatus, PaymentStatus, StatusType} from "@/types/enum"
-import {PAYMENT_PREFIX} from "@/config/app-constant"
+import {memo} from "react"
+import {ORDER_STATUS, PAYMENT_STATUS, STATUS_TYPE} from "@/types/enum"
+import {Badge} from "@/components/ui/badge"
 
 interface NoDataFoundProps {
     title?: string
@@ -13,7 +13,7 @@ interface NoDataFoundProps {
     className?: string
 }
 
-const NoDataFound = memo(
+export const NoDataFound = memo(
     ({
          title = "No data found",
          description = "Get started by creating your first item.",
@@ -32,165 +32,88 @@ const NoDataFound = memo(
 
 NoDataFound.displayName = "NoDataFound"
 
-interface StatusProps {
-    status: string | StatusType | PaymentStatus | OrderStatus
-    className?: string
-    showIcon?: boolean
-}
-
-type StatusConfigKey =
-    | Lowercase<StatusType>
-    | Lowercase<PaymentStatus>
-    | Lowercase<OrderStatus>
-
 interface StatusConfig {
-    color: string
-    icon: typeof CheckCircle
-    iconColor: string
-    label: string
+    icon: LucideIcon
+    className: string
 }
 
-const STATUS_CONFIG: Record<StatusConfigKey, StatusConfig> = {
-    delivered: {
-        color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+const statusConfigMap: Record<string, StatusConfig> = {
+    [STATUS_TYPE.ACTIVE]: {
         icon: CheckCircle,
-        iconColor: "text-green-600 dark:text-green-400",
-        label: "Delivered"
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
     },
-    cancelled: {
-        color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    [STATUS_TYPE.INACTIVE]: {
         icon: XCircle,
-        iconColor: "text-red-600 dark:text-red-400",
-        label: "Cancelled"
+        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
     },
-    pending: {
-        color: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    [STATUS_TYPE.PENDING]: {
         icon: Clock,
-        iconColor: "text-yellow-600 dark:text-yellow-400",
-        label: "Pending"
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
     },
-    confirmed: {
-        color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    [STATUS_TYPE.CONFIRMED]: {
+        icon: CheckCircle,
+        className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    },
+    [STATUS_TYPE.CANCELLED]: {
+        icon: XCircle,
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    },
+    [STATUS_TYPE.DELIVERED]: {
         icon: Package,
-        iconColor: "text-blue-600 dark:text-blue-400",
-        label: "Confirmed"
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
     },
-    verified: {
-        color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    [PAYMENT_STATUS.PAID]: {
         icon: CheckCircle,
-        iconColor: "text-green-600 dark:text-green-400",
-        label: "Verified"
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
     },
-    unverified: {
-        color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+    [PAYMENT_STATUS.UNPAID]: {
+        icon: XCircle,
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    },
+    [STATUS_TYPE.VERIFIED]: {
+        icon: CheckCircle,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [STATUS_TYPE.UNVERIFIED]: {
         icon: AlertCircle,
-        iconColor: "text-gray-600 dark:text-gray-400",
-        label: "Unverified"
+        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
     },
-    active: {
-        color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    [STATUS_TYPE.IN_STOCK]: {
+        icon: Package,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [STATUS_TYPE.OUT_OF_STOCK]: {
+        icon: AlertCircle,
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    },
+    [STATUS_TYPE.PUBLISHED]: {
         icon: CheckCircle,
-        iconColor: "text-green-600 dark:text-green-400",
-        label: "Active"
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
     },
-    inactive: {
-        color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
-        icon: Ban,
-        iconColor: "text-gray-600 dark:text-gray-400",
-        label: "Inactive"
-    },
-    out_of_stock: {
-        color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    [STATUS_TYPE.UNPUBLISHED]: {
         icon: XCircle,
-        iconColor: "text-red-600 dark:text-red-400",
-        label: "Out of Stock"
+        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
     },
-    in_stock: {
-        color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
-        icon: CheckCircle,
-        iconColor: "text-green-600 dark:text-green-400",
-        label: "In Stock"
-    },
-    draft: {
-        color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+    [STATUS_TYPE.DRAFT]: {
         icon: Clock,
-        iconColor: "text-gray-600 dark:text-gray-400",
-        label: "Draft"
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
     },
-    published: {
-        color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
-        icon: CheckCircle,
-        iconColor: "text-green-600 dark:text-green-400",
-        label: "Published"
-    },
-    unpublished: {
-        color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
-        icon: Ban,
-        iconColor: "text-gray-600 dark:text-gray-400",
-        label: "Unpublished"
-    },
-    paid: {
-        color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
-        icon: CheckCircle,
-        iconColor: "text-green-600 dark:text-green-400",
-        label: "Paid"
-    },
-    unpaid: {
-        color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
-        icon: XCircle,
-        iconColor: "text-red-600 dark:text-red-400",
-        label: "Unpaid"
-    }
 }
 
-const normalizeStatus = (status: string | StatusType | PaymentStatus | OrderStatus): StatusConfigKey => {
-    const normalized = String(status).toLowerCase().replace(/\s+/g, '_') as StatusConfigKey
-    return STATUS_CONFIG[normalized] ? normalized : 'pending'
+const defaultStatusConfig: StatusConfig = {
+    icon: AlertCircle,
+    className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
 }
 
-const GetStatusColor = (status: string | StatusType | PaymentStatus | OrderStatus): string => {
-    const normalizedStatus = normalizeStatus(status)
-    return STATUS_CONFIG[normalizedStatus].color
-}
-
-const GetStatusIcon = memo(({status}: {status: string | StatusType | PaymentStatus | OrderStatus}) => {
-    const config = useMemo(() => {
-        const normalizedStatus = normalizeStatus(status)
-        return STATUS_CONFIG[normalizedStatus]
-    }, [status])
-
-    const Icon = config.icon
-    return <Icon className={cn("w-4 h-4", config.iconColor)} aria-hidden="true"/>
-})
-
-GetStatusIcon.displayName = "GetStatusIcon"
-
-const GetStatusLabel = (status: string | StatusType | PaymentStatus | OrderStatus): string => {
-    const normalizedStatus = normalizeStatus(status)
-    return STATUS_CONFIG[normalizedStatus].label
-}
-
-const StatusBadge = memo(({status, className, showIcon = true}: StatusProps) => {
-    const config = useMemo(() => {
-        const normalizedStatus = normalizeStatus(status)
-        return STATUS_CONFIG[normalizedStatus]
-    }, [status])
-
+export const StatusBadge = memo(({status}: { status: PAYMENT_STATUS | ORDER_STATUS | STATUS_TYPE | string }) => {
+    const config = statusConfigMap[status.toUpperCase()] || defaultStatusConfig
     const Icon = config.icon
 
     return (
-        <span
-            className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors",
-                config.color,
-                className
-            )}
-            role="status"
-            aria-label={`Status: ${config.label}`}
-        >
-            {showIcon && <Icon className={cn("w-3.5 h-3.5", config.iconColor)} aria-hidden="true"/>}
-            <span>{config.label}</span>
-        </span>
+        <Badge variant="outline" className={cn("gap-1.5 capitalize", config.className)}>
+            <Icon className="h-3.5 w-3.5" aria-hidden="true"/>
+            <span>{status.toLowerCase().replace(/_/g, ' ')}</span>
+        </Badge>
     )
 })
 
@@ -204,7 +127,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
     minute: '2-digit',
 })
 
-const FormatDate = (dateString: string): string => {
+export const FormatDate = (dateString: string): string => {
     try {
         return dateFormatter.format(new Date(dateString))
     } catch {
@@ -219,26 +142,11 @@ const currencyFormatter = new Intl.NumberFormat('en-NP', {
     maximumFractionDigits: 2,
 })
 
-
-const FormatCurrency = (amount: number): string => {
+export const FormatCurrency = (amount: number): string => {
     return currencyFormatter.format(amount)
 }
 
-const StripHtml = (html: string, maxLength: number = 100): string => {
+export const StripHtml = (html: string, maxLength: number = 100): string => {
     const text = html.replace(/<[^>]*>/g, '').trim()
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
-}
-
-export {
-    NoDataFound,
-    GetStatusColor,
-    GetStatusIcon,
-    GetStatusLabel,
-    StatusBadge,
-    STATUS_CONFIG,
-   FormatCurrency,
-    FormatDate,
-    StripHtml,
-    type StatusProps,
-    type StatusConfigKey
 }

@@ -1,21 +1,4 @@
-enum PaymentStatus {
-    PAID = "PAID",
-    UNPAID = "UNPAID"
-}
-
-enum OrderStatus {
-    PENDING = "PENDING",
-    CONFIRMED = "CONFIRMED",
-    CANCELLED = "CANCELLED",
-    DELIVERED = "DELIVERED"
-}
-
-enum OrderType {
-    PRODUCT = "Product",
-    PACKAGE = "Package"
-}
-
-enum StatusType {
+enum STATUS_TYPE {
     PENDING = "PENDING",
     CONFIRMED = "CONFIRMED",
     CANCELLED = "CANCELLED",
@@ -29,7 +12,28 @@ enum StatusType {
     DRAFT = "DRAFT",
     PUBLISHED = "PUBLISHED",
     UNPUBLISHED = "UNPUBLISHED",
-
 }
 
-export {PaymentStatus, OrderStatus, OrderType, StatusType}
+enum PAYMENT_STATUS {
+    PAID = "PAID",
+    UNPAID = "UNPAID",
+}
+
+enum ORDER_STATUS {
+    PENDING = STATUS_TYPE.PENDING,
+    CONFIRMED = STATUS_TYPE.CONFIRMED,
+    CANCELLED = STATUS_TYPE.CANCELLED,
+    DELIVERED = STATUS_TYPE.DELIVERED,
+}
+
+enum ORDER_TYPE {
+    PRODUCT = "PRODUCT",
+    PACKAGE = "PACKAGE",
+}
+
+export {
+    STATUS_TYPE,
+    PAYMENT_STATUS,
+    ORDER_STATUS,
+    ORDER_TYPE
+}

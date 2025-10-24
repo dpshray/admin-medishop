@@ -1,6 +1,6 @@
 "use client"
 
-import {useState, useEffect} from "react"
+import {useCallback, useEffect, useMemo, useState} from "react"
 import {Label} from "@/components/ui/label"
 import {cn} from "@/lib/utils"
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command"
@@ -23,7 +23,12 @@ interface SearchSelectFieldProps {
     name?: string
     disabled?: boolean
     onChangeAction?: (value: string | number) => void
+
     [key: string]: any
+
+    className?: string
+    inputClassName?: string
+    helperText?: string
 }
 
 export default function SearchSelectField({
@@ -34,24 +39,35 @@ export default function SearchSelectField({
                                               value,
                                               error,
                                               disabled = false,
-                                              onChangeAction = () => {},
+                                              onChangeAction = () => {
+                                              },
+                                              className,
+                                              inputClassName,
+                                              helperText,
                                               ...props
                                           }: SearchSelectFieldProps) {
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
 
-    const filteredOptions = options.filter(option =>
-        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredOptions = useMemo(() =>
+            options.filter(option =>
+                option.label.toLowerCase().includes(searchTerm.toLowerCase())
+            ),
+        [options, searchTerm]
     )
 
-    const handleSelect = (selectedValue: string | number) => {
+    const selectedOption = useMemo(() =>
+            value ? options.find(option => option.value === value.value) : null,
+        [value, options]
+    )
+
+    const displayText = selectedOption?.label || value?.label || ""
+
+    const handleSelect = useCallback((selectedValue: string | number) => {
         onChangeAction(selectedValue)
         setOpen(false)
         setSearchTerm("")
-    }
-
-    const selectedOption = value ? options.find(option => option.value === value.value) : null
-    const displayText = selectedOption?.label || (value?.label) || ""
+    }, [onChangeAction])
 
     useEffect(() => {
         if (!open) {
@@ -60,11 +76,12 @@ export default function SearchSelectField({
     }, [open])
 
     return (
-        <div className="md:space-y-2 w-full space-y-1" {...props}>
+        <div className={cn("w-full space-y-1 md:space-y-2", className)} {...props}>
             {label && (
-                <Label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Label
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
+                    {required && <span className="ml-1 text-red-500">*</span>}
                 </Label>
             )}
             <Popover open={open} onOpenChange={setOpen}>
@@ -77,7 +94,8 @@ export default function SearchSelectField({
                         className={cn(
                             "w-full justify-between text-left font-normal",
                             error && "border-red-500 focus-visible:ring-red-500",
-                            !displayText && "text-muted-foreground"
+                            !displayText && "text-muted-foreground",
+                            inputClassName
                         )}
                     >
                         <span className={cn("truncate", !displayText && "text-muted-foreground")}>
@@ -86,7 +104,7 @@ export default function SearchSelectField({
                         <ChevronDownIcon
                             size={16}
                             className={cn(
-                                "text-muted-foreground/80 shrink-0 transition-transform duration-200",
+                                "shrink-0 text-muted-foreground/80 transition-transform duration-200",
                                 open && "rotate-180"
                             )}
                             aria-hidden="true"
@@ -94,7 +112,7 @@ export default function SearchSelectField({
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0"
+                    className="w-full min-w-[var(--radix-popper-anchor-width)] border-input p-0"
                     align="start"
                     sideOffset={4}
                 >
@@ -108,7 +126,7 @@ export default function SearchSelectField({
                             <CommandEmpty>No options found.</CommandEmpty>
                             <CommandGroup>
                                 {filteredOptions.length > 0 ? (
-                                    filteredOptions.map((option,index) => (
+                                    filteredOptions.map((option, index) => (
                                         <CommandItem
                                             key={`${option.value}-${index}`}
                                             value={option.value.toString()}
@@ -117,7 +135,7 @@ export default function SearchSelectField({
                                         >
                                             <span className="flex-1">{option.label}</span>
                                             {value?.value === option.value && (
-                                                <CheckIcon size={16} className="ml-2 text-primary shrink-0" />
+                                                <CheckIcon size={16} className="ml-2 shrink-0 text-primary"/>
                                             )}
                                         </CommandItem>
                                     ))
@@ -131,9 +149,14 @@ export default function SearchSelectField({
                     </Command>
                 </PopoverContent>
             </Popover>
+            {helperText && !error && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {helperText}
+                </p>
+            )}
             {error && (
-                <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                    <span className="inline-block w-1 h-1 bg-red-500 rounded-full shrink-0"></span>
+                <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                    <span className="inline-block h-1 w-1 shrink-0 rounded-full bg-red-500"></span>
                     {error}
                 </p>
             )}

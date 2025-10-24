@@ -143,7 +143,6 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
             title="Vendor Dashboard"
             subtitle="Manage your store"
             currentHref="/vendor"
-            logo={<Box className="h-5 w-5 text-primary-foreground" />}
             notifications={notifications}
             dropdownGroups={dropdownGroups}
         >

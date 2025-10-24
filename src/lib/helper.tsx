@@ -1,70 +1,161 @@
 'use client'
-import type {Row} from "@tanstack/react-table"
-import {Button} from "@/components/ui/button"
-import {Edit, Eye, Trash2} from "lucide-react"
+
+import {AlertCircle, CheckCircle, Clock, LucideIcon, Package, PackageOpen, XCircle} from "lucide-react"
 import {cn} from "@/lib/utils"
+import {memo} from "react"
+import {ORDER_STATUS, PAYMENT_STATUS, STATUS_TYPE} from "@/types/enum"
+import {Badge} from "@/components/ui/badge"
 
-interface RowActionsProps<TData> {
-    row: Row<TData>
-    onEditAction?: (row: Row<TData>) => void
-    onDeleteAction?: (row: Row<TData>) => void
-    onViewAction?: (row: Row<TData>) => void
+interface NoDataFoundProps {
+    title?: string
+    description?: string
+    icon?: React.ReactNode
+    className?: string
 }
 
-export function RowActions<TData>({
-                                      row,
-                                      onEditAction,
-                                      onDeleteAction,
-                                      onViewAction,
-                                  }: RowActionsProps<TData>) {
-    const commonClassName = "h-7 w-7 sm:h-8 sm:w-8 transition-colors duration-300 cursor-pointer"
+export const NoDataFound = memo(
+    ({
+         title = "No data found",
+         description = "Get started by creating your first item.",
+         icon,
+         className
+     }: NoDataFoundProps) => {
+        return (
+            <div className={cn("flex flex-col items-center justify-center py-12", className)}>
+                {icon || <PackageOpen className="h-12 w-12 text-muted-foreground" aria-hidden="true"/>}
+                <h3 className="mt-4 text-sm font-semibold text-foreground">{title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            </div>
+        )
+    }
+)
 
-    return (
-        <div className={cn("flex items-center gap-1")}>
-            {onEditAction && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(commonClassName, "hover:bg-blue-600 hover:text-white")}
-                    onClick={() => onEditAction(row)}
-                >
-                    <Edit size={16}/>
-                </Button>
-            )}
-            {onDeleteAction && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(commonClassName, "hover:bg-red-600 hover:text-white")}
-                    onClick={() => onDeleteAction(row)}
-                >
-                    <Trash2 size={16}/>
-                </Button>
-            )}
-            {onViewAction && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(commonClassName, "hover:bg-green-600 hover:text-white")}
-                    onClick={() => onViewAction(row)}
-                >
-                    <Eye size={16}/>
-                </Button>
-            )}
-        </div>
-    )
+NoDataFound.displayName = "NoDataFound"
+
+interface StatusConfig {
+    icon: LucideIcon
+    className: string
 }
 
+const statusConfigMap: Record<string, StatusConfig> = {
+    [STATUS_TYPE.ACTIVE]: {
+        icon: CheckCircle,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [STATUS_TYPE.INACTIVE]: {
+        icon: XCircle,
+        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+    },
+    [STATUS_TYPE.PENDING]: {
+        icon: Clock,
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    },
+    [STATUS_TYPE.CONFIRMED]: {
+        icon: CheckCircle,
+        className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    },
+    [STATUS_TYPE.CANCELLED]: {
+        icon: XCircle,
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    },
+    [STATUS_TYPE.DELIVERED]: {
+        icon: Package,
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
+    },
+    [PAYMENT_STATUS.PAID]: {
+        icon: CheckCircle,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [PAYMENT_STATUS.UNPAID]: {
+        icon: XCircle,
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    },
+    [STATUS_TYPE.VERIFIED]: {
+        icon: CheckCircle,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [STATUS_TYPE.UNVERIFIED]: {
+        icon: AlertCircle,
+        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+    },
+    [STATUS_TYPE.IN_STOCK]: {
+        icon: Package,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [STATUS_TYPE.OUT_OF_STOCK]: {
+        icon: AlertCircle,
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    },
+    [STATUS_TYPE.PUBLISHED]: {
+        icon: CheckCircle,
+        className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    },
+    [STATUS_TYPE.UNPUBLISHED]: {
+        icon: XCircle,
+        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+    },
+    [STATUS_TYPE.DRAFT]: {
+        icon: Clock,
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    },
+    [STATUS_TYPE.PROCESSING]: {
+        icon: Clock,
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    },
+    [STATUS_TYPE.SHIPPED]: {
+        icon: Clock,
+        className: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    },
 
-export function NoDataFound() {
+}
+
+const defaultStatusConfig: StatusConfig = {
+    icon: AlertCircle,
+    className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+}
+
+export const StatusBadge = memo(({status}: { status: PAYMENT_STATUS | ORDER_STATUS | STATUS_TYPE | string }) => {
+    const config = statusConfigMap[status.toUpperCase()] || defaultStatusConfig
+    const Icon = config.icon
+
     return (
-        <div className="flex flex-col items-center justify-center py-12">
-            <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
-            <h3 className="mt-4 text-sm font-medium text-gray-900">No products found</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating your first product.</p>
-        </div>
+        <Badge variant="outline" className={cn("gap-1.5 capitalize", config.className)}>
+            <Icon className="h-3.5 w-3.5" aria-hidden="true"/>
+            <span>{status.toLowerCase().replace(/_/g, ' ')}</span>
+        </Badge>
     )
+})
+
+StatusBadge.displayName = "StatusBadge"
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+})
+
+export const FormatDate = (dateString: string): string => {
+    try {
+        return dateFormatter.format(new Date(dateString))
+    } catch {
+        return dateString
+    }
+}
+
+const currencyFormatter = new Intl.NumberFormat('en-NP', {
+    style: 'currency',
+    currency: 'NPR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+})
+
+export const FormatCurrency = (amount: number): string => {
+    return currencyFormatter.format(amount)
+}
+
+export const StripHtml = (html: string, maxLength: number = 100): string => {
+    const text = html.replace(/<[^>]*>/g, '').trim()
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
 }

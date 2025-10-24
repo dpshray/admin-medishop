@@ -1,7 +1,6 @@
 "use client"
 
-import {type ReactNode, useEffect, useId, useRef, useState, useCallback, memo} from "react"
-import React from "react"
+import React, {memo, type ReactNode, useCallback, useEffect, useId, useRef, useState} from "react"
 import {
     type ColumnDef,
     type ColumnFiltersState,
@@ -55,35 +54,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {Pagination, PaginationContent, PaginationEllipsis, PaginationItem} from "@/components/ui/pagination"
+import {cn, generatePageRange} from "@/lib/utils";
+import {useDebounce} from "@/hooks/use-debounce";
 
-const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" ")
-
-const useDebounce = <T,>(value: T, delay: number): T => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
-
-    useEffect(() => {
-        const handler = setTimeout(() => setDebouncedValue(value), delay)
-        return () => clearTimeout(handler)
-    }, [value, delay])
-
-    return debouncedValue
-}
-
-const generatePageRange = (currentPage: number, totalPages: number): (number | "ellipsis")[] => {
-    if (totalPages <= 7) {
-        return Array.from({length: totalPages}, (_, i) => i + 1)
-    }
-
-    if (currentPage <= 3) {
-        return [1, 2, 3, 4, "ellipsis", totalPages]
-    }
-
-    if (currentPage >= totalPages - 2) {
-        return [1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages]
-    }
-
-    return [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages]
-}
 
 interface DataTablePagination {
     page: number
@@ -120,10 +93,10 @@ interface DataTableProps<TData, TValue> {
     renderSubComponent?: (row: Row<TData>) => ReactNode
 }
 
-const SkeletonRow = memo(({columnCount}: {columnCount: number}) => (
+const SkeletonRow = memo(({columnCount}: { columnCount: number }) => (
     <TableRow>
         {Array.from({length: columnCount}).map((_, j) => (
-            <TableCell key={j} className="h-14 px-4">
+            <TableCell key={j} className="h-14 px-2 sm:px-4">
                 <div className="h-4 w-full animate-pulse rounded bg-gray-200"/>
             </TableCell>
         ))}
@@ -132,14 +105,14 @@ const SkeletonRow = memo(({columnCount}: {columnCount: number}) => (
 
 SkeletonRow.displayName = "SkeletonRow"
 
-const EmptyRow = memo(({columnCount, noDataText}: {columnCount: number; noDataText: ReactNode}) => (
+const EmptyRow = memo(({columnCount, noDataText}: { columnCount: number; noDataText: ReactNode }) => (
     <TableRow className="hover:bg-transparent">
-        <TableCell colSpan={columnCount} className="h-32 text-center">
+        <TableCell colSpan={columnCount} className="h-32 text-center px-2 sm:px-4">
             <div className="flex flex-col items-center justify-center gap-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <Search className="h-6 w-6 text-gray-500" aria-hidden="true"/>
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-gray-100">
+                    <Search className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" aria-hidden="true"/>
                 </div>
-                <p className="text-sm text-gray-600">{noDataText}</p>
+                <div className="text-xs sm:text-sm text-gray-600 px-4">{noDataText}</div>
             </div>
         </TableCell>
     </TableRow>
@@ -273,22 +246,23 @@ export function DataTable<TData, TValue>({
     const hasSelectedRows = selectedRows.length > 0
 
     return (
-        <div className={cn("space-y-4 w-full", className)}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+        <div className={cn("space-y-3 sm:space-y-4 w-full", className)}>
+            <div className="flex flex-col gap-2 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-center md:flex-wrap">
                     {enableSearch && (
-                        <div className="relative w-full sm:w-auto sm:min-w-60 md:min-w-80">
+                        <div className="relative w-full md:w-auto md:min-w-[240px] lg:min-w-[320px]">
                             <Input
                                 id={`${id}-search`}
                                 ref={inputRef}
-                                className={cn("w-full pl-9 h-10", hasSearch && "pr-9")}
+                                className={cn("w-full pl-9 h-9 sm:h-10 text-sm", hasSearch && "pr-9")}
                                 value={search}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 placeholder={searchPlaceholder}
                                 type="search"
                                 aria-label="Search table"
                             />
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-gray-500">
+                            <div
+                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-gray-500">
                                 <Search size={16} aria-hidden="true"/>
                             </div>
                             {hasSearch && (
@@ -307,7 +281,7 @@ export function DataTable<TData, TValue>({
                     {enableColumnVisibility && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-10 gap-2">
+                                <Button variant="outline" size="sm" className="h-9 sm:h-10 gap-2">
                                     <Columns3 size={16} aria-hidden="true"/>
                                     <span className="hidden sm:inline">Columns</span>
                                 </Button>
@@ -333,37 +307,38 @@ export function DataTable<TData, TValue>({
                     )}
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end">
+                <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:flex-wrap lg:justify-end">
                     {enableRowSelection && hasSelectedRows && onDeleteAction && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-10 gap-2">
+                                <Button variant="outline" size="sm" className="h-9 sm:h-10 gap-2 w-full sm:w-auto">
                                     <Trash2 size={16} aria-hidden="true"/>
                                     <span>Delete ({selectedRows.length})</span>
                                 </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="max-w-md">
+                            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                                 <div className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50">
+                                    <div
+                                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50">
                                         <CircleAlert className="h-5 w-5 text-red-600" aria-hidden="true"/>
                                     </div>
                                     <div className="flex-1">
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>
+                                            <AlertDialogTitle className="text-base sm:text-lg">
                                                 Delete {selectedRows.length} item{selectedRows.length > 1 ? "s" : ""}?
                                             </AlertDialogTitle>
-                                            <AlertDialogDescription>
+                                            <AlertDialogDescription className="text-sm">
                                                 This action cannot be undone. The selected item
                                                 {selectedRows.length > 1 ? "s" : ""} will be permanently deleted.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                     </div>
                                 </div>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                    <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                         onClick={handleDeleteRows}
-                                        className="bg-red-600 text-white hover:bg-red-700"
+                                        className="bg-red-600 text-white hover:bg-red-700 w-full sm:w-auto"
                                     >
                                         Delete
                                     </AlertDialogAction>
@@ -372,7 +347,8 @@ export function DataTable<TData, TValue>({
                         </AlertDialog>
                     )}
                     {onAddAction && (
-                        <Button variant="outline" size="sm" onClick={onAddAction} className="h-10 gap-2">
+                        <Button variant="outline" size="sm" onClick={onAddAction}
+                                className="h-9 sm:h-10 gap-2 w-full sm:w-auto">
                             <Plus size={16} aria-hidden="true"/>
                             <span>{actionLabel}</span>
                         </Button>
@@ -381,8 +357,8 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
 
-            <div className={cn("overflow-hidden rounded-lg border bg-white shadow-sm", tableClassName)}>
-                <div className="overflow-x-auto">
+            <div className={cn("overflow-hidden  rounded-lg  bg-white shadow-sm",)}>
+                <div className={cn("overflow-x-auto max-w-[calc(100vw-295px)]", tableClassName)}>
                     <Table className="min-w-full">
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
@@ -391,12 +367,12 @@ export function DataTable<TData, TValue>({
                                         <TableHead
                                             key={header.id}
                                             style={{width: header.getSize()}}
-                                            className="h-12 px-4"
+                                            className="h-10 sm:h-12 px-2 sm:px-4 text-xs sm:text-sm"
                                         >
                                             {!header.isPlaceholder && (
                                                 <div
                                                     className={cn(
-                                                        "flex items-center gap-2",
+                                                        "flex items-center gap-1 sm:gap-2",
                                                         enableSorting &&
                                                         header.column.getCanSort() &&
                                                         "cursor-pointer select-none hover:text-gray-900 transition-colors"
@@ -423,10 +399,12 @@ export function DataTable<TData, TValue>({
                                                     {enableSorting && header.column.getCanSort() && (
                                                         <div className="flex-shrink-0">
                                                             {header.column.getIsSorted() === "asc" && (
-                                                                <ChevronUp size={16} aria-label="Sorted ascending"/>
+                                                                <ChevronUp size={14} className="sm:w-4 sm:h-4"
+                                                                           aria-label="Sorted ascending"/>
                                                             )}
                                                             {header.column.getIsSorted() === "desc" && (
-                                                                <ChevronDown size={16} aria-label="Sorted descending"/>
+                                                                <ChevronDown size={14} className="sm:w-4 sm:h-4"
+                                                                             aria-label="Sorted descending"/>
                                                             )}
                                                         </div>
                                                     )}
@@ -453,14 +431,15 @@ export function DataTable<TData, TValue>({
                                             )}
                                         >
                                             {row.getVisibleCells().map((cell) => (
-                                                <TableCell key={cell.id} className="h-14 px-4">
+                                                <TableCell key={cell.id}
+                                                           className="h-12 sm:h-14 px-2 sm:px-4 text-xs sm:text-sm">
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </TableCell>
                                             ))}
                                         </TableRow>
                                         {enableExpanding && row.getIsExpanded() && renderSubComponent && (
                                             <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                                <TableCell colSpan={columns.length} className="p-4">
+                                                <TableCell colSpan={columns.length} className="p-2 sm:p-4">
                                                     {renderSubComponent(row)}
                                                 </TableCell>
                                             </TableRow>
@@ -476,13 +455,15 @@ export function DataTable<TData, TValue>({
             </div>
 
             {showPagination && (
-                <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between", paginationClassName)}>
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor={`${id}-page-size`} className="text-sm font-medium whitespace-nowrap">
+                <div
+                    className={cn("flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between", paginationClassName)}>
+                    <div className="flex items-center gap-2 justify-center sm:justify-start">
+                        <Label htmlFor={`${id}-page-size`} className="text-xs sm:text-sm font-medium whitespace-nowrap">
                             Rows per page
                         </Label>
                         <Select value={currentPageSize.toString()} onValueChange={handlePageSizeChange}>
-                            <SelectTrigger id={`${id}-page-size`} className="w-20 h-9">
+                            <SelectTrigger id={`${id}-page-size`}
+                                           className="w-16 sm:w-20 h-8 sm:h-9 text-xs sm:text-sm">
                                 <SelectValue/>
                             </SelectTrigger>
                             <SelectContent>
@@ -495,8 +476,8 @@ export function DataTable<TData, TValue>({
                         </Select>
                     </div>
 
-                    <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-end">
-                        <span className="whitespace-nowrap text-sm text-gray-600 tabular-nums">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3 md:flex-row md:justify-end">
+                        <span className="whitespace-nowrap text-xs sm:text-sm text-gray-600 tabular-nums">
                             {startIndex}-{endIndex} of {dataCount}
                         </span>
                         <Pagination>
@@ -508,9 +489,9 @@ export function DataTable<TData, TValue>({
                                         onClick={() => handlePageClick(1)}
                                         disabled={currentPage === 1}
                                         aria-label="Go to first page"
-                                        className="h-9 w-9"
+                                        className="h-8 w-8 sm:h-9 sm:w-9"
                                     >
-                                        <ChevronFirst size={16} aria-hidden="true"/>
+                                        <ChevronFirst size={14} className="sm:w-4 sm:h-4" aria-hidden="true"/>
                                     </Button>
                                 </PaginationItem>
                                 <PaginationItem>
@@ -520,9 +501,9 @@ export function DataTable<TData, TValue>({
                                         onClick={() => handlePageClick(currentPage - 1)}
                                         disabled={currentPage === 1}
                                         aria-label="Go to previous page"
-                                        className="h-9 w-9"
+                                        className="h-8 w-8 sm:h-9 sm:w-9"
                                     >
-                                        <ChevronLeft size={16} aria-hidden="true"/>
+                                        <ChevronLeft size={14} className="sm:w-4 sm:h-4" aria-hidden="true"/>
                                     </Button>
                                 </PaginationItem>
                                 {pageRange.map((page, index) => (
@@ -535,7 +516,7 @@ export function DataTable<TData, TValue>({
                                                 size="sm"
                                                 onClick={() => handlePageClick(page as number)}
                                                 className={cn(
-                                                    "h-9 w-9 tabular-nums",
+                                                    "h-8 w-8 sm:h-9 sm:w-9 tabular-nums text-xs sm:text-sm",
                                                     page === currentPage && "bg-primaryColor text-white"
                                                 )}
                                                 aria-label={`Go to page ${page}`}
@@ -553,9 +534,9 @@ export function DataTable<TData, TValue>({
                                         onClick={() => handlePageClick(currentPage + 1)}
                                         disabled={currentPage === totalPages}
                                         aria-label="Go to next page"
-                                        className="h-9 w-9"
+                                        className="h-8 w-8 sm:h-9 sm:w-9"
                                     >
-                                        <ChevronRight size={16} aria-hidden="true"/>
+                                        <ChevronRight size={14} className="sm:w-4 sm:h-4" aria-hidden="true"/>
                                     </Button>
                                 </PaginationItem>
                                 <PaginationItem>
@@ -565,9 +546,9 @@ export function DataTable<TData, TValue>({
                                         onClick={() => handlePageClick(totalPages)}
                                         disabled={currentPage === totalPages}
                                         aria-label="Go to last page"
-                                        className="h-9 w-9"
+                                        className="h-8 w-8 sm:h-9 sm:w-9"
                                     >
-                                        <ChevronLast size={16} aria-hidden="true"/>
+                                        <ChevronLast size={14} className="sm:w-4 sm:h-4" aria-hidden="true"/>
                                     </Button>
                                 </PaginationItem>
                             </PaginationContent>

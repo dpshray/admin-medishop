@@ -116,6 +116,7 @@ const ProductVariantUpdateForm = () => {
             console.log("Resposne from vendor", response)
             setProducts(response?.items || [])
         } catch (error) {
+            console.log(error)
             toast.error("Failed to load products. Please try again.")
         } finally {
             setIsLoading(false)

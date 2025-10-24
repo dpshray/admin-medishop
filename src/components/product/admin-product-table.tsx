@@ -8,7 +8,7 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {DataTable} from "@/components/table/ReusableTable";
-import {RowActions} from "@/lib/helper";
+import {RowActions} from "@/lib/action-button"
 import {toast} from "sonner";
 import {cn} from "@/lib/utils";
 import {AlertTriangle, Building2, Eye, Package, RefreshCw} from "lucide-react";

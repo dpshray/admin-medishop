@@ -33,7 +33,7 @@ export const NoDataFound = memo(
 NoDataFound.displayName = "NoDataFound"
 
 interface StatusConfig {
-    icon: LucideIcon
+    icon?: LucideIcon
     className: string
 }
 
@@ -76,7 +76,7 @@ const statusConfigMap: Record<string, StatusConfig> = {
     },
     [STATUS_TYPE.UNVERIFIED]: {
         icon: AlertCircle,
-        className: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800",
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
     },
     [STATUS_TYPE.IN_STOCK]: {
         icon: Package,
@@ -120,7 +120,7 @@ export const StatusBadge = memo(({status}: { status: PAYMENT_STATUS | ORDER_STAT
 
     return (
         <Badge variant="outline" className={cn("gap-1.5 capitalize", config.className)}>
-            <Icon className="h-3.5 w-3.5" aria-hidden="true"/>
+            {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true"/>}
             <span>{status.toLowerCase().replace(/_/g, ' ')}</span>
         </Badge>
     )

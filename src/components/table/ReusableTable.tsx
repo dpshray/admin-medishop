@@ -57,7 +57,6 @@ import {Pagination, PaginationContent, PaginationEllipsis, PaginationItem} from 
 import {cn, generatePageRange} from "@/lib/utils";
 import {useDebounce} from "@/hooks/use-debounce";
 
-
 interface DataTablePagination {
     page: number
     totalPages: number
@@ -325,7 +324,7 @@ export function DataTable<TData, TValue>({
                                     <div className="flex-1">
                                         <AlertDialogHeader>
                                             <AlertDialogTitle className="text-base sm:text-lg">
-                                                Delete {selectedRows.length} item{selectedRows.length > 1 ? "s" : ""}?
+                                                Delete {selectedRows.length} item{selectedRows.length > 1 ? "s" : ""}
                                             </AlertDialogTitle>
                                             <AlertDialogDescription className="text-sm">
                                                 This action cannot be undone. The selected item
@@ -357,9 +356,11 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
 
-            <div className={cn("overflow-hidden  rounded-lg  bg-white shadow-sm",)}>
-                <div className={cn("overflow-x-auto max-w-[calc(100vw-295px)]", tableClassName)}>
-                    <Table className="min-w-full">
+            <div className={cn("overflow-hidden rounded-lg bg-white shadow-sm")}>
+                <div
+                    className={cn("overflow-x-auto overflow-y-auto  scrollbar max-w-[calc(100vw-295px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
+                        tableClassName)}>
+                    <Table className="min-w-full border-separate border-spacing-0">
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id} className="hover:bg-transparent">

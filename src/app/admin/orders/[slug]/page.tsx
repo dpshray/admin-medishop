@@ -1,387 +1,388 @@
-'use client';
+'use client'
 
-import {useQuery} from "@tanstack/react-query";
-import orderService from "@/service/order.service";
-import {useParams} from "next/navigation";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Badge} from "@/components/ui/badge";
-import {Separator} from "@/components/ui/separator";
+import {useCallback, useMemo, useState, useTransition} from "react";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useParams, useRouter} from "next/navigation";
+import {toast} from "sonner";
+import {AlertCircle, ArrowLeft, Check, Copy, Download, FileText, Package, Printer, Save, XCircle} from "lucide-react";
+import ErrorState from "@/components/Error/ErrorState";
 import {Skeleton} from "@/components/ui/skeleton";
-import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Card, CardContent, CardFooter, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
-import {
-    ArrowLeft,
-    Calendar,
-    Check,
-    Copy,
-    CreditCard,
-    Download,
-    FileText,
-    Mail,
-    MapPin,
-    Package,
-    Phone,
-    Printer,
-    User,
-    XCircle
-} from "lucide-react";
-import {useState} from "react";
+import {Separator} from "@/components/ui/separator";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import CustomerInfo from "@/components/order/CustomerInfoCard";
+import SearchSelectField from "@/components/field/search-select";
 import {FormatCurrency, StatusBadge} from "@/lib/helper";
+import useVendor from "@/hooks/use-vendor";
+import orderService from "@/service/order.service";
+import {OrderedItemCard} from "@/components/order/OrderedItemCard";
+import {QUERY_STALE_TIME} from "@/config/app-constant";
+import {cn} from "@/lib/utils";
 
-interface OrderedItem {
-    type: string;
-    item_name: string;
-    variant_name: string | null;
-    variant_size: string | null;
-    quantity: number;
-    price: number;
-    subtotal: number;
-}
+const COPIED_TIMEOUT = 2000;
+
 
 interface OrderData {
     order_code: string;
-    user_type: string;
-    name: string;
-    email: string;
-    mobile: string;
-    address: string;
-    description: string;
-    price: number;
-    payment_method: string;
-    payment_status: string;
-    status: string;
     created_at: string;
-    ordered_items: OrderedItem[];
+    payment_method: string;
+    status: string;
+    payment_status: string;
+    price: number;
+    description?: string;
+    ordered_items: any[];
 }
+
+interface VendorOption {
+    value: string;
+    label: string;
+}
+
+const copyToClipboard = async (text: string): Promise<boolean> => {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch {
+        return false;
+    }
+};
 
 export default function OrderDetails() {
     const params = useParams();
     const uuid = params.slug as string;
-    const [copied, setCopied] = useState(false);
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    const [isPending, startTransition] = useTransition();
 
-    const {data, error, isLoading} = useQuery<OrderData>({
+    const [copied, setCopied] = useState(false);
+    const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+
+    const {data, error, isLoading, isError} = useQuery<OrderData>({
         queryKey: ['order-details', uuid],
         queryFn: () => orderService.getOrderDetails(uuid),
         enabled: !!uuid,
-        staleTime: 30000,
+        staleTime: QUERY_STALE_TIME,
         refetchOnWindowFocus: false,
+        retry: 2,
     });
 
-    const handleCopyOrderCode = async () => {
-        if (data?.order_code) {
-            await navigator.clipboard.writeText(data.order_code);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
+    const {vendors, isLoading: vendorsLoading} = useVendor({page: 0});
 
-    const handlePrint = () => {
+    const vendorOptions = useMemo(
+        () => vendors?.map((v: any) => ({value: v.user_uuid, label: v.name})) || [],
+        [vendors]
+    );
+
+    const selectedVendorOption = useMemo(
+        () => selectedVendorId ? vendorOptions.find((v: any) => v.value === selectedVendorId) || null : null,
+        [selectedVendorId, vendorOptions]
+    );
+
+    const updateVendorMutation = useMutation({
+        mutationFn: (vendorId: string) => orderService.assignOrder(uuid, vendorId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['order-details', uuid]});
+            toast.success('Vendor assigned successfully');
+            setSelectedVendorId(null);
+        },
+        onError: (error) => {
+            const message = error instanceof Error ? error.message : 'Failed to assign vendor';
+            toast.error(message);
+        }
+    });
+
+    const cancelOrderMutation = useMutation({
+        mutationFn: () => orderService.cancelOrder(uuid),
+        onSuccess: () => {
+            toast.success('Order cancelled successfully');
+            startTransition(() => {
+                router.back();
+            });
+        },
+        onError: (error) => {
+            const message = error instanceof Error ? error.message : 'Failed to cancel order';
+            toast.error(message);
+        }
+    });
+
+    const handleCopyOrderCode = useCallback(async () => {
+        if (!data?.order_code) return;
+
+        const success = await copyToClipboard(data.order_code);
+        if (success) {
+            setCopied(true);
+            toast.success('Order code copied to clipboard');
+            setTimeout(() => setCopied(false), COPIED_TIMEOUT);
+        } else {
+            toast.error('Failed to copy order code');
+        }
+    }, [data?.order_code]);
+
+    const handlePrint = useCallback(() => {
         window.print();
-    };
+    }, []);
+
+    const handleVendorChange = useCallback((value: string | number) => {
+        setSelectedVendorId(String(value));
+    }, []);
+
+    const handleUpdateVendor = useCallback(() => {
+        if (!selectedVendorId) return;
+        updateVendorMutation.mutate(selectedVendorId);
+    }, [selectedVendorId, updateVendorMutation]);
+
+    const handleCancelOrder = useCallback(() => {
+        if (window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+            cancelOrderMutation.mutate();
+        }
+    }, [cancelOrderMutation]);
+
+    const handleGoBack = useCallback(() => {
+        startTransition(() => {
+            router.back();
+        });
+    }, [router]);
+
+    const canCancelOrder = useMemo(
+        () => data?.status !== 'cancelled' && data?.status !== 'completed',
+        [data?.status]
+    );
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100">
-                <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
-                    <Skeleton className="h-8 sm:h-10 w-24 sm:w-32 mb-4 sm:mb-6"/>
-                    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
-                        <Skeleton className="h-6 sm:h-8 w-36 sm:w-48 mb-3 sm:mb-4"/>
-                        <Skeleton className="h-4 w-24 sm:w-32"/>
-                    </div>
-                    <div className="grid gap-4 sm:gap-6 lg:grid-cols-3 mb-4 sm:mb-6">
-                        <Skeleton className="h-64 sm:h-72 lg:col-span-2"/>
-                        <Skeleton className="h-64 sm:h-72"/>
-                    </div>
-                    <Skeleton className="h-80 sm:h-96"/>
+                <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-6xl">
+                    <Skeleton className="h-10 w-32 mb-6"/>
+                    <Card className="shadow-xl border-slate-200/50">
+                        <CardHeader className="border-b border-slate-100 p-6">
+                            <Skeleton className="h-8 w-48 mb-3"/>
+                            <Skeleton className="h-6 w-32"/>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            <Skeleton className="h-64"/>
+                            <Skeleton className="h-48"/>
+                            <Skeleton className="h-32"/>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         );
     }
 
-    if (error || !data) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100">
-                <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
-                    <Alert variant="destructive" className="shadow-lg">
-                        <XCircle className="h-4 w-4"/>
-                        <AlertDescription>
-                            Failed to load order details. Please try again later.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-            </div>
-        );
+    if (isError || !data) {
+        const errorMessage = error instanceof Error
+            ? error.message
+            : 'Failed to load order details. Please try again later.';
+        return <ErrorState message={errorMessage}/>;
     }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100 print:bg-white">
-            <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
-                <div className="mb-4 sm:mb-6 print:hidden">
+            <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-6xl">
+                <div className="mb-6 print:hidden">
                     <Button
                         variant="ghost"
-                        className="mb-2 sm:mb-4 hover:bg-white/80 backdrop-blur-sm transition-all"
-                        onClick={() => window.history.back()}
+                        className="hover:bg-white/80 transition-all duration-200"
+                        onClick={handleGoBack}
+                        disabled={isPending}
+                        aria-label="Go back to previous page"
                     >
-                        <ArrowLeft className="h-4 w-4 mr-2"/>
-                        <span className="hidden sm:inline">Back to Orders</span>
-                        <span className="sm:hidden">Back</span>
+                        <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true"/>
+                        Back
                     </Button>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg transition-shadow p-4 sm:p-6 mb-4 sm:mb-6 border border-slate-200/50">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-[#4a358e] truncate">
-                                Order Details
-                            </h1>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <code className="text-xs sm:text-sm bg-slate-100 px-2 sm:px-3 py-1 rounded-md font-mono">
-                                    #{data.order_code}
-                                </code>
+                <Card
+                    className="shadow-xl border-slate-200/50 bg-white/95 backdrop-blur-sm overflow-hidden transition-shadow hover:shadow-2xl">
+                    <CardHeader
+                        className="border-b border-slate-100/80 p-6 bg-gradient-to-r from-[#4a358e]/5 to-purple-50/50">
+                        <div className="flex justify-between flex-wrap gap-4">
+                            <div className="space-y-2">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-[#4a358e]">
+                                    Order Details
+                                </h1>
+                                <div className="flex items-center gap-2">
+                                    <code
+                                        className="text-sm bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm font-mono">
+                                        #{data.order_code}
+                                    </code>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleCopyOrderCode}
+                                        className="hover:bg-[#4a358e]/10 transition-colors"
+                                        aria-label={copied ? "Order code copied" : "Copy order code"}
+                                    >
+                                        {copied ? (
+                                            <Check className="h-4 w-4 text-green-600" aria-hidden="true"/>
+                                        ) : (
+                                            <Copy className="h-4 w-4 text-slate-600" aria-hidden="true"/>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    onClick={handleCopyOrderCode}
-                                    className="h-6 sm:h-7 px-2"
+                                    onClick={handlePrint}
+                                    className="border-slate-200 hover:bg-slate-50 hover:border-[#4a358e]/30 transition-all"
+                                    aria-label="Print order details"
                                 >
-                                    {copied ? (
-                                        <Check className="h-3 w-3 text-green-600"/>
-                                    ) : (
-                                        <Copy className="h-3 w-3"/>
-                                    )}
+                                    <Printer className="h-4 w-4 mr-2" aria-hidden="true"/>
+                                    Print
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    className="bg-[#4a358e] hover:bg-[#3d2d75] text-white transition-colors shadow-md"
+                                    disabled
+                                    aria-label="Download order (coming soon)"
+                                >
+                                    <Download className="h-4 w-4 mr-2" aria-hidden="true"/>
+                                    Download
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex gap-2 print:hidden flex-wrap sm:flex-nowrap">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handlePrint}
-                                className="hover:bg-slate-50 flex-1 sm:flex-none"
-                            >
-                                <Printer className="h-4 w-4 sm:mr-2"/>
-                                <span className="hidden sm:inline">Print</span>
-                            </Button>
-                            <Button
-                                size="sm"
-                                className="bg-[#4a358e] hover:bg-[#3a2870] text-white flex-1 sm:flex-none"
-                                disabled
-                            >
-                                <Download className="h-4 w-4 sm:mr-2"/>
-                                <span className="hidden sm:inline">Download</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid gap-4 sm:gap-6 lg:grid-cols-3 mb-4 sm:mb-6">
-                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-                        <Card className="shadow-md hover:shadow-lg transition-all border-slate-200/50 bg-white/80 backdrop-blur-sm">
-                            <CardHeader className="border-b border-slate-100 p-4 sm:p-6">
-                                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                                    <div className="p-2 rounded-lg bg-[#4a358e]/10">
-                                        <User className="h-4 sm:h-5 w-4 sm:w-5 text-[#4a358e]"/>
-                                    </div>
-                                    <span className="truncate">Customer Information</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
-                                <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
-                                    <div className="space-y-3 sm:space-y-4">
-                                        <div className="group">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <User className="h-3 sm:h-4 w-3 sm:w-4 text-slate-400 group-hover:text-[#4a358e] transition-colors"/>
-                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Full Name</p>
-                                            </div>
-                                            <p className="text-sm font-semibold text-slate-900 pl-5 sm:pl-6 break-words">{data.name}</p>
-                                        </div>
-                                        <div className="group">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Mail className="h-3 sm:h-4 w-3 sm:w-4 text-slate-400 group-hover:text-[#4a358e] transition-colors"/>
-                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</p>
-                                            </div>
-                                            <p className="text-sm text-slate-700 pl-5 sm:pl-6 break-all">{data.email}</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3 sm:space-y-4">
-                                        <div className="group">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Phone className="h-3 sm:h-4 w-3 sm:w-4 text-slate-400 group-hover:text-[#4a358e] transition-colors"/>
-                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Mobile</p>
-                                            </div>
-                                            <p className="text-sm font-semibold text-slate-900 pl-5 sm:pl-6">{data.mobile}</p>
-                                        </div>
-                                        <div className="group">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <MapPin className="h-3 sm:h-4 w-3 sm:w-4 text-slate-400 group-hover:text-[#4a358e] transition-colors"/>
-                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Address</p>
-                                            </div>
-                                            <p className="text-sm text-slate-700 pl-5 sm:pl-6 break-words">{data.address}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {data.description && (
-                            <Card className="shadow-md border-slate-200/50 bg-white/80 backdrop-blur-sm">
-                                <CardHeader className="pb-3 p-4 sm:p-6">
-                                    <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                                        <FileText className="h-4 w-4 text-[#4a358e]"/>
-                                        <span className="truncate">Order Notes</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-4 sm:p-6 pt-0">
-                                    <p className="text-sm text-slate-600 leading-relaxed break-words">{data.description}</p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-
-                    <div className="space-y-4 sm:space-y-6">
-                        <Card className="shadow-md hover:shadow-lg transition-all border-slate-200/50 bg-white/80 backdrop-blur-sm">
-                            <CardHeader className="border-b border-slate-100 p-4 sm:p-6">
-                                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                                    <div className="p-2 rounded-lg bg-[#4a358e]/10">
-                                        <Package className="h-4 sm:h-5 w-4 sm:w-5 text-[#4a358e]"/>
-                                    </div>
-                                    <span className="truncate">Order Summary</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-4 sm:pt-6 space-y-4 sm:space-y-5 p-4 sm:p-6">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Calendar className="h-3 sm:h-4 w-3 sm:w-4 text-slate-400"/>
-                                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Order Date</p>
-                                    </div>
-                                    <p className="text-sm font-semibold text-slate-900 pl-5 sm:pl-6 break-words">{data.created_at}</p>
-                                </div>
-
-                                <Separator/>
-
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <CreditCard className="h-3 sm:h-4 w-3 sm:w-4 text-slate-400"/>
-                                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Payment Method</p>
-                                    </div>
-                                    <p className="text-sm font-medium text-slate-700 pl-5 sm:pl-6 capitalize break-words">{data.payment_method}</p>
-                                </div>
-
-                                <Separator/>
-
-                                <div>
-                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Status</p>
-                                    <div className="space-y-3 pl-1">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <span className="text-xs text-slate-600 truncate">Order Status</span>
-                                            <StatusBadge status={data.status}/>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-2">
-                                            <span className="text-xs text-slate-600 truncate">Payment</span>
-                                            <StatusBadge status={data.payment_status}/>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Separator/>
-
-                                <div className="bg-gradient-to-br from-[#4a358e]/5 to-[#4a358e]/10 rounded-lg p-3 sm:p-4 border border-[#4a358e]/20">
-                                    <p className="text-xs font-medium text-slate-600 mb-1">Total Amount</p>
-                                    <p className="text-xl sm:text-2xl font-bold text-[#4a358e] break-words">
-                                        {FormatCurrency(data.price)}
-                                    </p>
-                                </div>
-
-                                <div className="pt-2">
-                                    <Badge variant="secondary" className="text-xs capitalize">
-                                        {data.user_type}
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                <Card className="shadow-md border-slate-200/50 bg-white/80 backdrop-blur-sm">
-                    <CardHeader className="border-b border-slate-100 p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <CardTitle className="flex items-center gap-2">
-                                <div className="p-2 rounded-lg bg-[#4a358e]/10">
-                                    <Package className="h-4 sm:h-5 w-4 sm:w-5 text-[#4a358e]"/>
-                                </div>
-                                <span className="truncate">Ordered Items</span>
-                            </CardTitle>
-                            <Badge variant="secondary" className="text-xs self-start sm:self-auto">
-                                {data.ordered_items.length} {data.ordered_items.length === 1 ? 'item' : 'items'}
-                            </Badge>
-                        </div>
                     </CardHeader>
-                    <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
-                        <div className="space-y-3 sm:space-y-4">
-                            {data.ordered_items.map((item, index) => (
-                                <div key={index}>
-                                    <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg hover:bg-slate-50/50 transition-colors">
-                                        <div className="flex-1">
-                                            <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
-                                                <h4 className="font-semibold text-slate-900 text-sm sm:text-base break-words flex-1">{item.item_name}</h4>
-                                                <Badge variant="secondary" className="text-xs shrink-0 capitalize">
-                                                    {item.type}
-                                                </Badge>
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-sm">
-                                                {item.variant_name && (
-                                                    <div>
-                                                        <p className="text-xs text-slate-500 mb-1">Variant</p>
-                                                        <p className="font-medium text-slate-700 break-words">{item.variant_name}</p>
-                                                    </div>
-                                                )}
-                                                {item.variant_size && (
-                                                    <div>
-                                                        <p className="text-xs text-slate-500 mb-1">Size</p>
-                                                        <p className="font-medium text-slate-700 break-words">{item.variant_size}</p>
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <p className="text-xs text-slate-500 mb-1">Quantity</p>
-                                                    <p className="font-semibold text-slate-900">{item.quantity}x</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-slate-500 mb-1">Unit Price</p>
-                                                    <p className="font-medium text-slate-700 break-words">
-                                                        NPR {item.price.toLocaleString('en-NP', {minimumFractionDigits: 2})}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="sm:text-right pt-2 sm:pt-0 sm:border-t-0 border-t sm:border-l sm:pl-4 border-slate-200">
-                                            <p className="text-xs text-slate-500 mb-1">Subtotal</p>
-                                            <p className="text-base sm:text-lg font-bold text-[#4a358e] break-words">
-                                                NPR {item.subtotal.toLocaleString('en-NP', {minimumFractionDigits: 2})}
-                                            </p>
-                                        </div>
+
+                    <CardContent className="p-6 space-y-6">
+                        <CustomerInfo data={data as any}/>
+
+                        <Separator className="bg-gradient-to-r from-transparent via-slate-200 to-transparent"/>
+
+                        <div className="grid lg:grid-cols-2 gap-6">
+                            <section>
+                                <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Package className="h-5 w-5 text-[#4a358e]" aria-hidden="true"/>
+                                    Order Summary
+                                </h2>
+                                <div
+                                    className="space-y-3 bg-gradient-to-br from-slate-50 to-purple-50/30 p-5 rounded-xl border border-slate-200/60 shadow-sm">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600 font-medium">Order Date</span>
+                                        <span className="text-slate-900">{data.created_at}</span>
                                     </div>
-                                    {index < data.ordered_items.length - 1 && (
-                                        <Separator className="my-2"/>
-                                    )}
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600 font-medium">Payment Method</span>
+                                        <span className="capitalize text-slate-900">{data.payment_method}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm items-center">
+                                        <span className="text-slate-600 font-medium">Order Status</span>
+                                        <StatusBadge status={data.status}/>
+                                    </div>
+                                    <div className="flex justify-between text-sm items-center">
+                                        <span className="text-slate-600 font-medium">Payment Status</span>
+                                        <StatusBadge status={data.payment_status}/>
+                                    </div>
+                                    <Separator className="my-2"/>
+                                    <div className="text-right pt-2">
+                                        <p className="text-sm text-slate-500 mb-1">Total Amount</p>
+                                        <p className="text-3xl font-bold text-[#4a358e]">{FormatCurrency(data.price)}</p>
+                                    </div>
                                 </div>
-                            ))}
+                            </section>
+
+                            {data.description && (
+                                <section>
+                                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <FileText className="h-5 w-5 text-[#4a358e]" aria-hidden="true"/>
+                                        Order Notes
+                                    </h2>
+                                    <div
+                                        className="bg-gradient-to-br from-slate-50 to-purple-50/30 p-5 rounded-xl border border-slate-200/60 shadow-sm">
+                                        <p className="text-sm text-slate-700 leading-relaxed">{data.description}</p>
+                                    </div>
+                                </section>
+                            )}
                         </div>
 
-                        <Separator className="my-4 sm:my-6"/>
+                        <Separator className="bg-gradient-to-r from-transparent via-slate-200 to-transparent"/>
 
-                        <div className="rounded-lg p-4 sm:p-6 border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                                <div>
-                                    <p className="text-sm font-medium text-slate-600 mb-1">Grand Total</p>
-                                    <p className="text-xs text-slate-500">Including all items</p>
-                                </div>
-                                <p className="text-2xl sm:text-3xl font-bold text-[#4a358e] break-words">
-                                    {FormatCurrency(data.price)}
-                                </p>
+                        <section>
+                            <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <Package className="h-5 w-5 text-[#4a358e]" aria-hidden="true"/>
+                                Ordered Items
+                                <span className="text-sm font-normal text-slate-500 ml-2">
+                                    ({data.ordered_items.length} {data.ordered_items.length === 1 ? 'item' : 'items'})
+                                </span>
+                            </h2>
+                            <div className={cn('space-y-4',
+                                data.ordered_items.length === 0 && 'hidden',
+                                data.ordered_items.length > 3 && 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+                            )}>
+                                {data.ordered_items.map((item, index) => (
+                                    <OrderedItemCard
+                                        key={`${item.id || index}-${index}`}
+                                        item={item}
+                                        showAnimation
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    </CardContent>
+
+                    <CardFooter className="border-t border-slate-100 bg-slate-50/50 p-6 print:hidden">
+                        <div className="w-full space-y-4">
+                            <div className="grid sm:grid-cols-[1fr,auto] gap-4 items-end">
+                                <SearchSelectField
+                                    label="Assign Vendor"
+                                    placeholder="Select vendor to assign"
+                                    options={vendorOptions}
+                                    value={selectedVendorOption}
+                                    onChangeAction={handleVendorChange}
+                                    disabled={vendorsLoading || updateVendorMutation.isPending}
+                                    helperText={vendorsLoading ? "Loading vendors..." : undefined}
+                                />
+                                <Button
+                                    className="bg-[#4a358e] hover:bg-[#3d2d75] text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 "
+                                    onClick={handleUpdateVendor}
+                                    disabled={!selectedVendorId || updateVendorMutation.isPending || vendorsLoading}
+                                    aria-label="Assign selected vendor to order"
+                                >
+                                    <Save className="h-4 w-4 mr-2" aria-hidden="true"/>
+                                    {updateVendorMutation.isPending ? 'Assigning...' : 'Assign Vendor'}
+                                </Button>
+                            </div>
+
+                            {!canCancelOrder && (
+                                <Alert className="border-amber-200 bg-amber-50">
+                                    <AlertCircle className="h-4 w-4 text-amber-600"/>
+                                    <AlertDescription className="text-sm text-amber-800">
+                                        This order cannot be cancelled as it is already {data.status}.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            <Separator className="bg-gradient-to-r from-transparent via-slate-200 to-transparent"/>
+
+                            <div className="flex flex-col sm:flex-row justify-between gap-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleGoBack}
+                                    disabled={isPending}
+                                    className="border-slate-200 hover:bg-slate-50 transition-all"
+                                    aria-label="Go back to previous page"
+                                >
+                                    <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true"/>
+                                    Back
+                                </Button>
+
+                                {canCancelOrder && (
+                                    <Button
+                                        variant="destructive"
+                                        onClick={handleCancelOrder}
+                                        disabled={cancelOrderMutation.isPending}
+                                        className="shadow-md hover:shadow-lg transition-all"
+                                        aria-label="Cancel this order"
+                                    >
+                                        <XCircle className="h-4 w-4 mr-2" aria-hidden="true"/>
+                                        {cancelOrderMutation.isPending ? 'Cancelling...' : 'Cancel Order'}
+                                    </Button>
+                                )}
                             </div>
                         </div>
-
-                    </CardContent>
+                    </CardFooter>
                 </Card>
             </div>
         </div>

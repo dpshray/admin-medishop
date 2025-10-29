@@ -8,11 +8,11 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import vendorService from "@/service/vendor.service"
 import {RowActions} from "@/lib/action-button"
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
-import {Badge} from "@/components/ui/badge"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
 import {useRouter} from "next/navigation"
-import {cn} from "@/lib/utils"
+import {StatusBadge} from "@/lib/helper"
+import {STATUS_TYPE} from "@/types/enum";
 
 export interface Vendor {
     user_uuid: string
@@ -34,7 +34,7 @@ export default function VendorTable() {
     const [totalPages, setTotalPages] = useState(1)
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
     const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
-    const [searchTerm, setSearchTerm] = useState<string>("")
+    const [searchTerm, setSearchTerm] = useState("")
 
     const {data: vendors, isLoading, error} = useQuery({
         queryKey: ["admin-vendor", currentPage, pageSize, searchTerm],
@@ -61,8 +61,7 @@ export default function VendorTable() {
             queryClient.invalidateQueries({queryKey: ["admin-vendor"]})
         },
         onError: (error: any) => {
-            const errorMessage =
-                error?.response?.data?.message || error?.message || "Failed to delete vendor"
+            const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete vendor"
             toast.error(errorMessage)
         },
     })
@@ -108,7 +107,6 @@ export default function VendorTable() {
         [router]
     )
 
-
     const columns: ColumnDef<Vendor>[] = useMemo(
         () => [
             {
@@ -127,7 +125,7 @@ export default function VendorTable() {
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={(value) => row.toggleSelected(!!value)}
-                        className="mx-auto"
+                        className="mx-auto data-[state=checked]:bg-primaryColor data-[state=checked]:text-white data-[state=checked]:border-primaryColor"
                         aria-label="Select row"
                     />
                 ),
@@ -153,8 +151,8 @@ export default function VendorTable() {
                             <div className="flex flex-col min-w-0">
                                 <span className="font-medium text-xs sm:text-sm truncate">{name}</span>
                                 <span className="text-muted-foreground text-xs truncate max-w-[100px] sm:max-w-[140px]">
-                  {email}
-                </span>
+                                    {email}
+                                </span>
                             </div>
                         </div>
                     )
@@ -174,35 +172,11 @@ export default function VendorTable() {
                 ),
             },
             {
-                header: "User ID",
-                accessorKey: "user_uuid",
-                cell: ({row}) => (
-                    <div
-                        className="text-xs sm:text-sm font-mono truncate max-w-[80px] sm:max-w-[120px] lg:max-w-[160px]"
-                        title={row.getValue("user_uuid") as string}
-                    >
-                        {(row.getValue("user_uuid") as string)?.slice(0, 8)}...
-                    </div>
-                ),
-            },
-            {
                 header: "Verified",
                 accessorKey: "verified",
                 cell: ({row}) => {
                     const verified = row.getValue("verified") as boolean
-                    return (
-                        <Badge
-                            variant={verified ? "default" : "secondary"}
-                            className={cn(
-                                "text-xs whitespace-nowrap",
-                                verified
-                                    ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300"
-                            )}
-                        >
-                            {verified ? "Verified" : "Pending"}
-                        </Badge>
-                    )
+                    return <StatusBadge status={verified ? STATUS_TYPE.VERIFIED : STATUS_TYPE.UNVERIFIED}/>
                 },
             },
             {
@@ -210,46 +184,26 @@ export default function VendorTable() {
                 accessorKey: "status",
                 cell: ({row}) => {
                     const status = row.getValue("status") as boolean
-                    return (
-                        <Badge
-                            variant={status ? "default" : "secondary"}
-                            className={cn(
-                                "text-xs whitespace-nowrap",
-                                status
-                                    ? "bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
-                                    : "bg-red-100 text-red-800 hover:bg-red-200 border-red-300"
-                            )}
-                        >
-                            {status ? "Active" : "Inactive"}
-                        </Badge>
-                    )
+                    return <StatusBadge status={status ? "Active" : "Inactive"}/>
                 },
             },
             {
-                header: "Phone",
-                accessorKey: "mobile_number",
-                cell: ({row}) => (
-                    <div className="text-xs sm:text-sm whitespace-nowrap">
-                        {row.getValue("mobile_number") || "N/A"}
-                    </div>
-                ),
-            },
-            {
-                header: "Store",
+                header: "Store & Mobile",
                 accessorKey: "store_name",
                 cell: ({row}) => (
                     <div
-                        className="text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[140px] lg:max-w-[160px]"
-                        title={row.getValue("store_name") as string}
+                        className="flex flex-col text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[140px] lg:max-w-[160px]"
+                        title={`${row.getValue("store_name") || "N/A"} | ${row.original.mobile_number || "N/A"}`}
                     >
-                        {row.getValue("store_name") || "N/A"}
+                        <span>{row.getValue("store_name") || "N/A"}</span>
+                        <span className="text-muted-foreground">{row.original.mobile_number || "N/A"}</span>
                     </div>
                 ),
             },
             {
                 id: "actions",
                 accessorKey: "actions",
-                header: () => <span className="sr-only">Actions</span>,
+                header: () => <span className="text-xs sm:text-sm">Actions</span>,
                 cell: ({row}) => (
                     <RowActions
                         row={row}
@@ -268,14 +222,14 @@ export default function VendorTable() {
     const handleSearch = (searchValue: string) => {
         setSearchTerm(searchValue)
     }
+
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-[400px] p-4">
                 <div className="text-center space-y-4">
                     <div className="text-red-500 text-lg font-semibold">Failed to load vendors</div>
-                    <p className="text-gray-600">
-                        Please try refreshing the page or contact support if the problem persists.
-                    </p>
+                    <p className="text-gray-600">Please try refreshing the page or contact support if the problem
+                        persists.</p>
                 </div>
             </div>
         )
@@ -285,16 +239,13 @@ export default function VendorTable() {
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
-                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Vendor Management
-                    </h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Vendor Management</h1>
                     <p className="text-xs sm:text-sm text-gray-500">
                         Manage your vendors and their details
                         {vendors?.total_items && ` (${vendors.total_items} total)`}
                     </p>
                 </div>
             </div>
-
             <DataTable<Vendor, any>
                 data={vendorData}
                 columns={columns}
@@ -304,14 +255,13 @@ export default function VendorTable() {
                 actionLabel="Add Vendor"
                 pagination={{
                     page: currentPage,
-                    totalPages: totalPages,
-                    pageSize: pageSize,
+                    totalPages,
+                    pageSize,
                     onPageChange: handlePageChange,
                     onPageSizeChange: handlePageSizeChange,
                     pageSizeOptions: [5, 10, 25, 50, 100],
                 }}
                 totalCount={vendors?.total_items ?? 0}
-
                 searchPlaceholder="Search vendors by name..."
                 enableSearch
                 enableColumnVisibility
@@ -326,7 +276,6 @@ export default function VendorTable() {
                 className="w-full"
                 tableClassName="min-w-full"
             />
-
             <ActionModal
                 open={isDeleteModalOpen}
                 setOpen={setDeleteModalOpen}

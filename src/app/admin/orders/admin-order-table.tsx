@@ -22,8 +22,6 @@ import {
     QUERY_STALE_TIME
 } from "@/config/app-constant"
 import {ColumnDef} from "@tanstack/react-table";
-import SearchSelectField from "@/components/field/search-select";
-import useVendor from "@/hooks/use-vendor";
 
 
 type PaymentStatus = "PAID" | "UNPAID" | "PENDING"
@@ -59,7 +57,6 @@ export default function AdminOrderTable() {
     const [isDeleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null)
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
-
     const {data, isLoading, isFetching, refetch} = useQuery<OrdersResponse>({
         queryKey: ["admin-orders", currentPage, pageSize, search],
         queryFn: async () => {
@@ -76,10 +73,6 @@ export default function AdminOrderTable() {
         refetchOnWindowFocus: false,
         refetchInterval: QUERY_REFETCH_INTERVAL,
     })
-    const {vendors}=useVendor( {
-        per_page:100
-    })
-    console.log("vendors",vendors)
     const handleView = useCallback((order: OrderType): void => {
         router.push(`/admin/orders/${order.order_uuid}`)
     }, [router])
@@ -203,30 +196,6 @@ export default function AdminOrderTable() {
                 </div>
             ),
             size: 250,
-        },
-        {
-            accessorKey: "assigned_to",
-            header: "Assign To",
-            cell: ({row}) => (
-                <div>
-                    <SearchSelectField
-                        options={[
-                            {value: "", label: "Select"},
-                            {value: "1", label: "User 1"},
-                            {value: "2", label: "User 2"},
-                            {value: "3", label: "User 3"},
-                            {value: "4", label: "User 4"},
-                            {value: "5", label: "User 5"},
-                        ]} onChangeAction={(value) => console.log(value)}
-                        placeholder={'Assign To'}
-
-                    />
-
-
-                </div>
-            ),
-            enableSorting: true,
-            size: 150,
         },
         {
             id: "actions",

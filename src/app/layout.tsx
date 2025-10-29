@@ -3,6 +3,7 @@ import {Geist, Geist_Mono} from "next/font/google"
 import "./globals.css"
 import ReactQueryProvider from "@/Providers/ReactQueryProvider"
 import {Toaster} from "sonner"
+import React from "react";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -70,7 +71,7 @@ export default function RootLayout({
                                        children,
                                    }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="en" className="h-full overflow-x-hidden">
+        <html lang="en" className="h-full overflow-x-hidden scroll-smooth">
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}
         >

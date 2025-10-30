@@ -1,6 +1,6 @@
 "use client"
 
-import {useCallback, useEffect, useMemo, useState} from "react"
+import {useCallback, useEffect, useMemo, useState, useRef} from "react"
 import {Label} from "@/components/ui/label"
 import {cn} from "@/lib/utils"
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command"
@@ -13,22 +13,20 @@ interface OptionType {
     label: string
 }
 
-interface SearchSelectFieldProps {
+interface SearchSelectFieldProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
     label?: string
     required?: boolean
     placeholder?: string
     options: OptionType[]
-    value?: { value: string | number; label: string } | null
+    value?: string | number | null
     error?: string
     name?: string
     disabled?: boolean
-    onChangeAction?: (value: string | number) => void
-
-    [key: string]: any
-
-    className?: string
-    inputClassName?: string
+    onChange?: (value: string | number) => void
     helperText?: string
+    inputClassName?: string
+    emptyMessage?: string
+    searchPlaceholder?: string
 }
 
 export default function SearchSelectField({
@@ -39,49 +37,59 @@ export default function SearchSelectField({
                                               value,
                                               error,
                                               disabled = false,
-                                              onChangeAction = () => {
-                                              },
+                                              onChange,
                                               className,
                                               inputClassName,
                                               helperText,
+                                              emptyMessage = "No options found.",
+                                              searchPlaceholder,
                                               ...props
                                           }: SearchSelectFieldProps) {
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const labelIdRef = useRef(`select-${Math.random().toString(36).slice(2, 11)}`)
+    const errorIdRef = useRef(`error-${Math.random().toString(36).slice(2, 11)}`)
 
-    const filteredOptions = useMemo(() =>
-            options.filter(option =>
-                option.label.toLowerCase().includes(searchTerm.toLowerCase())
-            ),
-        [options, searchTerm]
-    )
+    const filteredOptions = useMemo(() => {
+        if (!searchTerm.trim()) return options
+
+        const search = searchTerm.toLowerCase()
+        return options.filter(option =>
+            option.label.toLowerCase().includes(search)
+        )
+    }, [options, searchTerm])
 
     const selectedOption = useMemo(() =>
-            value ? options.find(option => option.value === value.value) : null,
+            value !== undefined && value !== null
+                ? options.find(opt => opt.value === value)
+                : null,
         [value, options]
     )
 
-    const displayText = selectedOption?.label || value?.label || ""
+    const displayText = selectedOption?.label || ""
 
     const handleSelect = useCallback((selectedValue: string | number) => {
-        onChangeAction(selectedValue)
+        onChange?.(selectedValue)
         setOpen(false)
         setSearchTerm("")
-    }, [onChangeAction])
+    }, [onChange])
 
     useEffect(() => {
-        if (!open) {
-            setSearchTerm("")
-        }
+        if (!open) setSearchTerm("")
     }, [open])
+
+    const labelId = label ? labelIdRef.current : undefined
+    const errorId = error ? errorIdRef.current : undefined
 
     return (
         <div className={cn("w-full space-y-1 md:space-y-2", className)} {...props}>
             {label && (
                 <Label
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    id={labelId}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
                     {label}
-                    {required && <span className="ml-1 text-red-500">*</span>}
+                    {required && <span className="ml-1 text-red-500" aria-label="required">*</span>}
                 </Label>
             )}
             <Popover open={open} onOpenChange={setOpen}>
@@ -90,6 +98,9 @@ export default function SearchSelectField({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
+                        aria-labelledby={labelId}
+                        aria-describedby={error ? errorId : undefined}
+                        aria-invalid={!!error}
                         disabled={disabled}
                         className={cn(
                             "w-full justify-between text-left font-normal",
@@ -116,26 +127,30 @@ export default function SearchSelectField({
                     align="start"
                     sideOffset={4}
                 >
-                    <Command shouldFilter={false}>
+                    <Command shouldFilter={false} aria-label={`Search ${label || 'options'}`}>
                         <CommandInput
-                            placeholder={`Search ${label?.toLowerCase() || 'options'}...`}
+                            placeholder={searchPlaceholder || `Search ${label?.toLowerCase() || 'options'}...`}
                             value={searchTerm}
                             onValueChange={setSearchTerm}
                         />
                         <CommandList>
-                            <CommandEmpty>No options found.</CommandEmpty>
+                            <CommandEmpty>{emptyMessage}</CommandEmpty>
                             <CommandGroup>
                                 {filteredOptions.length > 0 ? (
-                                    filteredOptions.map((option, index) => (
+                                    filteredOptions.map((option,index) => (
                                         <CommandItem
-                                            key={`${option.value}-${index}`}
+                                            key={index + option.value.toString()}
                                             value={option.value.toString()}
                                             onSelect={() => handleSelect(option.value)}
                                             className="cursor-pointer"
                                         >
                                             <span className="flex-1">{option.label}</span>
-                                            {value?.value === option.value && (
-                                                <CheckIcon size={16} className="ml-2 shrink-0 text-primary"/>
+                                            {value === option.value && (
+                                                <CheckIcon
+                                                    size={16}
+                                                    className="ml-2 shrink-0 text-primary"
+                                                    aria-label="selected"
+                                                />
                                             )}
                                         </CommandItem>
                                     ))
@@ -155,8 +170,8 @@ export default function SearchSelectField({
                 </p>
             )}
             {error && (
-                <p className="mt-1 flex items-center gap-1 text-sm text-red-500">
-                    <span className="inline-block h-1 w-1 shrink-0 rounded-full bg-red-500"></span>
+                <p id={errorId} className="mt-1 flex items-center gap-1 text-sm text-red-500" role="alert">
+                    <span className="inline-block h-1 w-1 shrink-0 rounded-full bg-red-500" aria-hidden="true"></span>
                     {error}
                 </p>
             )}

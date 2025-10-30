@@ -75,7 +75,7 @@ class OrderService extends HttpServices {
         }
     }
 
-    async getAssignedVendorOrders(order_uuid: string, params?: ParamsType) {
+    async getAssignableVendorOrders(order_uuid: string, params?: ParamsType) {
         try {
             const response = await this.getRequest({
                 url: `/admin/orders/${order_uuid}/vendors`,

@@ -1,5 +1,5 @@
 'use client'
-import CategoryTable from "@/app/admin/categories/CategoryTable";
+import CategoryTable from "@/components/categories/CategoryTable";
 import PageHeader from "@/components/headers/PageHeader";
 import {Building2} from "lucide-react";
 import {adminVendorDashboardCards} from "@/data";

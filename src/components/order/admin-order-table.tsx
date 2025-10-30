@@ -14,13 +14,7 @@ import ActionModal from "@/components/modal/ConfirmModal"
 import {cn} from "@/lib/utils"
 import {NoDataFound, StatusBadge} from "@/lib/helper"
 import {RowActions} from "@/lib/action-button"
-import {
-    DEFAULT_PAGE,
-    DEFAULT_PAGE_SIZE,
-    PAGE_SIZE_OPTIONS,
-    QUERY_REFETCH_INTERVAL,
-    QUERY_STALE_TIME
-} from "@/config/app-constant"
+import {DEFAULT_PAGE, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, QUERY_STALE_TIME} from "@/config/app-constant"
 import {ColumnDef} from "@tanstack/react-table";
 
 
@@ -71,7 +65,6 @@ export default function AdminOrderTable() {
         },
         staleTime: QUERY_STALE_TIME,
         refetchOnWindowFocus: false,
-        refetchInterval: QUERY_REFETCH_INTERVAL,
     })
     const handleView = useCallback((order: OrderType): void => {
         router.push(`/admin/orders/${order.order_uuid}`)

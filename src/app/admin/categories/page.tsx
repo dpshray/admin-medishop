@@ -1,5 +1,5 @@
 'use client'
-import CategoryTable from "@/app/admin/categories/CategoryTable";
+import CategoryTable from "@/components/categories/CategoryTable";
 import PageHeader from "@/components/headers/PageHeader";
 import {Building2} from "lucide-react";
 import {adminVendorDashboardCards} from "@/data";
@@ -8,7 +8,7 @@ import {DashboardCard} from "@/components/dashboard/dashboard-card";
 export default function CategoryPage() {
 
     return (
-        <div className={'min-h-screen'}>
+        <div className={'min-h-screen mainContainer'}>
             <PageHeader title={'Categories Dashboard'}
                         icon={Building2}
                         description={'Manage your categories'}/>

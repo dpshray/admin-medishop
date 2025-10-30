@@ -120,6 +120,7 @@
         @apply bg-background text-foreground;
     }
 }
+
 @layer utilities {
     .mainContainer {
         @apply max-w-7xl mx-auto p-2 md:px-4 ;
@@ -127,5 +128,23 @@
 
     .primaryGradient {
         @apply bg-gradient-to-br from-[#4a358e] to-[#6b4fd8] text-white
+    }
+
+    .primary-btn {
+        @apply bg-primaryColor hover:bg-primaryColor/90 text-white cursor-pointer
+    }
+
+    .scrollbar::-webkit-scrollbar {
+        height: 3px;
+        width: 3px;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 4px;
+    }
+
+    .scrollbar::-webkit-scrollbar-track {
+        background: transparent;
     }
 }

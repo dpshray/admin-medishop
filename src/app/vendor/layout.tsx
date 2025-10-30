@@ -1,11 +1,10 @@
 "use client"
 
 import type React from "react"
-import type { NavGroup } from "@/components/sidebar/app-sidebar"
-import type { DropdownGroup } from "@/components/sidebar/user-dropdown"
+import type {NavGroup} from "@/components/sidebar/app-sidebar"
+import type {DropdownGroup} from "@/components/sidebar/user-dropdown"
 import {
     BarChart3,
-    Box,
     ClipboardCheck,
     ClipboardList,
     FileText,
@@ -22,35 +21,35 @@ import {
 } from "lucide-react"
 import ReusableSidebar from "@/components/sidebar/resuable-sidebar"
 
-export default function VendorLayout({ children }: { children: React.ReactNode }) {
+export default function VendorLayout({children}: { children: React.ReactNode }) {
     const navGroups: NavGroup[] = [
         {
             label: "Main",
             items: [
-                { label: "Dashboard", href: "/vendor", icon: Home },
-                { label: "Customers", href: "/vendor/customers", icon: Users },
+                {label: "Dashboard", href: "/vendor", icon: Home},
+                {label: "Customers", href: "/vendor/customers", icon: Users},
             ],
         },
         {
             label: "Products",
             items: [
-                { label: "Suppliers", href: "/vendor/suppliers", icon: Truck },
-                { label: "Products", href: "/vendor/products", icon: Package },
-                { label: "Categories", href: "/vendor/categories", icon: Layers },
-                { label: "Inventories", href: "/vendor/inventories", icon: Warehouse },
+                {label: "Suppliers", href: "/vendor/suppliers", icon: Truck},
+                {label: "Products", href: "/vendor/products", icon: Package},
+                {label: "Categories", href: "/vendor/categories", icon: Layers},
+                {label: "Inventories", href: "/vendor/inventories", icon: Warehouse},
             ],
         },
         {
             label: "Orders",
             items: [
-                { label: "Orders", href: "/vendor/orders", icon: ShoppingCart },
-                { label: "Order History", href: "/vendor/order-history", icon: History },
+                {label: "Orders", href: "/vendor/vendor-orders", icon: ShoppingCart},
+                {label: "Order History", href: "/vendor/order-history", icon: History},
             ],
         },
         {
             label: "Prescriptions",
             items: [
-                { label: "Prescriptions", href: "/vendor/prescriptions", icon: ClipboardList },
+                {label: "Prescriptions", href: "/vendor/prescriptions", icon: ClipboardList},
                 {
                     label: "Prescription History",
                     href: "/vendor/prescription-history",
@@ -61,15 +60,15 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         {
             label: "Reports",
             items: [
-                { label: "Reports", href: "/vendor/reports", icon: BarChart3 },
-                { label: "Report History", href: "/vendor/report-history", icon: ClipboardCheck },
+                {label: "Reports", href: "/vendor/reports", icon: BarChart3},
+                {label: "Report History", href: "/vendor/report-history", icon: ClipboardCheck},
             ],
         },
         {
             label: "Settings",
             items: [
-                { label: "Profile", href: "/vendor/profile", icon: UserPen },
-                { label: "Preferences", href: "/vendor/preferences", icon: Settings },
+                {label: "Profile", href: "/vendor/profile", icon: UserPen},
+                {label: "Preferences", href: "/vendor/preferences", icon: Settings},
             ],
         },
     ]

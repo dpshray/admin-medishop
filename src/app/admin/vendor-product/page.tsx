@@ -6,7 +6,8 @@ import {DashboardCard} from "@/components/dashboard/dashboard-card";
 import PageHeader from "@/components/headers/PageHeader";
 import {adminVendorDashboardCards} from "@/data";
 
-const VendorProductTable = dynamic(() => import("@/app/admin/vendor-product/vendor-product-table"), {
+
+const VendorProductRequestTable = dynamic(() => import("@/components/vendor/VendorProductRequestTable"), {
     ssr: false,
     loading: () => (
         <div className="flex items-center justify-center py-12">
@@ -37,7 +38,7 @@ export default function VendorProductDashboard() {
                 </section>
 
                 <section className="mt-8 w-full">
-                    <VendorProductTable/>
+                    <VendorProductRequestTable/>
                 </section>
             </div>
         </div>

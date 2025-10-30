@@ -85,7 +85,7 @@ export default function LoginPage() {
                             </div>
                             <Button
                                 type="submit"
-                                className="w-full font-semibold cursor-pointer"
+                                className="w-full font-semibold cursor-pointer primary-btn"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? "Signing in..." : "Sign In"}

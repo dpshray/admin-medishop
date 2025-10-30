@@ -9,7 +9,8 @@ import UsersTable from "@/components/dashboard/users-table"
 import {Button} from "@/components/ui/button"
 import {motion} from "framer-motion"
 import {Badge} from "@/components/ui/badge"
-import {vendorDashboardCards} from "@/data";
+import {useQuery} from "@tanstack/react-query"
+import vendorService from "@/service/vendor.service"
 
 export default function VendorPage() {
     const recentActivities = [
@@ -24,33 +25,65 @@ export default function VendorPage() {
         {id: 2, name: "Organic Apples Pack", sold: "890 units", growth: "+9%", vendors: 6},
     ]
 
+    const {data} = useQuery({
+        queryKey: ['vendor-dashboard'],
+        queryFn: () => vendorService.vendorDashboard(),
+    })
 
+    const dashboardData = [
+        {
+            title: "Total Uploaded Products",
+            value: data?.total_uploaded_products_count || 0,
+            change: "0%",
+            changeType: "neutral" as const,
+            icon: Package,
+            color: "text-purple-500",
+            bgColor: "bg-purple-100"
+        },
+        {
+            title: "Total Assigned Orders",
+            value: data?.total_assigned_orders_count || 0,
+            change: "0%",
+            changeType: "neutral" as const,
+            icon: Package,
+            color: "text-yellow-500",
+            bgColor: "bg-yellow-100"
+        },
+        {
+            title: "Total Delivered Orders",
+            value: data?.total_delivered_orders_count || 0,
+            change: "0%",
+            changeType: "neutral" as const,
+            icon: Package,
+            color: "text-green-500",
+            bgColor: "bg-green-100"
+        },
+        {
+            title: "Total Vendor Earnings",
+            value: data?.total_vendor_earning || 0,
+            change: "0%",
+            changeType: "neutral" as const,
+            icon: Package,
+            color: "text-pink-500",
+            bgColor: "bg-pink-100"
+        }
+    ]
 
     return (
-        <div className="space-y-6 px-4 ">
-            <div
-                className={cn('flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-gradient-to-r from-purple-600 via-pink-500 to-pink-400 p-6 rounded-xl text-white my-2')}>
+        <div className="space-y-6 px-4">
+            <div className={cn('flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-gradient-to-r from-purple-600 via-pink-500 to-pink-400 p-6 rounded-xl text-white my-2')}>
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between w-full">
                     <div className="space-y-4 max-w-lg">
                         <Badge className="bg-white/20 text-white hover:bg-white/30 rounded-xl">Premium</Badge>
                         <h2 className="text-3xl font-bold">Welcome to Vendor Dashboard</h2>
                         <p className="text-white/80">Manage your vendors, products, and sales performance</p>
                         <div className="flex flex-wrap gap-3">
-                            <Button className="rounded-2xl bg-white text-purple-700 hover:bg-white/90">
-                                Explore Plans
-                            </Button>
-                            <Button variant="outline"
-                                    className="rounded-2xl  !bg-white/10 border-white text-background hover:bg-white/10">
-                                Take a Tour
-                            </Button>
+                            <Button className="rounded-2xl bg-white text-purple-700 hover:bg-white/90">Explore Plans</Button>
+                            <Button variant="outline" className="rounded-2xl !bg-white/10 border-white text-background hover:bg-white/10">Take a Tour</Button>
                         </div>
                     </div>
                     <div className="hidden lg:block">
-                        <motion.div
-                            animate={{rotate: 360}}
-                            transition={{duration: 50, repeat: Infinity, ease: "linear"}}
-                            className="relative h-40 w-40"
-                        >
+                        <motion.div animate={{rotate: 360}} transition={{duration: 50, repeat: Infinity, ease: "linear"}} className="relative h-40 w-40">
                             <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-md"/>
                             <div className="absolute inset-4 rounded-full bg-white/20"/>
                             <div className="absolute inset-8 rounded-full bg-white/30"/>
@@ -62,7 +95,7 @@ export default function VendorPage() {
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-                {vendorDashboardCards.map((card, index) => (
+                {dashboardData.map((card, index) => (
                     <DashboardCard key={index} {...card} index={index}/>
                 ))}
             </div>
@@ -72,9 +105,7 @@ export default function VendorPage() {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-6 mt-6">
-                <UsersTable onAddUser={function (): void {
-                    throw new Error("Function not implemented.")
-                }}/>
+                <UsersTable onAddUser={function (): void {throw new Error("Function not implemented.")}}/>
                 <Card className="w-full lg:w-1/2">
                     <CardHeader>
                         <CardTitle>Top Selling Products</CardTitle>
@@ -133,12 +164,7 @@ export default function VendorPage() {
                                 {title: "Download Sales Report", desc: "Export sales analytics", icon: Download},
                                 {title: "Vendor Settings", desc: "Configure vendor accounts", icon: Settings},
                             ].map((action, index) => (
-                                <button
-                                    key={index}
-                                    className={cn(
-                                        "w-full p-3 text-left rounded-lg border hover:bg-gray-50 transition-colors sm:text-sm"
-                                    )}
-                                >
+                                <button key={index} className={cn("w-full p-3 text-left rounded-lg border hover:bg-gray-50 transition-colors sm:text-sm")}>
                                     <div className="flex items-center gap-3">
                                         <action.icon className="w-5 h-5 text-purple-600 flex-shrink-0"/>
                                         <div className="flex-1 min-w-0">

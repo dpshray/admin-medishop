@@ -115,6 +115,20 @@ class VendorService extends HttpServices {
             throw error;
         }
     }
+
+    async vendorDashboard() {
+        try {
+            return await this.getRequest({
+                url: "/vendor/dashboard",
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            console.log('Error from vendorDashboard', error)
+            throw error;
+        }
+    }
 }
 
 

@@ -11,7 +11,7 @@ interface DashboardCardProps {
     title: string
     value: string
     change?: string
-    changeType?: 'positive' | 'negative'
+    changeType?: 'positive' | 'negative' | 'neutral'
     icon: LucideIcon
     color?: string
     bgColor?: string

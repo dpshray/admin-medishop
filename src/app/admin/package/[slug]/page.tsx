@@ -82,22 +82,14 @@ export default function AddProductToPackage() {
         formState: { errors, isSubmitting }
     } = useForm<ProductToAddForm>({
         resolver: zodResolver(productToAddSchema),
-        defaultValues: {
-            products: [{ product_uuid: "", product_variation_id: 0, quantity: 1 }]
-        }
+        defaultValues: { products: [{ product_uuid: "", product_variation_id: 0, quantity: 1 }] }
     })
 
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "products"
-    })
+    const { fields, append, remove } = useFieldArray({ control, name: "products" })
 
     const { data, isLoading, error, refetch } = useQuery<PackageDetail>({
         queryKey: ["package", slug],
-        queryFn: () => packageService.getPackageDetail(slug).then((data) => {
-            console.log('Response from getPackageDetail',data)
-            return data
-        }),
+        queryFn: () => packageService.getPackageDetail(slug),
         enabled: !!slug,
     })
 
@@ -116,53 +108,49 @@ export default function AddProductToPackage() {
     }, [append])
 
     const removeProductRow = useCallback((index: number) => {
-        if (fields.length > 1) {
-            remove(index)
-        }
+        if (fields.length > 1) remove(index)
     }, [fields.length, remove])
 
     const handleProductSubmit = async (data: ProductToAddForm) => {
         try {
             await packageService.addProductToPackage(slug, data)
-            toast.success("Products added successfully!", {
-                description: `${data.products.length} product${data.products.length > 1 ? 's' : ''} added to the package.`,
+            toast.success("Products added successfully", {
+                description: `${data.products.length} product${data.products.length > 1 ? "s" : ""} added.`,
             })
             reset()
             await refetch()
         } catch (error: any) {
             toast.error("Failed to add products", {
-                description: error?.message || "An error occurred while adding products to the package.",
+                description: error?.message || "An error occurred.",
             })
         }
     }
 
-    const getSelectedProduct = useCallback((uuid: string): ProductWithVariations | undefined => {
-        return products.find(p => p.uuid === uuid)
-    }, [products])
+    const getSelectedProduct = useCallback(
+        (uuid: string): ProductWithVariations | undefined =>
+            products.find(p => p.uuid === uuid),
+        [products]
+    )
 
     const resetForm = useCallback(() => {
         reset()
-        toast.info("Form reset", {
-            description: "All fields have been cleared.",
-        })
+        toast.info("Form reset", { description: "All fields cleared." })
     }, [reset])
 
     const handleDeleteProduct = useCallback(async (productVariationId: number) => {
         if (!slug) return
-
         try {
             const response = await packageService.deleteProductFromPackage(slug, productVariationId)
             toast.success(response?.message || "Product removed successfully")
             await refetch()
         } catch (error: any) {
-            console.error("Delete error:", error)
             toast.error(error?.message || "Failed to remove product")
         }
     }, [slug, refetch])
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center" role="status" aria-live="polite">
+            <div className="flex min-h-screen items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="h-10 w-10 animate-spin text-[#4a358e]" />
                     <p className="text-sm font-medium text-muted-foreground">Loading package details...</p>
@@ -173,12 +161,10 @@ export default function AddProductToPackage() {
 
     if (error) {
         return (
-            <div className="flex min-h-screen items-center justify-center p-4" role="alert">
+            <div className="flex min-h-screen items-center justify-center p-4">
                 <Alert variant="destructive" className="max-w-md">
                     <AlertTriangle className="h-5 w-5" />
-                    <AlertDescription className="font-medium">
-                        Error loading package details. Please try again.
-                    </AlertDescription>
+                    <AlertDescription>Error loading package details. Please try again.</AlertDescription>
                 </Alert>
             </div>
         )
@@ -207,26 +193,23 @@ export default function AddProductToPackage() {
             )}
 
             <Card className="overflow-hidden border-border shadow-lg hover:shadow-xl transition-all duration-300 py-0">
-                <form onSubmit={handleSubmit(handleProductSubmit)} noValidate aria-label="Add products to package form">
-                    <CardHeader className="bg-gradient-to-br from-purple-50 via-purple-50/80 to-background p-5 sm:p-7 border-b">
+                <form onSubmit={handleSubmit(handleProductSubmit)} noValidate>
+                    <CardHeader className="bg-gradient-to-br from-purple-50 via-purple-50/80 to-background p-6 border-b">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                            <div
-                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4a358e] to-[#6b4db8] text-white shadow-lg sm:h-16 sm:w-16 ring-4 ring-purple-100"
-                                aria-hidden="true"
-                            >
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4a358e] to-[#6b4db8] text-white shadow-lg sm:h-16 sm:w-16 ring-4 ring-purple-100">
                                 <Plus className="h-7 w-7 sm:h-8 sm:w-8" />
                             </div>
                             <div className="space-y-1.5">
                                 <CardTitle className="text-2xl font-bold sm:text-3xl text-gray-900">Add New Products</CardTitle>
                                 <CardDescription className="text-sm sm:text-base text-gray-600">
-                                    Select products, variations and quantities to add to this package
+                                    Select products, variations, and quantities to add to this package.
                                 </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
 
-                    <CardContent className="space-y-5 p-5 sm:p-7 sm:space-y-6">
-                        <div className="space-y-4 sm:space-y-5" role="list" aria-label="Products to add">
+                    <CardContent className="space-y-6 p-6">
+                        <div className="space-y-5">
                             {fields.map((field, index) => {
                                 const productUuid = watch(`products.${index}.product_uuid`)
                                 const variationId = watch(`products.${index}.product_variation_id`)
@@ -238,23 +221,20 @@ export default function AddProductToPackage() {
                                 })) || []
 
                                 return (
-                                    <Card key={field.id} className="border-2 border-border transition-all hover:shadow-lg hover:border-purple-200" role="listitem">
-                                        <CardContent className="p-4 sm:p-5 lg:p-6">
-                                            <div className="flex flex-col gap-4 sm:gap-5">
-                                                <div className="flex items-start gap-3 sm:gap-4">
-                                                    <div
-                                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4a358e] to-[#6b4db8] text-sm font-bold text-white shadow-md sm:h-11 sm:w-11 sm:text-base ring-2 ring-purple-100"
-                                                        aria-label={`Product ${index + 1}`}
-                                                    >
+                                    <Card key={field.id} className="border-2 hover:shadow-lg hover:border-purple-200 transition-all">
+                                        <CardContent className="p-5">
+                                            <div className="flex flex-col gap-5">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#4a358e] to-[#6b4db8] text-sm font-bold text-white shadow-md sm:h-11 sm:w-11">
                                                         {index + 1}
                                                     </div>
 
-                                                    <div className="grid flex-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
+                                                    <div className="grid flex-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                                                         <div className="space-y-2">
                                                             <SearchSelectField
                                                                 options={productsOptions}
-                                                                value={productsOptions.find(option => option.value === productUuid) || null}
-                                                                onChangeAction={(val) => {
+                                                                value={productUuid}
+                                                                onChange={(val) => {
                                                                     setValue(`products.${index}.product_uuid`, val as string)
                                                                     setValue(`products.${index}.product_variation_id`, 0)
                                                                 }}
@@ -277,15 +257,10 @@ export default function AddProductToPackage() {
                                                         <div className="space-y-2">
                                                             <SearchSelectField
                                                                 options={variationOptions}
-                                                                value={
-                                                                    selectedVariation
-                                                                        ? {
-                                                                            value: variationId,
-                                                                            label: `${selectedVariation.name} - ${selectedVariation.size_value} ${selectedVariation.size_unit}`,
-                                                                        }
-                                                                        : null
+                                                                value={variationId}
+                                                                onChange={(val) =>
+                                                                    setValue(`products.${index}.product_variation_id`, Number(val))
                                                                 }
-                                                                onChangeAction={(val) => setValue(`products.${index}.product_variation_id`, parseInt(val.toString()))}
                                                                 placeholder="Search variations..."
                                                                 label="Select Variation"
                                                                 disabled={!selectedProduct}
@@ -322,8 +297,7 @@ export default function AddProductToPackage() {
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => removeProductRow(index)}
-                                                            className="h-10 w-10 shrink-0 rounded-full border-2 border-transparent text-destructive transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 sm:h-11 sm:w-11"
-                                                            aria-label={`Remove product ${index + 1}`}
+                                                            className="h-10 w-10 rounded-full text-destructive hover:bg-red-50 hover:text-red-600"
                                                         >
                                                             <X className="h-5 w-5" />
                                                         </Button>
@@ -336,22 +310,19 @@ export default function AddProductToPackage() {
                             })}
                         </div>
 
-                        <div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={addProductRow}
-                                className="w-full border-2 border-[#4a358e] text-sm font-bold text-[#4a358e] transition-all hover:bg-purple-50 hover:shadow-md sm:text-base"
-                                aria-label="Add another product row"
-                            >
-                                <Plus className="mr-2 h-5 w-5" />
-                                Add Another Product
-                            </Button>
-                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={addProductRow}
+                            className="w-full border-2 border-[#4a358e] text-sm font-bold text-[#4a358e] hover:bg-purple-50"
+                        >
+                            <Plus className="mr-2 h-5 w-5" />
+                            Add Another Product
+                        </Button>
 
-                        <Separator className="my-5 sm:my-7" />
+                        <Separator className="my-6" />
 
-                        <div className="flex flex-col-reverse gap-3 pb-2 sm:flex-row sm:justify-end sm:pb-4">
+                        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -365,9 +336,8 @@ export default function AddProductToPackage() {
                             <Button
                                 type="submit"
                                 disabled={isSubmitting || validProductCount === 0}
-                                className="w-full bg-gradient-to-r from-[#4a358e] to-[#6b4db8] text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50 sm:w-auto"
+                                className="w-full bg-gradient-to-r from-[#4a358e] to-[#6b4db8] text-white shadow-lg hover:shadow-xl disabled:opacity-50 sm:w-auto"
                                 size="lg"
-                                aria-label={`Add ${validProductCount} product${validProductCount !== 1 ? 's' : ''} to package`}
                             >
                                 {isSubmitting ? (
                                     <>

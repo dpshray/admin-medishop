@@ -15,7 +15,7 @@ import {createProductSchema, ProductCreate, ProductUpdate, updateProductSchema} 
 import {useBrands, useCategories, useProductUnits, useTags} from "@/hooks/all-hook"
 import productService from "@/service/product/product.service"
 import {toast} from "sonner"
-import {useRouter} from "next/navigation";
+import {useRouter} from "next/navigation"
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
@@ -27,11 +27,6 @@ interface ProductManageFormProps {
 interface SelectOption {
     id: number
     name: string
-}
-
-interface BrandSelectValue {
-    value: number
-    label: string
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -137,12 +132,6 @@ const ProductManageForm = ({
     const watchCategories = watch("categories") as number[] || []
     const watchTags = watch("tags") as number[] || []
     const watchBrandId = watch("brand_id")
-
-    const brandSelectValue: BrandSelectValue | null = (() => {
-        if (!watchBrandId) return null
-        const brandOption = brandsOptions.find((brand) => brand.id === watchBrandId)
-        return brandOption ? {value: brandOption.id, label: brandOption.name} : null
-    })()
 
     const categorySelectOptions = categoriesOptions.map((category) => ({
         value: category.id,
@@ -325,8 +314,8 @@ const ProductManageForm = ({
                                             value: brand.id,
                                             label: brand.name
                                         }))}
-                                        value={brandSelectValue}
-                                        onChangeAction={handleBrandChange}
+                                        value={watchBrandId}
+                                        onChange={handleBrandChange}
                                         placeholder="Select Brand"
                                         label="Brand"
                                         error={errors.brand_id?.message}
@@ -441,10 +430,6 @@ const ProductManageForm = ({
                                     <div className="space-y-4">
                                         {fields.map((field, index) => {
                                             const currentSizeUnit = watch(`variations.${index}.size_unit`)
-                                            const sizeUnitValue = currentSizeUnit ? {
-                                                value: currentSizeUnit,
-                                                label: currentSizeUnit
-                                            } : null
 
                                             return (
                                                 <div
@@ -498,8 +483,8 @@ const ProductManageForm = ({
                                                                 value: unit.value,
                                                                 label: unit.label || unit.value
                                                             }))}
-                                                            value={sizeUnitValue}
-                                                            onChangeAction={handleSizeUnitChange(index)}
+                                                            value={currentSizeUnit}
+                                                            onChange={handleSizeUnitChange(index)}
                                                             error={errors.variations?.[index]?.size_unit?.message}
                                                             required
                                                         />

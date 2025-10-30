@@ -48,16 +48,16 @@ export default function CategoryTable() {
         queryFn: async () => {
             const params: PaginationParams = {page: currentPage, per_page: pageSize}
             return categoriesService.getAllCategories(params).then(response => {
-                setCurrentPage(response.page)
                 setTotalPages(response.total_page)
                 setTotalItems(response.total_items || 0)
+                console.log('Total Items', response.total_items)
                 return response
             })
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
     })
-
+    console.log('Total Pages', totalItems)
     const categories = useMemo(() => data?.items || [], [data?.items])
 
     const deleteMutation = useMutation({
@@ -73,12 +73,15 @@ export default function CategoryTable() {
         },
     })
 
-    const handleSearch = useCallback((value: string) => setSearch(value), [])
-    const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
-    const handlePageSizeChange = useCallback((size: number) => {
-        setPageSize(size)
+    const handleSearch = useCallback((value: string) => {
+        setSearch(value)
         setCurrentPage(DEFAULT_PAGE)
     }, [])
+
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page)
+    }, [])
+
 
     const handleAddCategory = useCallback(() => {
         setSelectedCategory(null)
@@ -105,34 +108,28 @@ export default function CategoryTable() {
             if (selectedCategory) {
                 await categoriesService.updateCategory(selectedCategory.id, formData).then(res => {
                     toast.success(res?.message || "Category updated successfully")
-                    refetch()
                     setFormModalOpen(false)
                     setSelectedCategory(null)
+                    refetch()
                 })
             } else {
                 await categoriesService.createCategory(formData).then(res => {
                     toast.success(res?.message || "Category created successfully")
+                    setFormModalOpen(false)
+                    setSelectedCategory(null)
                     refetch()
                 })
             }
-            setFormModalOpen(false)
-            setSelectedCategory(null)
-            refetch()
         } catch (err: any) {
             toast.error(err?.message || "Failed to save category")
         }
     }, [selectedCategory, refetch])
 
-    const handleBulkDelete = useCallback(async (selectedCategories: Category[]) => {
-        if (!selectedCategories.length) return
-        try {
-            await Promise.all(selectedCategories.map(cat => categoriesService.deleteCategory(cat.id)))
-            toast.success(`Successfully deleted ${selectedCategories.length} categor${selectedCategories.length > 1 ? 'ies' : 'y'}`)
-            refetch()
-        } catch (err: any) {
-            toast.error(err?.message || "Failed to delete selected categories")
-        }
-    }, [refetch])
+
+    const handleCloseFormModal = useCallback(() => {
+        setFormModalOpen(false)
+        setSelectedCategory(null)
+    }, [])
 
     const columns: ColumnDef<Category>[] = useMemo(() => [
         {
@@ -172,8 +169,9 @@ export default function CategoryTable() {
             header: "Discount Percent",
             size: 180,
             cell: ({row}) =>
-                <span
-                    className="text-sm bg-gray-100 px-2 py-1 rounded">{row.original.discount_percent || "-"}</span>
+                <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    {row.original.discount_percent || "-"}
+                </span>
         },
         {
             accessorKey: "image",
@@ -200,6 +198,21 @@ export default function CategoryTable() {
         }
     ], [handleEditCategory, handleDeleteCategory])
 
+    const formModalInitialData = useMemo(() =>
+            selectedCategory ? {
+                name: selectedCategory.name,
+                image: selectedCategory.image
+            } : undefined,
+        [selectedCategory]
+    )
+
+    const deleteModalDescription = useMemo(() =>
+            selectedCategory
+                ? `Are you sure you want to delete "${selectedCategory.name}"? This action cannot be undone.`
+                : "Are you sure you want to delete this category?",
+        [selectedCategory]
+    )
+
     if (isError) {
         return (
             <div className="p-6">
@@ -219,7 +232,7 @@ export default function CategoryTable() {
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 ">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Category Management</h1>
@@ -232,7 +245,6 @@ export default function CategoryTable() {
                 columns={columns}
                 loading={isLoading}
                 onAddAction={handleAddCategory}
-                onDeleteAction={handleBulkDelete}
                 onSearchAction={handleSearch}
                 actionLabel="Add Category"
                 pagination={{
@@ -240,16 +252,13 @@ export default function CategoryTable() {
                     totalPages,
                     pageSize,
                     onPageChange: handlePageChange,
-                    onPageSizeChange: handlePageSizeChange,
-                    pageSizeOptions: [5, 10, 25, 50],
-                    dataCount: totalItems,
+                    dataCount: 15,
                 }}
                 enableRowSelection
                 enableSorting
                 enableSearch
                 enableColumnVisibility
                 searchPlaceholder="Search categories by name..."
-                totalCount={totalItems}
                 noDataText={
                     <div className="flex flex-col items-center justify-center py-12">
                         <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -266,7 +275,7 @@ export default function CategoryTable() {
                 open={isDeleteModalOpen}
                 setOpen={setDeleteModalOpen}
                 title="Delete Category"
-                description={selectedCategory ? `Are you sure you want to delete "${selectedCategory.name}"? This action cannot be undone.` : "Are you sure you want to delete this category?"}
+                description={deleteModalDescription}
                 confirmLabel="Delete Category"
                 onConfirm={confirmDeleteCategory}
                 loading={deleteMutation.isPending}
@@ -274,17 +283,11 @@ export default function CategoryTable() {
 
             <CategoryFormModal
                 open={isFormModalOpen}
-                onCloseAction={() => {
-                    setFormModalOpen(false);
-                    setSelectedCategory(null)
-                }}
+                onCloseAction={handleCloseFormModal}
                 onSubmitAction={handleFormSubmit}
                 slug={selectedCategory?.slug}
                 isLoading={false}
-                initialData={selectedCategory ? {
-                    name: selectedCategory.name,
-                    image: selectedCategory.image
-                } : undefined}
+                initialData={formModalInitialData}
             />
         </div>
     )

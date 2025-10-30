@@ -1,4 +1,4 @@
-import PackageForm from "@/components/form/package-form";
+import PackageForm from "@/components/package/package-form";
 
 export default function AddPackageForm() {
     return (

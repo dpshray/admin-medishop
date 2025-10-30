@@ -77,7 +77,7 @@ const PriceCell = memo(({price}: {price: number}) => (
 
 PriceCell.displayName = "PriceCell"
 
-export default function VendorProductTable() {
+export default function VendorProductRequestTable() {
     const router = useRouter()
 
     const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE)
@@ -96,7 +96,7 @@ export default function VendorProductTable() {
                 per_page: pageSize,
                 search
             }
-            const response = await vendorProductService.vendorProductList(params)
+            const response = await vendorProductService.vendorProductListByAdmin(params)
             setCurrentPage(response.page)
             return response
         },

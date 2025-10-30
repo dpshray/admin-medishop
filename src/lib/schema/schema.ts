@@ -47,5 +47,18 @@ export const updateVendorSchema = z.object({
     vendor_business_license: z.instanceof(File).optional(),
 });
 
+
+export const VendorProductSchema = z.object({
+    product_uuid: z.string().min(1, "Please select a product"),
+    variations: z.array(
+        z.object({
+            product_variation_id: z.number(),
+            units_in_stock: z.number().min(0, "Size value must be non-negative"),
+            price: z.number().min(0, "Price must be non-negative"),
+        })
+    ).min(1, "At least one variation is required"),
+})
+
+export type VendorProductForm = z.infer<typeof VendorProductSchema>
 export type VendorFormValues = z.infer<typeof createVendorSchema>;
 export type UpdateVendorFormValues = z.infer<typeof updateVendorSchema>;

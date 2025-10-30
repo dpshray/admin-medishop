@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation"
 import {useQuery} from "@tanstack/react-query"
 
 import {RefreshCw} from "lucide-react"
-import orderService from "@/service/order.service"
+import orderService from "@/service/order/order.service"
 import {ParamsType} from "@/types/types"
 import {Button} from "@/components/ui/button"
 import {Checkbox} from "@/components/ui/checkbox"

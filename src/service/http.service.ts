@@ -1,5 +1,6 @@
 import axiosInstance from "@/config/axiosConfig";
 import {AxiosRequestConfig} from 'axios';
+import {useRouter} from "next/navigation";
 
 interface RequestProps<T = any> {
     url: string;
@@ -18,12 +19,15 @@ interface HeaderConfigProps {
 class HttpServices {
     private headers: Record<string, string> = {};
 
+
     private setHeaders(config?: HeaderConfigProps) {
         this.headers = {};
         if (config?.auth) {
             const token = localStorage.getItem("_at");
             if (!token) {
+                window.location.href = "/login";
                 throw new Error("Authentication required. Please login first.");
+
             }
             this.headers["Authorization"] = `Bearer ${token}`;
         }

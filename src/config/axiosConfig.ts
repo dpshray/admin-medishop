@@ -24,9 +24,12 @@ axiosInstance.interceptors.response.use(
         return response.data;
     },
     (error: AxiosError) => {
+        const token = localStorage.getItem("_at");
 
         console.error("Response Error from axios:", error);
-        if (error.status === 401) {
+        if (error.status === 401 && typeof window !== "undefined") {
+            localStorage.removeItem("_at");
+            localStorage.removeItem("_role");
             window.location.href = "/login";
 
         }

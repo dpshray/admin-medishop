@@ -49,13 +49,12 @@ class OrderService extends HttpServices {
 
     async assignOrder(order_uuid: string, vendor_uuid: string) {
         try {
-            const response = await this.postRequest({
-                url: `/admin/orders/${order_uuid}/assign/${vendor_uuid}`,
+           return await this.getRequest({
+                url: `/admin/order/${order_uuid}/assign/${vendor_uuid}`,
                 config: {
                     auth: true,
                 },
             })
-            return response?.data
         } catch (error) {
             throw error
         }

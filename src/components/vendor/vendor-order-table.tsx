@@ -1,15 +1,17 @@
 'use client'
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import {useQuery, useQueryClient} from "@tanstack/react-query"
 import vendorOrderService from "@/service/order/vendor-order.service"
-import { DEFAULT_PAGE_SIZE } from "@/config/app-constant"
-import { useCallback, useMemo, useState } from "react"
-import { ColumnDef } from "@tanstack/react-table"
-import { Checkbox } from "@/components/ui/checkbox"
-import { StatusBadge } from "@/lib/helper"
-import { DataTable } from "@/components/table/ReusableTable"
+import {DEFAULT_PAGE_SIZE} from "@/config/app-constant"
+import {useCallback, useMemo, useState, useTransition} from "react"
+import {ColumnDef} from "@tanstack/react-table"
+import {Checkbox} from "@/components/ui/checkbox"
+import {StatusBadge} from "@/lib/helper"
+import {DataTable} from "@/components/table/ReusableTable"
 import ActionModal from "@/components/modal/ConfirmModal"
-import { Package, ShoppingCart } from "lucide-react"
+import {Package, ShoppingCart} from "lucide-react"
+import {RowActions} from "@/lib/action-button"
+import {useRouter} from "next/navigation"
 
 interface AssignedOrder {
     order_uuid: string
@@ -33,11 +35,13 @@ export default function VendorOrderTable() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false)
     const [selectedOrder, setSelectedOrder] = useState<AssignedOrder | null>(null)
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
+    const [pending, startTransition] = useTransition()
+    const router = useRouter()
 
-    const { data, isLoading, error } = useQuery({
+    const {data, isLoading, error} = useQuery({
         queryKey: ["vendor-orders", currentPage, pageSize],
         queryFn: async () => {
-            const params = { page: currentPage, limit: pageSize }
+            const params = {page: currentPage, limit: pageSize}
             const res = await vendorOrderService.getVendorOrders(params)
             setTotalItems(res?.total_items || 0)
             setTotalPages(res?.total_page || 1)
@@ -47,27 +51,22 @@ export default function VendorOrderTable() {
         gcTime: 300000,
     })
 
-    const handlePageChange = useCallback((page: number) => {
-        setCurrentPage(page)
-    }, [])
-
+    const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
     const handlePageSizeChange = useCallback((size: number) => {
-        setPageSize(size)
+        setPageSize(size);
         setCurrentPage(1)
     }, [])
-
     const handleModalClose = useCallback(() => {
-        setIsDeleteModalOpen(false)
+        setIsDeleteModalOpen(false);
         setSelectedOrder(null)
     }, [])
 
     const confirmDeleteProduct = useCallback(async () => {
         if (!selectedOrder) return
-
         setIsDeleting(true)
         try {
             // await vendorOrderService.deleteVendorOrder(selectedOrder.order_uuid)
-            await queryClient.invalidateQueries({ queryKey: ["vendor-orders"] })
+            await queryClient.invalidateQueries({queryKey: ["vendor-orders"]})
             handleModalClose()
         } catch (error) {
             console.error("Failed to delete order:", error)
@@ -76,22 +75,25 @@ export default function VendorOrderTable() {
         }
     }, [selectedOrder, queryClient, handleModalClose])
 
+    const handleViewOrder = useCallback((order: AssignedOrder) => {
+        startTransition(() => {
+            router.push(`/vendor/vendor-orders/${order.order_uuid}`)
+        })
+    }, [router, startTransition])
+
     const assignedOrderColumns = useMemo<ColumnDef<AssignedOrder>[]>(
         () => [
             {
                 id: "select",
-                header: ({ table }) => (
+                header: ({table}) => (
                     <Checkbox
-                        checked={
-                            table.getIsAllPageRowsSelected() ||
-                            (table.getIsSomePageRowsSelected() && "indeterminate")
-                        }
+                        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
                         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                         aria-label="Select all orders"
                         className="translate-y-[2px]"
                     />
                 ),
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -106,9 +108,9 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "order_code",
                 header: "Order Code",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                        <ShoppingCart className="h-4 w-4 text-gray-400 flex-shrink-0" aria-hidden="true"/>
                         <span className="font-semibold text-gray-900">{row.original.order_code}</span>
                     </div>
                 ),
@@ -116,7 +118,7 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "name",
                 header: "Customer",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex flex-col gap-0.5">
                         <span className="font-medium text-gray-900">{row.original.name}</span>
                         <span className="text-sm text-gray-500">{row.original.email}</span>
@@ -126,7 +128,7 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "address",
                 header: "Delivery Details",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex flex-col gap-0.5 max-w-[250px]">
                         <span className="text-sm text-gray-900 line-clamp-2" title={row.original.address}>
                             {row.original.address}
@@ -138,32 +140,37 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "payment_method",
                 header: "Payment",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex flex-col gap-1">
                         <span className="text-sm font-medium text-gray-900 capitalize">
                             {row.original.payment_method?.replace(/_/g, ' ')}
                         </span>
-                        <StatusBadge status={row.original.payment_status} />
+                        <StatusBadge status={row.original.payment_status}/>
                     </div>
                 ),
             },
             {
                 accessorKey: "status",
                 header: "Order Status",
-                cell: ({ row }) => <StatusBadge status={row.original.status} />,
+                cell: ({row}) => <StatusBadge status={row.original.status}/>,
             },
             {
                 accessorKey: "no_of_ordered_items",
                 header: "Items",
-                cell: ({ row }) => (
+                cell: ({row}) => (
                     <div className="flex items-center gap-1.5">
-                        <Package className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                        <Package className="h-4 w-4 text-gray-400" aria-hidden="true"/>
                         <span className="font-medium text-gray-900">{row.original.no_of_ordered_items}</span>
                     </div>
                 ),
             },
+            {
+                id: "actions",
+                header: "Actions",
+                cell: ({row}) => <RowActions row={row} onViewAction={() => handleViewOrder(row.original)}/>,
+            },
         ],
-        []
+        [handleViewOrder]
     )
 
     if (error) {
@@ -181,12 +188,8 @@ export default function VendorOrderTable() {
         <div className="space-y-6">
             <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        Vendor Orders
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        Manage and track all vendor-specific orders in one place
-                    </p>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Vendor Orders</h1>
+                    <p className="text-sm text-gray-500">Manage and track all vendor-specific orders in one place</p>
                 </div>
             </div>
 

@@ -71,7 +71,7 @@ export default function RootLayout({
                                        children,
                                    }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="en" className="h-full overflow-x-hidden scroll-smooth">
+        <html lang="en" className="h-full overflow-x-hidden " data-scroll-behavior="smooth">
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}
         >

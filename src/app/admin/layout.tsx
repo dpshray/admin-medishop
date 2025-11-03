@@ -5,26 +5,27 @@ import type { NavGroup } from "@/components/sidebar/app-sidebar"
 import type { DropdownGroup } from "@/components/sidebar/user-dropdown"
 import {
     BarChart3,
-    Box,
     ClipboardCheck,
     ClipboardList,
     FileText,
-    GalleryHorizontalIcon,
-    History,
     Home,
     Layers,
     Package,
-    Settings,
     ShoppingCart,
     Tag,
     UserPen,
     Users,
     Warehouse,
+    ImageIcon,
 } from "lucide-react"
 import ReusableSidebar from "@/components/sidebar/resuable-sidebar"
 import { notifications } from "@/data"
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+interface AdminLayoutProps {
+    children: React.ReactNode
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
     const navGroups: NavGroup[] = [
         {
             label: "Dashboard",
@@ -42,7 +43,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 { label: "Categories", href: "/admin/categories", icon: Layers },
                 { label: "Tags", href: "/admin/tags", icon: Tag },
                 { label: "Packages", href: "/admin/package", icon: Warehouse },
-                { label: "Banners", href: "/admin/banners", icon: GalleryHorizontalIcon },
+                { label: "Banners", href: "/admin/banners", icon: ImageIcon },
+                { label: "Kit Bags", href: "/admin/kit-bags", icon: Package },
             ],
         },
         {
@@ -50,12 +52,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             items: [
                 { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
                 { label: "Vendor Products", href: "/admin/vendor-product", icon: Package },
-                { label: "Order History", href: "/admin/order-history", icon: History },
+                { label: "Order History", href: "/admin/order-history", icon: FileText },
             ],
         },
         {
-            label: "Prescriptions",
+            label: "Health Records",
             items: [
+                { label: "Health Condition", href: "/admin/health-condition", icon: FileText },
                 { label: "Prescriptions", href: "/admin/prescriptions", icon: ClipboardList },
                 { label: "Prescription History", href: "/admin/prescription-history", icon: FileText },
             ],
@@ -71,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             label: "Settings",
             items: [
                 { label: "Profile", href: "/admin/profile", icon: UserPen },
-                { label: "Preferences", href: "/admin/preferences", icon: Settings },
+                { label: "Preferences", href: "/admin/preferences", icon: UserPen },
             ],
         },
     ]

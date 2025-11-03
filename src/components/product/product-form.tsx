@@ -32,9 +32,6 @@ interface SelectOption {
 }
 
 
-
-
-
 const ProductManageForm = ({
                                mode = "create",
                                productUuid,
@@ -520,8 +517,8 @@ const ProductManageForm = ({
                                         disabled={isSubmitting}
                                         className={`sm:w-auto w-full ${
                                             isUpdateMode
-                                                ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500"
-                                                : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                                                ? "bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50"
+                                                : "bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50"
                                         } focus:ring-2 focus:ring-offset-2`}
                                     >
                                         {isSubmitting ? (

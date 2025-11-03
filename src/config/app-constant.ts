@@ -17,6 +17,10 @@ const OUT_OF_STOCK = 0;
 const PAYMENT_PREFIX = "Rs" satisfies string
 
 
+//File Constant
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+
 export {
     LOW_STOCK_THRESHOLD,
     OUT_OF_STOCK,
@@ -25,5 +29,6 @@ export {
     QUERY_STALE_TIME,
     PAGE_SIZE_OPTIONS,
     PAYMENT_PREFIX,
-    QUERY_REFETCH_INTERVAL
+    QUERY_REFETCH_INTERVAL,
+    MAX_FILE_SIZE
 }

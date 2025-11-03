@@ -4,7 +4,18 @@ import {useCallback, useMemo, useState, useTransition} from "react"
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import {useParams, useRouter} from "next/navigation"
 import {toast} from "sonner"
-import {AlertCircle, ArrowLeft, Check, Copy, Download, FileText, Package, Printer, Save, XCircle} from "lucide-react"
+import {
+    AlertCircle,
+    ArrowLeft,
+    Check,
+    Copy,
+    Download,
+    FileText,
+    Package,
+    Printer,
+    Save,
+    XCircle,
+} from "lucide-react"
 import ErrorState from "@/components/Error/ErrorState"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Card, CardContent, CardFooter, CardHeader} from "@/components/ui/card"
@@ -18,6 +29,7 @@ import orderService from "@/service/order/order.service"
 import {OrderedItemCard} from "@/components/order/OrderedItemCard"
 import {QUERY_STALE_TIME} from "@/config/app-constant"
 import {cn} from "@/lib/utils"
+import ActionModal from "@/components/modal/ConfirmModal"
 
 const COPIED_TIMEOUT = 2000
 
@@ -61,13 +73,11 @@ export default function OrderDetails() {
     const [isPending, startTransition] = useTransition()
     const [copied, setCopied] = useState(false)
     const [selectedVendor, setSelectedVendor] = useState<VendorOption | null>(null)
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
 
     const {data, error, isLoading, isError} = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],
-        queryFn: async () => orderService.getOrderDetails(orderUuid).then((res)=>{
-            console.log('Response',res)
-            return res
-        }),
+        queryFn: async () => orderService.getOrderDetails(orderUuid),
         enabled: !!orderUuid,
         staleTime: QUERY_STALE_TIME,
         refetchOnWindowFocus: false,
@@ -99,11 +109,7 @@ export default function OrderDetails() {
     )
 
     const updateVendorMutation = useMutation({
-        mutationFn: async (vendorId: string) => {
-            console.log('VendorId',vendorId)
-            console.log('OrderUuid',orderUuid)
-            return  await  orderService.assignOrder(orderUuid, vendorId)
-        },
+        mutationFn: async (vendorId: string) => await orderService.assignOrder(orderUuid, vendorId),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ["order-details", orderUuid]})
             toast.success("Vendor assigned successfully")
@@ -128,6 +134,16 @@ export default function OrderDetails() {
             toast.error(message)
         },
     })
+
+    const handleCancelModalClose = useCallback(() => {
+        setIsCancelModalOpen(false)
+        setSelectedVendor(null)
+    }, [])
+
+    const confirmCancelOrder = useCallback(() => {
+        cancelOrderMutation.mutate()
+        handleCancelModalClose()
+    }, [cancelOrderMutation, handleCancelModalClose])
 
     const handleCopyOrderCode = useCallback(async () => {
         if (!data?.order_code) return
@@ -159,10 +175,8 @@ export default function OrderDetails() {
     }, [selectedVendor, updateVendorMutation])
 
     const handleCancelOrder = useCallback(() => {
-        if (window.confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
-            cancelOrderMutation.mutate()
-        }
-    }, [cancelOrderMutation])
+        setIsCancelModalOpen(true)
+    }, [])
 
     const handleGoBack = useCallback(() => {
         startTransition(() => {
@@ -173,6 +187,10 @@ export default function OrderDetails() {
     const itemCount = useMemo(() => data?.ordered_items?.length || 0, [data?.ordered_items])
     const useGridLayout = itemCount > 2
     const showDescriptionSection = Boolean(data?.description)
+    const cancelDes = useMemo(
+        () => "Are you sure you want to cancel this order? This action cannot be undone.",
+        []
+    )
 
     if (isLoading) {
         return (
@@ -196,15 +214,17 @@ export default function OrderDetails() {
     }
 
     if (isError || !data) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to load order details. Please try again later."
+        const errorMessage =
+            error instanceof Error
+                ? error.message
+                : "Failed to load order details. Please try again later."
         return <ErrorState message={errorMessage}/>
     }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 print:bg-white">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-7xl">
-                <Card
-                    className="border-2 hover:border-primaryColor/30 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden">
+                <Card className="border-2 hover:border-primaryColor/30 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden">
                     <CardHeader className="border-b bg-gradient-to-br from-primary/5 to-purple-50/50 p-6 sm:p-8">
                         <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-6">
                             <div className="space-y-3">
@@ -212,8 +232,7 @@ export default function OrderDetails() {
                                     Order Details
                                 </h1>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <code
-                                        className="text-xs sm:text-sm bg-white px-3 py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm">
+                                    <code className="text-xs sm:text-sm bg-white px-3 py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm">
                                         #{data.order_code}
                                     </code>
                                     <Button
@@ -221,12 +240,11 @@ export default function OrderDetails() {
                                         size="sm"
                                         onClick={handleCopyOrderCode}
                                         className="border border-transparent hover:border-primary/10 transition-all h-8 w-8 p-0 rounded-lg"
-                                        aria-label={copied ? "Order code copied" : "Copy order code"}
                                     >
                                         {copied ? (
-                                            <Check className="h-4 w-4 text-green-600" aria-hidden="true"/>
+                                            <Check className="h-4 w-4 text-green-600"/>
                                         ) : (
-                                            <Copy className="h-4 w-4 text-primary" aria-hidden="true"/>
+                                            <Copy className="h-4 w-4 text-primary"/>
                                         )}
                                     </Button>
                                 </div>
@@ -236,45 +254,41 @@ export default function OrderDetails() {
                                     variant="outline"
                                     size="sm"
                                     onClick={handlePrint}
-                                    className="border-2 hover:bg-muted/50 hover:border-primary/40 transition-all "
-                                    aria-label="Print order details"
+                                    className="border-2 hover:bg-muted/50 hover:border-primary/40 transition-all"
                                 >
-                                    <Printer className="h-4 w-4" aria-hidden="true"/>
+                                    <Printer className="h-4 w-4"/>
                                     <span className="text-sm font-medium">Print</span>
                                 </Button>
                                 <Button
                                     size="sm"
-                                    className="bg-primary hover:bg-primary/80 text-white shadow-md hover:shadow-lg transition-all "
+                                    className="bg-primary hover:bg-primary/80 text-white shadow-md hover:shadow-lg transition-all"
                                     disabled
-                                    aria-label="Download order details"
                                 >
-                                    <Download className="h-4 w-4" aria-hidden="true"/>
+                                    <Download className="h-4 w-4"/>
                                     <span className="text-sm font-medium">Download</span>
                                 </Button>
                             </div>
                         </div>
                     </CardHeader>
-
                     <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                         <CustomerInfo data={data as any}/>
                         <Separator className="bg-border/60"/>
-
                         <div className="grid gap-6 lg:grid-cols-2">
                             <section className="space-y-4">
                                 <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Package className="h-5 w-5 text-primary" aria-hidden="true"/>
+                                    <Package className="h-5 w-5 text-primary"/>
                                     Order Summary
                                 </h2>
-                                <div
-                                    className="space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                <div className="space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                     <div className="flex justify-between text-sm sm:text-base items-center">
                                         <span className="text-muted-foreground font-medium">Order Date</span>
                                         <span className="text-foreground font-semibold">{data.created_at}</span>
                                     </div>
                                     <div className="flex justify-between text-sm sm:text-base items-center">
                                         <span className="text-muted-foreground font-medium">Payment Method</span>
-                                        <span
-                                            className="capitalize text-foreground font-semibold">{data.payment_method}</span>
+                                        <span className="capitalize text-foreground font-semibold">
+                                            {data.payment_method}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between text-sm sm:text-base items-center">
                                         <span className="text-muted-foreground font-medium">Order Status</span>
@@ -295,15 +309,13 @@ export default function OrderDetails() {
                                     </div>
                                 </div>
                             </section>
-
                             {showDescriptionSection && (
                                 <section className="space-y-4">
                                     <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-                                        <FileText className="h-5 w-5 text-primary" aria-hidden="true"/>
+                                        <FileText className="h-5 w-5 text-primary"/>
                                         Order Notes
                                     </h2>
-                                    <div
-                                        className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                    <div className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                         <p className="text-sm sm:text-base text-foreground leading-relaxed whitespace-pre-wrap">
                                             {data.description}
                                         </p>
@@ -311,39 +323,41 @@ export default function OrderDetails() {
                                 </section>
                             )}
                         </div>
-
                         <Separator className="bg-border/60"/>
-
                         <section className="space-y-4">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Package className="h-5 w-5 text-primary" aria-hidden="true"/>
+                                    <Package className="h-5 w-5 text-primary"/>
                                     Ordered Items
                                 </h2>
-                                <span
-                                    className="text-sm sm:text-base font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                                <span className="text-sm sm:text-base font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
                                     {itemCount} {itemCount === 1 ? "item" : "items"}
                                 </span>
                             </div>
                             {itemCount > 0 ? (
                                 <div
-                                    className={cn(useGridLayout ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4")}>
+                                    className={cn(
+                                        useGridLayout
+                                            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                                            : "space-y-4"
+                                    )}
+                                >
                                     {data.ordered_items.map((item, index) => (
-                                        <OrderedItemCard key={`${item.id || index}-${orderUuid}`} item={item}
-                                                         showAnimation/>
+                                        <OrderedItemCard
+                                            key={`${item.id || index}-${orderUuid}`}
+                                            item={item}
+                                            showAnimation
+                                        />
                                     ))}
                                 </div>
                             ) : (
-                                <div
-                                    className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
-                                    <Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50"
-                                             aria-hidden="true"/>
+                                <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
+                                    <Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50"/>
                                     <p className="text-base font-medium">No items in this order</p>
                                 </div>
                             )}
                         </section>
                     </CardContent>
-
                     <CardFooter className="border-t bg-muted/30 p-4 sm:p-6 lg:p-8 print:hidden">
                         <div className="w-full space-y-6">
                             <div className="grid gap-4 sm:grid-cols-[1fr,auto] items-end">
@@ -354,54 +368,58 @@ export default function OrderDetails() {
                                     value={selectedVendor?.value ?? ""}
                                     onChange={handleVendorChange}
                                     disabled={vendorsLoading || updateVendorMutation.isPending}
-                                    helperText={vendorsLoading ? "Loading vendors..." : "Choose a vendor to fulfill this order"}
+                                    helperText={
+                                        vendorsLoading
+                                            ? "Loading vendors..."
+                                            : "Choose a vendor to fulfill this order"
+                                    }
                                 />
                                 <Button
-                                    className="bg-primaryColor hover:bg-primaryColor/80 text-white transition-all disabled:opacity-50 shadow-md hover:shadow-lg "
+                                    className="bg-primaryColor hover:bg-primaryColor/80 text-white transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
                                     onClick={handleUpdateVendor}
-                                    disabled={!selectedVendor || updateVendorMutation.isPending || vendorsLoading}
-                                    aria-label="Assign vendor to order"
+                                    disabled={
+                                        !selectedVendor ||
+                                        updateVendorMutation.isPending ||
+                                        vendorsLoading
+                                    }
                                 >
-                                    <Save className="h-4 w-4 " aria-hidden="true"/>
+                                    <Save className="h-4 w-4"/>
                                     <span className="text-sm sm:text-base font-medium">
                                         {updateVendorMutation.isPending ? "Assigning..." : "Assign Vendor"}
                                     </span>
                                 </Button>
                             </div>
-
                             {!canCancelOrder && (
                                 <Alert className="border-2 border-amber-200 bg-amber-50/50">
-                                    <AlertCircle className="h-5 w-5 text-amber-600" aria-hidden="true"/>
+                                    <AlertCircle className="h-5 w-5 text-amber-600"/>
                                     <AlertDescription className="text-sm sm:text-base text-amber-800 font-medium">
                                         This order cannot be cancelled as it is already {data.status}.
                                     </AlertDescription>
                                 </Alert>
                             )}
-
                             <Separator className="bg-border/60"/>
-
                             <div className="flex flex-col-reverse sm:flex-row justify-between gap-3">
                                 <Button
                                     variant="outline"
                                     onClick={handleGoBack}
                                     disabled={isPending}
-                                    className="border-2 hover:bg-muted/50 hover:border-primary/40 transition-all "
-                                    aria-label="Go back to previous page"
+                                    className="border-2 hover:bg-muted/50 hover:border-primary/40 transition-all"
                                 >
-                                    <ArrowLeft className="h-4 w-4 " aria-hidden="true"/>
+                                    <ArrowLeft className="h-4 w-4"/>
                                     <span className="text-sm sm:text-base font-medium">Back</span>
                                 </Button>
                                 {canCancelOrder && (
                                     <Button
                                         variant="destructive"
                                         onClick={handleCancelOrder}
-                                        disabled={cancelOrderMutation.isPending}
-                                        className="transition-all shadow-md hover:shadow-lg "
-                                        aria-label="Cancel order"
+                                        disabled={cancelOrderMutation.isPending }
+                                        className="transition-all shadow-md hover:shadow-lg"
                                     >
-                                        <XCircle className="h-4 w-4 " aria-hidden="true"/>
+                                        <XCircle className="h-4 w-4"/>
                                         <span className="text-sm sm:text-base font-medium">
-                                            {cancelOrderMutation.isPending ? "Cancelling..." : "Cancel Order"}
+                                            {cancelOrderMutation.isPending
+                                                ? "Cancelling..."
+                                                : "Cancel Order"}
                                         </span>
                                     </Button>
                                 )}
@@ -410,6 +428,13 @@ export default function OrderDetails() {
                     </CardFooter>
                 </Card>
             </div>
+            <ActionModal
+                open={isCancelModalOpen}
+                setOpen={handleCancelModalClose}
+                title="Cancel Order"
+                description={cancelDes}
+                onConfirm={confirmCancelOrder}
+            />
         </div>
     )
 }

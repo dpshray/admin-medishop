@@ -58,7 +58,21 @@ class VendorProductService extends HttpServices {
         }
     }
 
+    async getVendorProducts(params?: any) {
+        try {
+            const res = await this.getRequest({
+                url: '',
+                config: {
+                    auth: true,
+                    params
+                }
 
+            })
+            return res?.data
+        } catch (error) {
+            throw error
+        }
+    }
 
 
 }

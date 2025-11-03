@@ -458,8 +458,19 @@ export default function VendorManageForm({
                                     </div>
                                 </section>
 
-                                <div className="flex gap-4 pt-6">
-                                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                <div className="grid grid-cols-2 gap-4">
+
+
+                                    <Button
+                                        type="button"
+                                        variant={'outline'}
+                                        onClick={handleReset}
+                                        className=" "
+                                        disabled={isSubmitting}
+                                    >
+                                        Reset
+                                    </Button>
+                                    <Button type="submit" className="primary-btn" disabled={isSubmitting}>
                                         {isEditMode ? (
                                             <>
                                                 <Save className="w-4 h-4 mr-2"/>
@@ -471,16 +482,6 @@ export default function VendorManageForm({
                                                 {isSubmitting ? "Creating..." : "Create Vendor"}
                                             </>
                                         )}
-                                    </Button>
-
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleReset}
-                                        className="w-full"
-                                        disabled={isSubmitting}
-                                    >
-                                        Reset
                                     </Button>
                                 </div>
                             </CardContent>

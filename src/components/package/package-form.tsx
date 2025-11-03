@@ -18,6 +18,7 @@ import {
     updatePackageSchema,
 } from "@/lib/schema/packageSchema"
 import SelectInputField from "@/components/field/select-input"
+import PackageFormSkeleton from "@/app/admin/package/add-package/loading";
 
 interface PackageFormProps {
     slug?: string
@@ -151,12 +152,7 @@ export default function PackageForm({ slug, mode = "create" }: PackageFormProps)
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-slate-600">Loading package details...</p>
-                </div>
-            </div>
+            <PackageFormSkeleton/>
         )
     }
 

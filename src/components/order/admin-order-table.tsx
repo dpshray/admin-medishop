@@ -197,7 +197,6 @@ export default function AdminOrderTable() {
                 <RowActions
                     row={row}
                     onDeleteAction={() => handleDeleteClick(row.original)}
-                    onEditAction={() => handleEdit(row.original)}
                     onViewAction={() => handleView(row.original)}
                 />
             ),

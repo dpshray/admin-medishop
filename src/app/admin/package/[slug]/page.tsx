@@ -18,6 +18,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import PackageDetailsCard from "@/components/package/package-details-card"
+import AddProductToPackageSkeleton from "@/app/admin/package/[slug]/loading";
 
 interface Product {
     id: number
@@ -140,8 +141,9 @@ export default function AddProductToPackage() {
     const handleDeleteProduct = useCallback(async (productVariationId: number) => {
         if (!slug) return
         try {
-            const response = await packageService.deleteProductFromPackage(slug, productVariationId)
-            toast.success(response?.message || "Product removed successfully")
+            await packageService.deleteProductFromPackage(slug, productVariationId).then(() => {
+                toast.success("Product removed successfully")
+            })
             await refetch()
         } catch (error: any) {
             toast.error(error?.message || "Failed to remove product")
@@ -150,12 +152,7 @@ export default function AddProductToPackage() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-[#4a358e]" />
-                    <p className="text-sm font-medium text-muted-foreground">Loading package details...</p>
-                </div>
-            </div>
+            <AddProductToPackageSkeleton/>
         )
     }
 

@@ -12,6 +12,7 @@ import {toast} from 'sonner'
 import {useMutation, useQuery} from '@tanstack/react-query'
 import {useParams} from 'next/navigation'
 import vendorOrderService from '@/service/order/vendor-order.service'
+import VendorOrderDetailsLoading from "@/app/vendor/vendor-orders/[slug]/loading";
 
 interface OrderedItem {
     type: string
@@ -50,7 +51,7 @@ export default function VendorOrderDetailsPage() {
         {value: 'Delivered', label: 'Delivered'},
     ]
 
-    const {data: vendorOrder, isLoading, error} = useQuery<Order>({
+    const {data: vendorOrder, refetch, isLoading, error} = useQuery<Order>({
         queryKey: ['vendor-order', slug],
         queryFn: () => vendorOrderService.getVendorOrderDetail(slug as string).then((res) => {
             console.log(res)
@@ -66,6 +67,7 @@ export default function VendorOrderDetailsPage() {
         },
         onSuccess: () => {
             toast.success(`Order status updated to "${selectedStatus}"`)
+            refetch()
         },
         onError: (error: any) => {
             toast.error(error.message || 'Failed to update order status')
@@ -85,7 +87,7 @@ export default function VendorOrderDetailsPage() {
     }, [selectedStatus, slug, updateStatusMutation, vendorOrder])
 
     if (isLoading)
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+        return <VendorOrderDetailsLoading/>
     if (error || !vendorOrder)
         return (
             <div className="min-h-screen flex items-center justify-center text-red-500">

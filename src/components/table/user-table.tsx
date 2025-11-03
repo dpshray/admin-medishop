@@ -5,7 +5,6 @@ import {useCallback, useMemo, useState} from "react"
 import {ColumnDef} from "@tanstack/react-table"
 import userService from "@/service/user.service"
 import {DataTable} from "@/components/table/ReusableTable"
-import ActionModal from "@/components/modal/ConfirmModal"
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import {Badge} from "@/components/ui/badge"
 import {Button} from "@/components/ui/button"
@@ -14,8 +13,8 @@ import {toast} from "sonner"
 import {PaginatedResponse, ParamsType} from "@/types/types"
 import {AlertTriangle} from "lucide-react"
 import {Checkbox} from "@/components/ui/checkbox"
-import {cn} from "@/lib/utils"
 import {useRouter} from "next/navigation"
+import {cn} from "@/lib/utils";
 
 interface UserTable {
     id: number
@@ -47,29 +46,6 @@ export default function UserTable() {
         },
     })
 
-    const handleDeleteUser = useCallback(
-        async (user: UserTable) => {
-            setIsDeleting(true)
-            try {
-                await userService.deleteUser(user.id)
-                toast.success(`User "${user.name}" deleted successfully`)
-                await refetch()
-            } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Failed to delete user")
-            } finally {
-                setIsDeleting(false)
-            }
-        },
-        [refetch]
-    )
-
-    const confirmDeleteUser = useCallback(async () => {
-        if (selectedUser) {
-            await handleDeleteUser(selectedUser)
-            setSelectedUser(null)
-            setIsDeleteModalOpen(false)
-        }
-    }, [selectedUser, handleDeleteUser])
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page)
@@ -85,9 +61,6 @@ export default function UserTable() {
         setCurrentPage(1)
     }, [])
 
-    const handleAddUser = useCallback(() => {
-        console.log("Add user clicked")
-    }, [])
 
     const handleViewUser = useCallback(
         (uuid: string) => {
@@ -151,9 +124,7 @@ export default function UserTable() {
                 accessorKey: "status",
                 header: "Status",
                 cell: ({row}) => (
-                    <Badge className={cn("", row.original.status ? "bg-green-500" : "bg-red-500")}>
-                        {row.original.status ? "Verified" : "Unverified"}
-                    </Badge>
+                    <Badge className={cn("", row.original.status ? "bg-green-500" : "bg-red-500")}>{row.original.status ? "Verified" : "Unverified"}</Badge>
                 ),
                 size: 100,
             },
@@ -182,10 +153,7 @@ export default function UserTable() {
                 cell: ({row}) => (
                     <RowActions
                         row={row}
-                        onDeleteAction={() => {
-                            setSelectedUser(row.original)
-                            setIsDeleteModalOpen(true)
-                        }}
+                        className={'text-right'}
                         onViewAction={() => handleViewUser(row.original.uuid)}
                     />
                 ),
@@ -210,12 +178,10 @@ export default function UserTable() {
                 </svg>
                 <h3 className="mt-4 text-sm font-medium text-gray-900">No users found</h3>
                 <p className="mt-1 text-sm text-gray-500">Get started by adding your first user.</p>
-                <Button onClick={handleAddUser} variant="outline" className="mt-4">
-                    Add User
-                </Button>
+
             </div>
         ),
-        [handleAddUser]
+        []
     )
 
     if (isError) {
@@ -260,9 +226,8 @@ export default function UserTable() {
                 data={data?.items || []}
                 columns={columns}
                 loading={isLoading || isFetching}
-                onAddAction={handleAddUser}
                 onSearchAction={handleSearch}
-                actionLabel="Add User"
+
                 enableRowSelection
                 enableSorting
                 enableSearch
@@ -281,19 +246,7 @@ export default function UserTable() {
                 noDataText={noDataContent}
             />
 
-            <ActionModal
-                open={isDeleteModalOpen}
-                setOpen={setIsDeleteModalOpen}
-                title="Delete User"
-                description={
-                    selectedUser
-                        ? `Are you sure you want to delete "${selectedUser.name}"? This action cannot be undone.`
-                        : "Are you sure you want to delete this user?"
-                }
-                confirmLabel="Delete User"
-                onConfirm={confirmDeleteUser}
-                loading={isDeleting}
-            />
+
         </div>
     )
 }

@@ -1,13 +1,13 @@
 'use client'
 
 import React, {useState} from 'react'
-import {Box, CheckCircle2, Image as ImageIcon, Package2, Tag, Trash2} from 'lucide-react'
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from '@/components/ui/card'
+import {Box, CheckCircle2, Image as ImageIcon, Package2} from 'lucide-react'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
 import {Badge} from '@/components/ui/badge'
 import Image from 'next/image'
 import ImageGallery from '@/components/product/GalleryImages'
-import {Button} from '@/components/ui/button'
 import ActionModal from '@/components/modal/ConfirmModal'
+import PackageProductCard from "@/components/package/package-product";
 
 interface Product {
     id: number
@@ -48,7 +48,6 @@ export default function PackageDetailsCard({
     const hasImages = featured_image || gallery_images.length > 0
 
     const handleDeleteClick = (productId: number) => {
-
         setSelectedProductId(productId)
         setOpen(true)
     }
@@ -72,7 +71,7 @@ export default function PackageDetailsCard({
 
     return (
         <>
-            <Card className="overflow-hidden border-border shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="overflow-hidden border-border shadow-lg hover:shadow-xl transition-all duration-300 py-0">
                 <CardHeader
                     className="space-y-4 bg-gradient-to-br from-purple-50 via-purple-50/80 to-background p-5 sm:p-7 sm:space-y-6 sm:pb-9 border-b">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -198,70 +197,12 @@ export default function PackageDetailsCard({
                             aria-label="Current products in package"
                         >
                             {products.map((product) => (
-                                <Card
+                                <PackageProductCard
                                     key={product.id}
-                                    className="overflow-hidden border-border transition-shadow hover:shadow-md flex flex-col py-0 gap-0"
-                                    role="listitem"
-                                >
-                                    <CardContent className="p-4 flex-1 bg-gradient-to-br from-white to-gray-50/30">
-                                        <div className="space-y-3.5">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0 flex-1 space-y-1.5">
-                                                    <h3 className="line-clamp-2 text-sm font-bold leading-tight text-gray-900">
-                                                        {product.product_name}
-                                                    </h3>
-                                                    <p className="truncate text-xs text-gray-500 font-medium">
-                                                        {product.variant_name}
-                                                    </p>
-                                                </div>
-                                                <div
-                                                    className="flex h-14 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#4a358e] to-[#6b4db8] shadow-md">
-                                                    <div className="text-center">
-                                                        <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider">Qty</p>
-                                                        <p className="text-lg font-bold leading-none text-white mt-0.5">
-                                                            {product.quantity}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Tag className="h-3 w-3 text-gray-400"/>
-                                                    <Badge variant="outline"
-                                                           className="text-xs font-semibold border-gray-300 hover:bg-gray-100">
-                                                        {product.brand}
-                                                    </Badge>
-                                                </div>
-                                                <div className="flex flex-wrap justify-end gap-1.5">
-                                                    {product.categories.slice(0, 2).map((cat, idx) => (
-                                                        <Badge key={idx} variant="secondary"
-                                                               className="text-[10px] font-semibold px-2 py-0.5 bg-purple-100 text-purple-700 hover:bg-purple-200">
-                                                            {cat}
-                                                        </Badge>
-                                                    ))}
-                                                    {product.categories.length > 2 && (
-                                                        <Badge variant="secondary"
-                                                               className="text-[10px] font-bold px-2 py-0.5 bg-gray-200 text-gray-700">
-                                                            +{product.categories.length - 2}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-
-                                    <CardFooter className="mt-auto justify-end pb-3 px-4 bg-gray-50/50 border-t">
-                                        <Button
-                                            size="icon"
-                                            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-md hover:shadow-lg transition-all h-9 w-9"
-                                            onClick={() => handleDeleteClick(product.variant_id)}
-                                            aria-label={`Delete ${product.product_name}`}
-                                        >
-                                            <Trash2 className="h-4 w-4"/>
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
+                                    product={product}
+                                    onDeleteAction={handleDeleteClick}
+                                    isDeleting={deleteLoading}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -290,6 +231,7 @@ export default function PackageDetailsCard({
                 title="Delete Product"
                 description="Are you sure you want to delete this product from the package? This action cannot be undone."
                 onConfirm={handleConfirmDelete}
+                loading={deleteLoading}
             />
         </>
     )

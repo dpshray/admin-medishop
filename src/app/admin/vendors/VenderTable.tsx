@@ -46,6 +46,7 @@ export default function VendorTable() {
             })
             setTotalPages(res?.total_page || 1)
             setCurrentPage(res?.page || 1)
+            console.log('Resposne from', res.items)
             return res
         },
         retry: 2,
@@ -81,7 +82,7 @@ export default function VendorTable() {
 
     const confirmDeleteVendor = useCallback(() => {
         if (!selectedVendor) return
-        deleteMutation.mutate(selectedVendor.vendor_uuid)
+        deleteMutation.mutate(selectedVendor.user_uuid)
     }, [selectedVendor, deleteMutation])
 
     const vendorData = useMemo(() => vendors?.items ?? [], [vendors])

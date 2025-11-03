@@ -5,6 +5,7 @@ import type {NavGroup} from "@/components/sidebar/app-sidebar"
 import type {DropdownGroup} from "@/components/sidebar/user-dropdown"
 import {Home, Package, ShoppingCart, UserPen,} from "lucide-react"
 import ReusableSidebar from "@/components/sidebar/resuable-sidebar"
+import {ProtectedRoute} from "@/config/ProtectedRoutes";
 
 export default function VendorLayout({children}: { children: React.ReactNode }) {
     const navGroups: NavGroup[] = [
@@ -100,6 +101,7 @@ export default function VendorLayout({children}: { children: React.ReactNode }) 
     ]
 
     return (
+        // <ProtectedRoute requiredRoles={["vendor"]}>
         <ReusableSidebar
             navGroups={navGroups}
             title="Vendor Dashboard"
@@ -110,5 +112,6 @@ export default function VendorLayout({children}: { children: React.ReactNode }) 
         >
             {children}
         </ReusableSidebar>
+        // </ProtectedRoute>
     )
 }

@@ -113,7 +113,7 @@ export function BrandFormModal({
 
     return (
         <Dialog open={open} onOpenChange={handleDialogChange}>
-            <DialogContent className="w-full max-w-xl mx-auto px-6 py-6 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[95vw] md:max-w-[600px] max-h-[90vh] flex flex-col overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl font-semibold">
                         {isEditMode ? "Edit Brand" : "Create New Brand"}
@@ -130,13 +130,15 @@ export function BrandFormModal({
                         required={!isEditMode}
                     />
 
-                    <FileInputField
-                        label={`Brand Image${isEditMode ? " (Optional)" : ""}`}
-                        accept="image/*"
-                        disabled={disabled}
-                        onFileChange={(files: File[]) => setValue("image", files[0] || undefined)}
-                        error={errors.image?.message as string}
-                    />
+                   <div className={'flex flex-col gap-2'}>
+                       <FileInputField
+                           label={`Brand Image${isEditMode ? " (Optional)" : ""}`}
+                           accept="image/*"
+                           disabled={disabled}
+                           onFileChange={(files: File[]) => setValue("image", files[0] || undefined)}
+                           error={errors.image?.message as string}
+                       />
+                   </div>
 
                     {brandDetails?.image && (
                         <div className="flex items-center gap-2">

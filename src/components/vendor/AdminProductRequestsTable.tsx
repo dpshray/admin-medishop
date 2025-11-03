@@ -47,25 +47,19 @@ const ProductCell = memo(({product}: {product: VendorProduct['product_variation'
         </div>
     </div>
 ))
-
 ProductCell.displayName = "ProductCell"
-
 const VendorCell = memo(({name}: {name: string}) => (
     <span className="font-medium text-sm truncate block max-w-[150px]" title={name}>
         {name}
     </span>
 ))
-
 VendorCell.displayName = "VendorCell"
-
 const SizeCell = memo(({value, unit}: {value: number; unit: string}) => (
     <span className="text-sm whitespace-nowrap tabular-nums">
         {value} {unit}
     </span>
 ))
-
 SizeCell.displayName = "SizeCell"
-
 const PriceCell = memo(({price}: {price: number}) => (
     <div className="text-right font-medium text-sm tabular-nums">
         {price.toLocaleString('en-NP', {
@@ -74,10 +68,9 @@ const PriceCell = memo(({price}: {price: number}) => (
         })}
     </div>
 ))
-
 PriceCell.displayName = "PriceCell"
 
-export default function VendorProductRequestTable() {
+export default function AdminProductRequestsTable() {
     const router = useRouter()
 
     const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE)

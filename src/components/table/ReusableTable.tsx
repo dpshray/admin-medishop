@@ -58,7 +58,7 @@ import {useDebounce} from "@/hooks/use-debounce"
 interface DataTablePagination {
     page: number
     totalPages: number
-    pageSize: number
+    pageSize?: number
     onPageChange: (page: number) => void
     onPageSizeChange?: (pageSize: number) => void
     pageSizeOptions?: number[]
@@ -90,12 +90,11 @@ interface DataTableProps<TData, TValue> {
     renderSubComponent?: (row: Row<TData>) => ReactNode
 }
 
-const SkeletonRow = memo(({columnCount}: { columnCount: number }) => (
+const SkeletonRow = memo(({columnCount}: {columnCount: number}) => (
     <TableRow className="animate-in fade-in-50 duration-200">
         {Array.from({length: columnCount}).map((_, j) => (
             <TableCell key={j} className="h-14 px-2 sm:px-4">
-                <div
-                    className="h-4 w-full animate-pulse rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]"/>
+                <div className="h-4 w-full animate-pulse rounded-md bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]"/>
             </TableCell>
         ))}
     </TableRow>
@@ -103,13 +102,11 @@ const SkeletonRow = memo(({columnCount}: { columnCount: number }) => (
 
 SkeletonRow.displayName = "SkeletonRow"
 
-const EmptyRow = memo(({columnCount, noDataText}: { columnCount: number; noDataText: ReactNode }) => (
+const EmptyRow = memo(({columnCount, noDataText}: {columnCount: number; noDataText: ReactNode}) => (
     <TableRow className="hover:bg-transparent">
         <TableCell colSpan={columnCount} className="h-40 text-center px-2 sm:px-4">
-            <div
-                className="flex flex-col items-center justify-center gap-3 animate-in fade-in-50 zoom-in-95 duration-300">
-                <div
-                    className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-50 to-gray-100 ring-1 ring-gray-200/50">
+            <div className="flex flex-col items-center justify-center gap-3 animate-in fade-in-50 zoom-in-95 duration-300">
+                <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-50 to-gray-100 ring-1 ring-gray-200/50">
                     <Search className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" aria-hidden="true"/>
                 </div>
                 <div className="text-sm sm:text-base font-medium text-gray-600 px-4">{noDataText}</div>
@@ -138,7 +135,6 @@ export function DataTable<TData, TValue>({
                                              enableRowSelection = true,
                                              enableSorting = true,
                                              onSearchAction,
-                                             totalCount,
                                              actionLabel = "Add",
                                              enableExpanding = false,
                                              getRowCanExpand,
@@ -187,7 +183,7 @@ export function DataTable<TData, TValue>({
             expanded: enableExpanding ? expanded : {},
             pagination: {
                 pageIndex: pagination.page - 1,
-                pageSize: pagination.pageSize,
+                pageSize: pagination.pageSize || 10,
             },
             columnFilters,
             columnVisibility,
@@ -198,8 +194,9 @@ export function DataTable<TData, TValue>({
     const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original)
     const currentPage = pagination.page
     const totalPages = pagination.totalPages
-    const currentPageSize = pagination.pageSize
+    const currentPageSize = pagination.pageSize || 10
     const startIndex = (currentPage - 1) * currentPageSize + 1
+    const endIndex = Math.min(currentPage * currentPageSize, pagination.dataCount || 0)
 
     const handleDeleteRows = useCallback(() => {
         if (selectedRows.length > 0) {
@@ -258,8 +255,7 @@ export function DataTable<TData, TValue>({
                                 type="search"
                                 aria-label="Search table"
                             />
-                            <div
-                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3.5 text-gray-400">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3.5 text-gray-400">
                                 <Search size={16} aria-hidden="true" strokeWidth={2}/>
                             </div>
                             {hasSearch && (
@@ -288,9 +284,9 @@ export function DataTable<TData, TValue>({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
-                                <DropdownMenuLabel
-                                    className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Toggle
-                                    columns</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Toggle columns
+                                </DropdownMenuLabel>
                                 {table
                                     .getAllColumns()
                                     .filter((column) => column.getCanHide())
@@ -325,10 +321,8 @@ export function DataTable<TData, TValue>({
                             </AlertDialogTrigger>
                             <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                                 <div className="flex items-start gap-4">
-                                    <div
-                                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50 ring-4 ring-red-100">
-                                        <CircleAlert className="h-6 w-6 text-red-600" aria-hidden="true"
-                                                     strokeWidth={2}/>
+                                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50 ring-4 ring-red-100">
+                                        <CircleAlert className="h-6 w-6 text-red-600" aria-hidden="true" strokeWidth={2}/>
                                     </div>
                                     <div className="flex-1">
                                         <AlertDialogHeader>
@@ -336,9 +330,7 @@ export function DataTable<TData, TValue>({
                                                 Delete {selectedRows.length} item{selectedRows.length > 1 ? "s" : ""}?
                                             </AlertDialogTitle>
                                             <AlertDialogDescription className="text-sm text-gray-600 mt-2">
-                                                This action cannot be undone. The selected
-                                                item{selectedRows.length > 1 ? "s" : ""} will be permanently deleted
-                                                from the system.
+                                                This action cannot be undone. The selected item{selectedRows.length > 1 ? "s" : ""} will be permanently deleted from the system.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                     </div>
@@ -375,8 +367,7 @@ export function DataTable<TData, TValue>({
                     <Table className="min-w-full">
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id}
-                                          className="hover:bg-transparent border-b border-gray-200 bg-gray-50/50">
+                                <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-gray-200 bg-gray-50/50">
                                     {headerGroup.headers.map((header) => (
                                         <TableHead
                                             key={header.id}
@@ -387,45 +378,25 @@ export function DataTable<TData, TValue>({
                                                 <div
                                                     className={cn(
                                                         "flex items-center gap-2 transition-colors",
-                                                        enableSorting &&
-                                                        header.column.getCanSort() &&
-                                                        "cursor-pointer select-none hover:text-[#4a358e] group"
+                                                        enableSorting && header.column.getCanSort() && "cursor-pointer select-none hover:text-[#4a358e] group"
                                                     )}
-                                                    onClick={
-                                                        enableSorting && header.column.getCanSort()
-                                                            ? handleSortingClick(header.column.getToggleSortingHandler())
-                                                            : undefined
-                                                    }
+                                                    onClick={enableSorting && header.column.getCanSort() ? handleSortingClick(header.column.getToggleSortingHandler()) : undefined}
                                                     tabIndex={enableSorting && header.column.getCanSort() ? 0 : undefined}
                                                     role={enableSorting && header.column.getCanSort() ? "button" : undefined}
-                                                    onKeyDown={
-                                                        enableSorting && header.column.getCanSort()
-                                                            ? handleKeyDown(header.column.getToggleSortingHandler())
-                                                            : undefined
-                                                    }
-                                                    aria-label={
-                                                        enableSorting && header.column.getCanSort()
-                                                            ? `Sort by ${header.id}`
-                                                            : undefined
-                                                    }
+                                                    onKeyDown={enableSorting && header.column.getCanSort() ? handleKeyDown(header.column.getToggleSortingHandler()) : undefined}
+                                                    aria-label={enableSorting && header.column.getCanSort() ? `Sort by ${header.id}` : undefined}
                                                 >
                                                     {flexRender(header.column.columnDef.header, header.getContext())}
                                                     {enableSorting && header.column.getCanSort() && (
                                                         <div className="flex-shrink-0 transition-colors">
                                                             {header.column.getIsSorted() === "asc" && (
-                                                                <ChevronUp size={16} className="text-[#4a358e]"
-                                                                           aria-label="Sorted ascending"
-                                                                           strokeWidth={2.5}/>
+                                                                <ChevronUp size={16} className="text-[#4a358e]" aria-label="Sorted ascending" strokeWidth={2.5}/>
                                                             )}
                                                             {header.column.getIsSorted() === "desc" && (
-                                                                <ChevronDown size={16} className="text-[#4a358e]"
-                                                                             aria-label="Sorted descending"
-                                                                             strokeWidth={2.5}/>
+                                                                <ChevronDown size={16} className="text-[#4a358e]" aria-label="Sorted descending" strokeWidth={2.5}/>
                                                             )}
                                                             {!header.column.getIsSorted() && (
-                                                                <ChevronDown size={16}
-                                                                             className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                             aria-hidden="true" strokeWidth={2}/>
+                                                                <ChevronDown size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" strokeWidth={2}/>
                                                             )}
                                                         </div>
                                                     )}
@@ -452,17 +423,13 @@ export function DataTable<TData, TValue>({
                                             )}
                                         >
                                             {row.getVisibleCells().map((cell) => (
-                                                <TableCell
-                                                    key={cell.id}
-                                                    className="h-14 px-3 sm:px-4 text-xs sm:text-sm text-gray-700"
-                                                >
+                                                <TableCell key={cell.id} className="h-14 px-3 sm:px-4 text-xs sm:text-sm text-gray-700">
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </TableCell>
                                             ))}
                                         </TableRow>
                                         {enableExpanding && row.getIsExpanded() && renderSubComponent && (
-                                            <TableRow
-                                                className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
                                                 <TableCell colSpan={columns.length} className="p-3 sm:p-4">
                                                     {renderSubComponent(row)}
                                                 </TableCell>
@@ -479,17 +446,14 @@ export function DataTable<TData, TValue>({
             </div>
 
             {showPagination && (
-                <div
-                    className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between", paginationClassName)}>
+                <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between", paginationClassName)}>
                     <div className="flex items-center justify-center sm:justify-start">
                         <span className="text-sm text-gray-600 font-medium tabular-nums">
-                            Showing <span className="text-gray-900 font-semibold">{startIndex}</span> to <span
-                            className="text-gray-900 font-semibold">{pagination.pageSize}</span> of <span
-                            className="text-gray-900 font-semibold">{pagination.dataCount}</span> results
+                            Showing <span className="text-gray-900 font-semibold">{startIndex}</span> to <span className="text-gray-900 font-semibold">{endIndex}</span> of <span className="text-gray-900 font-semibold">{pagination.dataCount}</span> results
                         </span>
                     </div>
 
-                    <div className={'flex items-center justify-center sm:justify-end'}>
+                    <div className="flex items-center justify-center sm:justify-end">
                         <Pagination>
                             <PaginationContent className="flex-wrap justify-center gap-1">
                                 <PaginationItem>

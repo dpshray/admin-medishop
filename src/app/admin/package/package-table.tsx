@@ -200,7 +200,6 @@ export default function PackageTable() {
                     row={row}
                     onViewAction={() => {
                         startTransition(() => {
-                            toast.success( row.original.slug)
                             router.push(`/admin/package/${row.original.slug}`)
                         })
                     }}

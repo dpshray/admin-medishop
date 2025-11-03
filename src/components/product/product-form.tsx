@@ -16,6 +16,8 @@ import {useBrands, useCategories, useProductUnits, useTags} from "@/hooks/all-ho
 import productService from "@/service/product/product.service"
 import {toast} from "sonner"
 import {useRouter} from "next/navigation"
+import ProductManageFormSkeleton from "@/app/admin/products/add-product/laoding";
+import {MAX_FILE_SIZE} from "@/config/app-constant";
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
@@ -29,16 +31,6 @@ interface SelectOption {
     name: string
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024
-
-const LoadingSpinner = () => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"/>
-            <p className="text-slate-600">Loading product data...</p>
-        </div>
-    </div>
-)
 
 const ProductManageForm = ({
                                mode = "create",
@@ -263,7 +255,7 @@ const ProductManageForm = ({
     }, [reset, defaultValues])
 
     if (isLoading || (isUpdateMode && !isDataLoaded)) {
-        return <LoadingSpinner/>
+        return <ProductManageFormSkeleton/>
     }
 
     return (
@@ -525,8 +517,8 @@ const ProductManageForm = ({
                                         disabled={isSubmitting}
                                         className={`sm:w-auto w-full ${
                                             isUpdateMode
-                                                ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500"
-                                                : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                                                ? "bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50"
+                                                : "bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50"
                                         } focus:ring-2 focus:ring-offset-2`}
                                     >
                                         {isSubmitting ? (

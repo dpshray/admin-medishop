@@ -15,11 +15,11 @@ import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
 import {DEFAULT_PAGE} from "@/config/app-constant"
 
 interface Category {
-    id: number
-    slug: string
-    name: string
-    image: string
-    discount_percent?: number
+    id: number;
+    slug: string;
+    name: string;
+    image: string;
+    discount_percent?: number;
 }
 
 interface CategoryResponse {
@@ -50,7 +50,7 @@ export default function CategoryTable() {
             return categoriesService.getAllCategories(params).then(response => {
                 setTotalPages(response.total_page)
                 setTotalItems(response.total_items || 0)
-                console.log('Total Items', response.total_items)
+                console.log('Total Items', response)
                 return response
             })
         },
@@ -146,6 +146,7 @@ export default function CategoryTable() {
                     checked={row.getIsSelected()}
                     onCheckedChange={value => row.toggleSelected(!!value)}
                     aria-label={`Select category ${row.original.name}`}
+                    className={'data-[state=checked]:bg-primaryColor data-[state=checked]:text-primary-foreground'}
                 />
             ),
             size: 50,
@@ -166,11 +167,12 @@ export default function CategoryTable() {
         },
         {
             accessorKey: "discount_percent",
-            header: "Discount Percent",
+            header: "Discount",
             size: 180,
             cell: ({row}) =>
-                <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                    {row.original.discount_percent || "-"}
+                <span className="text-sm mx-auto px-2 py-1 rounded">
+                    {row.original.discount_percent || "0"}
+                    {"%"}
                 </span>
         },
         {

@@ -14,6 +14,10 @@ import {Badge} from "@/components/ui/badge"
 import {cn} from "@/lib/utils"
 import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
 import {RowActions} from "@/lib/action-button"
+import {DEFAULT_PAGE_SIZE} from "@/config/app-constant";
+import {TableHeader} from "@/components/ui/table";
+import {Package2} from "lucide-react";
+import TableHeading from "@/components/table/table-headers";
 
 interface Brand {
     id: number
@@ -39,7 +43,6 @@ interface PaginationParams {
 
 export default function BrandAdminTable() {
     const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(10)
     const [totalPages, setTotalPages] = useState(1)
     const [totalItems, setTotalItems] = useState(0)
 
@@ -51,7 +54,7 @@ export default function BrandAdminTable() {
     const {data, isLoading, isError, error, refetch} = useQuery<BrandResponse, Error>({
         queryKey: ["admin-brands", currentPage, searchQuery],
         queryFn: async () => {
-            const params: PaginationParams = {page: currentPage, per_page: pageSize, search: searchQuery}
+            const params: PaginationParams = {page: currentPage, per_page: DEFAULT_PAGE_SIZE, search: searchQuery}
             const response = await brandService.getAllBrands(params)
             setTotalPages(response?.total_page || 1)
             setTotalItems(response?.total_items || 0)
@@ -75,6 +78,10 @@ export default function BrandAdminTable() {
         },
     })
 
+    const handleSearch = useCallback((value: string) => {
+        setSearchQuery(value)
+        setCurrentPage(1)
+    }, [])
     const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
     const handleAddBrand = useCallback(() => {
         setSelectedBrand(null);
@@ -214,12 +221,12 @@ export default function BrandAdminTable() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Brand Management</h1>
-                    <p className="mt-1 text-sm text-gray-500">Manage your brand catalog and settings</p>
-                </div>
-            </div>
+            <TableHeading
+                title="Brand Management"
+                description="Manage your brand catalog and settings"
+                icon={Package2}
+                className={cn('mt-2')}
+            />
 
             <DataTable<Brand, any>
                 data={brands}
@@ -230,10 +237,10 @@ export default function BrandAdminTable() {
                 pagination={{
                     page: currentPage,
                     totalPages,
-                    pageSize,
                     onPageChange: handlePageChange,
                     dataCount: totalItems,
                 }}
+                onSearchAction={handleSearch}
                 enableRowSelection
                 enableSorting
                 enableSearch

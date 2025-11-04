@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-import { Building2, Plus } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import {memo} from "react"
+import {Building2, Plus} from "lucide-react"
+import {cn} from "@/lib/utils"
+import {Button} from "@/components/ui/button"
 
 interface PageHeaderProps {
     icon?: React.ElementType
@@ -15,38 +16,56 @@ interface PageHeaderProps {
     buttonClassName?: string
 }
 
-export default function PageHeader({
-                                       icon: Icon = Building2,
-                                       title,
-                                       description,
-                                       className,
-                                       actionLabel = "Add New",
-                                       onAction,
-                                       buttonClassName,
-                                   }: PageHeaderProps) {
+const PageHeader = memo(function PageHeader({
+                                                icon: Icon = Building2,
+                                                title,
+                                                description,
+                                                className,
+                                                actionLabel = "Add New",
+                                                onAction,
+                                                buttonClassName,
+                                            }: PageHeaderProps) {
     return (
-        <div className={cn("border-b bg-white py-6 ", className)}>
-            <div className="mx-auto max-w-7xl">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
-                            <Icon className="h-6 w-6 text-slate-700" />
+        <header
+            className={cn("sticky top-0 z-40 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80", className)}>
+            <div className="mx-auto w-full max-w-7xl py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center sm:gap-4">
+                        <div
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-sm ring-1 transition-transform hover:scale-105 sm:h-12 sm:w-12 sm:rounded-xl"
+                            style={{backgroundColor: '#f8f7fc', borderColor: '#e9e6f4'}}>
+                            <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{color: '#4a358e'}}/>
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">{title}</h1>
-                            {description && <p className="mt-1 text-sm text-gray-600 sm:text-base">{description}</p>}
+                            <h1 className="truncate text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl">
+                                {title}
+                            </h1>
+                            {description && (
+                                <p className="mt-0.5 line-clamp-2 text-xs text-gray-600 sm:mt-1 sm:text-sm lg:text-base">
+                                    {description}
+                                </p>
+                            )}
                         </div>
                     </div>
                     {onAction && (
-                        <div className="flex shrink-0">
-                            <Button onClick={onAction} className={cn("", buttonClassName)}>
-                                <Plus className="h-4 w-4" />
-                                {actionLabel}
-                            </Button>
-                        </div>
+                        <Button
+                            onClick={onAction}
+                            size="sm"
+                            className={cn(
+                                "w-full shrink-0 gap-1.5 shadow-sm transition-all hover:shadow sm:w-auto sm:gap-2",
+                                "bg-primaryColor border-primaryColor",
+                                buttonClassName
+                            )}
+
+                        >
+                            <Plus className="h-4 w-4 shrink-0"/>
+                            <span className="truncate">{actionLabel}</span>
+                        </Button>
                     )}
                 </div>
             </div>
-        </div>
+        </header>
     )
-}
+})
+
+export default PageHeader

@@ -39,7 +39,7 @@ export default function BannerTable() {
     const {data, isLoading, isFetching, refetch} = useQuery({
         queryKey: ["banners", currentPage, pageSize, search],
         queryFn: async () => {
-            const params: ParamsType = {page: currentPage, per_page: pageSize, search}
+            const params: ParamsType = {page: currentPage, per_page: pageSize, search: search}
             const response = await bannerService.getAllBanners(params)
             return {
                 items: response.data?.items || [],
@@ -63,7 +63,7 @@ export default function BannerTable() {
 
     const handleSearch = useCallback((value: string) => {
         setSearch(value)
-        setCurrentPage(DEFAULT_PAGE)
+        setCurrentPage(1)
     }, [])
 
     const handleDeleteModalClose = useCallback(() => {

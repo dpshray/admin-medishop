@@ -11,6 +11,7 @@ import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
 import TagFormModal from "@/components/modal/tag-modal-from"
 import {RowActions} from "@/lib/action-button";
+import {ParamsType} from "@/types/types";
 
 interface Tag {
     id: number
@@ -37,13 +38,12 @@ export default function TagsAdminTable() {
     const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
     const [isFormModalOpen, setFormModalOpen] = useState(false)
-
+const [search, setSearch] = useState("")
     const {data, isLoading, refetch} = useQuery<TagResponse, Error>({
-        queryKey: ["admin-tags", currentPage, pageSize],
+        queryKey: ["admin-tags", currentPage, pageSize,search],
         queryFn: async () => {
-            const params: PaginationParams = {page: currentPage, per_page: pageSize}
-            const response = await tagService.getAllTags(params)
-            return response
+            const params: ParamsType = {page: currentPage, per_page: pageSize,search: search}
+            return await tagService.getAllTags(params)
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
@@ -89,6 +89,11 @@ export default function TagsAdminTable() {
     const handleDeleteTag = useCallback((tag: Tag) => {
         setSelectedTag(tag)
         setDeleteModalOpen(true)
+    }, [])
+
+    const handleSearch = useCallback((value: string) => {
+        setSearch(value)
+        setCurrentPage(1)
     }, [])
 
     const confirmDeleteTag = useCallback(() => {
@@ -207,6 +212,7 @@ export default function TagsAdminTable() {
                     pageSizeOptions: [5, 10, 25, 50],
                     dataCount: totalItems,
                 }}
+                onSearchAction={handleSearch}
                 enableRowSelection
                 enableSorting
                 enableSearch

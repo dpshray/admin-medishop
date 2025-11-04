@@ -3,17 +3,16 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import {useForm} from "react-hook-form"
-import {z} from "zod"
-import {zodResolver} from "@hookform/resolvers/zod"
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import {Button} from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import TextInputField from "@/components/field/text-input"
 import PasswordInputField from "@/components/field/password-input"
-import {loginSchema} from "@/lib/schema/schema";
-import authService from "@/service/auth.service";
-import {useRouter} from "next/navigation";
-
+import { loginSchema } from "@/lib/schema/schema"
+import authService from "@/service/auth.service"
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
@@ -23,36 +22,43 @@ export default function LoginPage() {
     const {
         register,
         handleSubmit,
-        formState: {errors, isSubmitting},
+        formState: { errors, isSubmitting },
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
+        mode: "onTouched",
     })
 
-    const onSubmit = async (data: LoginFormValues) => {
+    const handleLogin = React.useCallback(async (data: LoginFormValues) => {
         try {
             const response = await authService.login(data)
-            console.log('Response from', response)
-            if (response) {
-                localStorage.setItem("_at", response?.data?.token)
-                localStorage.setItem("_role", response?.data?.user?.user_type?.toLowerCase() || "")
-                if (response?.data?.user?.user_type?.toLowerCase() === "admin") {
-                    router.push('/admin')
-                } else if (response?.data?.user?.user_type?.toLowerCase() === "vendor") {
-                    router.push('/vendor')
-                }
+            const token = response?.data?.token
+            const role = response?.data?.user?.user_type?.toLowerCase()
+
+            if (token && role) {
+                localStorage.setItem("_at", token)
+                localStorage.setItem("_role", role)
+                router.push(`/${role}`)
             }
-        } catch (error) {
-            console.log(error)
+        } catch {
+
         }
-    }
+    }, [router])
+
+    React.useEffect(() => {
+        const token = localStorage.getItem("_at")
+        const role = localStorage.getItem("_role")
+        if (token && role) router.replace(`/${role}`)
+    }, [router])
 
     return (
         <div className="min-h-screen w-full flex flex-col lg:flex-row">
-            <div className="flex w-full lg:w-1/2 items-center justify-center bg-background px-6 py-12">
+            <section
+                aria-label="Login form"
+                className="flex w-full lg:w-1/2 items-center justify-center bg-background px-6 py-12"
+            >
                 <Card className="w-full shadow-xl border max-w-md">
                     <CardHeader className="space-y-1">
-                        <CardTitle
-                            className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                             Welcome Back
                         </CardTitle>
                         <p className="text-sm text-muted-foreground text-center">
@@ -60,64 +66,53 @@ export default function LoginPage() {
                         </p>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <form
+                            onSubmit={handleSubmit(handleLogin)}
+                            className="space-y-4"
+                            noValidate
+                        >
                             <TextInputField
                                 {...register("email")}
                                 type="email"
                                 label="Email Address"
                                 placeholder="Enter your email"
                                 error={errors.email?.message}
+                                autoComplete="email"
                             />
                             <PasswordInputField
                                 {...register("password")}
-                                label="Password"
                                 id="password"
+                                label="Password"
                                 placeholder="Enter your password"
                                 error={errors.password?.message}
+                                autoComplete="current-password"
                             />
                             <div className="flex items-center justify-between">
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm"
                                 >
                                     Forgot password?
                                 </Link>
                             </div>
                             <Button
                                 type="submit"
-                                className="w-full font-semibold cursor-pointer primary-btn"
+                                className="w-full font-semibold primary-btn"
                                 disabled={isSubmitting}
+                                aria-busy={isSubmitting}
                             >
                                 {isSubmitting ? "Signing in..." : "Sign In"}
                             </Button>
                         </form>
-                        {/*<div className="relative">*/}
-                        {/*    <div className="absolute inset-0 flex items-center">*/}
-                        {/*        <Separator className="w-full"/>*/}
-                        {/*    </div>*/}
-                        {/*    <div className="relative flex justify-center text-xs uppercase">*/}
-                        {/*    <span className="bg-background px-2 text-muted-foreground font-medium">*/}
-                        {/*      Or continue with*/}
-                        {/*    </span>*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-                        {/*<div className="w-full">*/}
-                        {/*    <Button*/}
-                        {/*        variant="outline"*/}
-                        {/*        className=" font-medium w-full"*/}
-                        {/*        onClick={() => console.log("Login with Google")}*/}
-                        {/*    >*/}
-                        {/*        <Mail className="w-5 h-5"/>*/}
-                        {/*        Login with Google*/}
-                        {/*    </Button>*/}
-                        {/*</div>*/}
-
-
                     </CardContent>
                 </Card>
-            </div>
-            <div className="hidden lg:block w-full lg:w-1/2 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 z-10"/>
+            </section>
+
+            <section
+                aria-label="Promotional content"
+                className="hidden lg:block w-full lg:w-1/2 relative overflow-hidden"
+            >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 z-10" />
                 <Image
                     src="https://images.pexels.com/photos/7102037/pexels-photo-7102037.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
                     alt="Professional workspace with modern design"
@@ -149,7 +144,7 @@ export default function LoginPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
     )
 }

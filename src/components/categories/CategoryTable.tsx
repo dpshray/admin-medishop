@@ -12,7 +12,7 @@ import {Badge} from "@/components/ui/badge"
 import {toast} from "sonner"
 import {CategoryFormModal, CategoryFormValues} from "@/components/categories/CategoryFromModal"
 import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
-import {DEFAULT_PAGE} from "@/config/app-constant"
+import {ParamsType} from "@/types/types";
 
 interface Category {
     id: number;
@@ -46,7 +46,7 @@ export default function CategoryTable() {
     const {data, isLoading, isError, error, refetch} = useQuery<CategoryResponse, Error>({
         queryKey: ["admin-categories", currentPage, pageSize, search],
         queryFn: async () => {
-            const params: PaginationParams = {page: currentPage, per_page: pageSize}
+            const params: ParamsType = {page: currentPage, per_page: pageSize, search: search}
             return categoriesService.getAllCategories(params).then(response => {
                 setTotalPages(response.total_page)
                 setTotalItems(response.total_items || 0)
@@ -75,7 +75,7 @@ export default function CategoryTable() {
 
     const handleSearch = useCallback((value: string) => {
         setSearch(value)
-        setCurrentPage(DEFAULT_PAGE)
+        setCurrentPage(1)
     }, [])
 
     const handlePageChange = useCallback((page: number) => {

@@ -5,9 +5,10 @@ export interface PaginationParams {
 
 export interface PaginatedResponse<T> {
     items: T[]
-    total_page: number
+    total_page?: number
     total_items?: number
     page?: number
+    per_page?: number
 }
 
 export interface ParamsType extends PaginationParams {

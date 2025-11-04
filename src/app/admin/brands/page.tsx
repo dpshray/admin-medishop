@@ -17,7 +17,9 @@ export default function BrandPage() {
                     <DashboardCard key={index} {...card} index={index}/>
                 ))}
             </div>
-            <BrandAdminTable/>
+            <div className="mt-6">
+                <BrandAdminTable/>
+            </div>
         </div>
     );
 }

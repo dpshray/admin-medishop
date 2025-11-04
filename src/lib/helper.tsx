@@ -2,14 +2,14 @@
 
 import {AlertCircle, CheckCircle, Clock, LucideIcon, Package, PackageOpen, XCircle} from "lucide-react"
 import {cn} from "@/lib/utils"
-import {memo} from "react"
+import React, {memo} from "react"
 import {ORDER_STATUS, PAYMENT_STATUS, STATUS_TYPE} from "@/types/enum"
 import {Badge} from "@/components/ui/badge"
 
 interface NoDataFoundProps {
     title?: string
     description?: string
-    icon?: React.ReactNode
+    icon?: LucideIcon
     className?: string
 }
 
@@ -17,12 +17,12 @@ export const NoDataFound = memo(
     ({
          title = "No data found",
          description = "Get started by creating your first item.",
-         icon,
+         icon: Icon = PackageOpen,
          className
      }: NoDataFoundProps) => {
         return (
-            <div className={cn("flex flex-col items-center justify-center py-12", className)}>
-                {icon || <PackageOpen className="h-12 w-12 text-muted-foreground" aria-hidden="true"/>}
+            <div className={cn("flex flex-col items-center justify-center ", className)}>
+                <Icon className="h-12 w-12 text-muted-foreground" aria-hidden="true"/>
                 <h3 className="mt-4 text-sm font-semibold text-foreground">{title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             </div>

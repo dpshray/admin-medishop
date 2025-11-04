@@ -4,18 +4,7 @@ import {useCallback, useMemo, useState, useTransition} from "react"
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import {useParams, useRouter} from "next/navigation"
 import {toast} from "sonner"
-import {
-    AlertCircle,
-    ArrowLeft,
-    Check,
-    Copy,
-    Download,
-    FileText,
-    Package,
-    Printer,
-    Save,
-    XCircle,
-} from "lucide-react"
+import {AlertCircle, ArrowLeft, Check, Copy, Download, FileText, Package, Printer, Save, XCircle,} from "lucide-react"
 import ErrorState from "@/components/Error/ErrorState"
 import {Skeleton} from "@/components/ui/skeleton"
 import {Card, CardContent, CardFooter, CardHeader} from "@/components/ui/card"
@@ -42,6 +31,8 @@ interface OrderData {
     price: number
     description?: string
     ordered_items: any[]
+    gift_wrap_remarks?: string
+    gift_wrap?: boolean
 }
 
 interface VendorType {
@@ -224,7 +215,8 @@ export default function OrderDetails() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 print:bg-white">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-7xl">
-                <Card className="border-2 hover:border-primaryColor/30 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden">
+                <Card
+                    className="border-2 hover:border-primaryColor/30 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden">
                     <CardHeader className="border-b bg-gradient-to-br from-primary/5 to-purple-50/50 p-6 sm:p-8">
                         <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-6">
                             <div className="space-y-3">
@@ -232,7 +224,8 @@ export default function OrderDetails() {
                                     Order Details
                                 </h1>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <code className="text-xs sm:text-sm bg-white px-3 py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm">
+                                    <code
+                                        className="text-xs sm:text-sm bg-white px-3 py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm">
                                         #{data.order_code}
                                     </code>
                                     <Button
@@ -279,7 +272,8 @@ export default function OrderDetails() {
                                     <Package className="h-5 w-5 text-primary"/>
                                     Order Summary
                                 </h2>
-                                <div className="space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                <div
+                                    className="space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                     <div className="flex justify-between text-sm sm:text-base items-center">
                                         <span className="text-muted-foreground font-medium">Order Date</span>
                                         <span className="text-foreground font-semibold">{data.created_at}</span>
@@ -315,11 +309,26 @@ export default function OrderDetails() {
                                         <FileText className="h-5 w-5 text-primary"/>
                                         Order Notes
                                     </h2>
-                                    <div className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                    <div
+                                        className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                         <p className="text-sm sm:text-base text-foreground leading-relaxed whitespace-pre-wrap">
                                             {data.description}
                                         </p>
                                     </div>
+                                    {data.gift_wrap && (
+                                        <div className={' space-y-4'}>
+                                            <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+                                                <FileText className="h-5 w-5 text-primary"/>
+                                                Gift Wrap
+                                            </h2>
+                                            <div
+                                                className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-5 sm:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                                <p className="text-sm sm:text-base text-foreground leading-relaxed whitespace-pre-wrap">
+                                                    {data.gift_wrap_remarks}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </section>
                             )}
                         </div>
@@ -330,7 +339,8 @@ export default function OrderDetails() {
                                     <Package className="h-5 w-5 text-primary"/>
                                     Ordered Items
                                 </h2>
-                                <span className="text-sm sm:text-base font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                                <span
+                                    className="text-sm sm:text-base font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
                                     {itemCount} {itemCount === 1 ? "item" : "items"}
                                 </span>
                             </div>
@@ -351,7 +361,8 @@ export default function OrderDetails() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
+                                <div
+                                    className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
                                     <Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50"/>
                                     <p className="text-base font-medium">No items in this order</p>
                                 </div>
@@ -412,7 +423,7 @@ export default function OrderDetails() {
                                     <Button
                                         variant="destructive"
                                         onClick={handleCancelOrder}
-                                        disabled={cancelOrderMutation.isPending }
+                                        disabled={cancelOrderMutation.isPending}
                                         className="transition-all shadow-md hover:shadow-lg"
                                     >
                                         <XCircle className="h-4 w-4"/>

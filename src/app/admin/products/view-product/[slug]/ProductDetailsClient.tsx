@@ -1,39 +1,14 @@
 'use client'
 
-import React, {Suspense} from 'react'
-import {useQuery} from '@tanstack/react-query'
-import Image from 'next/image'
-import {Skeleton} from '@/components/ui/skeleton'
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
-import {
-    Activity,
-    Archive,
-    BarChart3,
-    Building2,
-    Copy,
-    DollarSign,
-    Edit,
-    Eye,
-    Globe,
-    MoreVertical,
-    Package,
-    Settings,
-    Share2,
-    Shield,
-    Star,
-    Tag,
-    Trash2,
-    TrendingDown,
-    TrendingUp,
-    Users,
-    Zap
-} from 'lucide-react'
+import React from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Edit, Eye } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import productService from '@/service/product/product.service'
-import {ErrorFallback} from '@/components/Error/error-fallback'
-import ImageGallery from '@/components/product/image-gallery'
-import {FormatCurrency, StatusBadge} from "@/lib/helper";
-import AdminProductDetailsSkeleton from "@/app/admin/products/view-product/[slug]/loading";
-import ProductMetricCard from "@/components/product/product-metric-card";
+import { ErrorFallback } from '@/components/Error/error-fallback'
+import AdminProductDetailsSkeleton from '@/app/admin/products/view-product/[slug]/loading'
+import ProductActionButton from '@/components/product/product-action-button'
+import { AdminProductInfo, AdminProductSidebar } from '@/components/product/product-details-info'
 
 export interface Brand {
     id: number
@@ -66,6 +41,7 @@ export interface ProductImage {
 }
 
 export interface ProductData {
+    uuid: string
     id: number
     name: string
     slug: string
@@ -91,378 +67,13 @@ interface AdminProductDetailsProps {
     slug: string
 }
 
+const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ slug }) => {
+    const router = useRouter()
 
-
-
-
-
-interface ActionButtonProps {
-    icon: React.ElementType
-    label: string
-    variant?: 'primary' | 'secondary' | 'danger'
-    onClick?: () => void
-}
-
-
-
-
-
-
-
-
-const ActionButton = ({icon: Icon, label, variant = 'secondary', onClick}: ActionButtonProps) => {
-    const variantStyles = {
-        primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/25',
-        secondary: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm',
-        danger: 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200'
-    }
-
-    return (
-        <button
-            onClick={onClick}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${variantStyles[variant]}`}
-            aria-label={label}
-        >
-            <Icon className="h-4 w-4" aria-hidden="true"/>
-            {label}
-        </button>
-    )
-}
-
-const AdminProductInfo = ({product}: { product: ProductData }) => (
-    <div className="space-y-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 rounded-lg bg-blue-100">
-                                <Package className="h-5 w-5 text-blue-600" aria-hidden="true"/>
-                            </div>
-                            <h2 className="text-lg font-semibold text-slate-900">Product Overview</h2>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {
-                                product.status && (
-                                    <StatusBadge status={product.status}/>
-                                )
-                            }
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                                <Globe className="h-3 w-3" aria-hidden="true"/>
-                                <span>Live since {new Date(product.added_date).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                        aria-label="More options"
-                    >
-                        <MoreVertical className="h-4 w-4 text-slate-500" aria-hidden="true"/>
-                    </button>
-                </div>
-            </div>
-
-            <div className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 group">
-                            <Image
-                                src={product.featured_image.url}
-                                alt={`${product.name} - Featured image`}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                priority
-                                sizes="(max-width: 1024px) 100vw, 40vw"
-                            />
-                            <div className="absolute top-4 right-4 flex gap-2">
-                                <button
-                                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm hover:bg-white transition-colors"
-                                    aria-label="View image"
-                                >
-                                    <Eye className="h-4 w-4 text-slate-600" aria-hidden="true"/>
-                                </button>
-                                <button
-                                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm hover:bg-white transition-colors"
-                                    aria-label="Share product"
-                                >
-                                    <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true"/>
-                                </button>
-                            </div>
-                        </div>
-                        {product.gallery_images.length > 0 && (
-                            <Suspense fallback={<Skeleton className="h-20 w-full rounded-lg"/>}>
-                                <ImageGallery images={product.gallery_images}/>
-                            </Suspense>
-                        )}
-                    </div>
-
-                    <div className="space-y-6">
-                        <div>
-                            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                                <Building2 className="h-4 w-4" aria-hidden="true"/>
-                                <span className="font-medium">{product.brand.name}</span>
-                            </div>
-                            <h1 className="text-xl font-bold text-slate-900 mb-3">{product.name}</h1>
-
-                            <div className="flex items-center gap-2 mb-4">
-                                <code className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-mono">
-                                    /{product.slug}
-                                </code>
-                                <button
-                                    className="p-1.5 hover:bg-slate-100 rounded-md transition-colors"
-                                    aria-label="Copy slug"
-                                >
-                                    <Copy className="h-3 w-3 text-slate-500" aria-hidden="true"/>
-                                </button>
-                            </div>
-
-                            <div
-                                className="prose prose-sm max-w-none text-slate-600 leading-relaxed"
-                                dangerouslySetInnerHTML={{__html: product.description}}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Vendors
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4 text-blue-600" aria-hidden="true"/>
-                                    <span className="font-semibold text-slate-900">{product.no_of_vendors}</span>
-                                    <span className="text-sm text-slate-500">active</span>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Rating
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Star className="h-4 w-4 text-amber-500 fill-current" aria-hidden="true"/>
-                                    <span className="font-semibold text-slate-900">{product.rating || 4.5}</span>
-                                    <span className="text-sm text-slate-500">(128 reviews)</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60">
-            <Tabs defaultValue="variations" className="w-full">
-                <div className="border-b border-slate-100 px-6 pt-6">
-                    <TabsList className="h-10 p-1 bg-slate-100 rounded-xl">
-                        <TabsTrigger
-                            value="variations"
-                            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                        >
-                            Pricing & Stock
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="taxonomy"
-                            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                        >
-                            Categories
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="health-conditions"
-                            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                        >
-                            Health Conditions
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
-
-                <TabsContent value="variations" className="p-6 space-y-4">
-                    <div className="space-y-3">
-                        {product.variations.map((variation) => (
-                            <div
-                                key={variation.variation_id}
-                                className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200/60"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500"/>
-                                        <span className="font-semibold text-slate-900">
-                                            {variation.size_value}{variation.size_unit}
-                                        </span>
-                                    </div>
-                                    {variation.status && <StatusBadge status={variation.status}/>}
-                                </div>
-                                <div className="flex items-center gap-6">
-                                    {variation.stock_quantity && (
-                                        <div className="text-right">
-                                            <div className="text-sm text-slate-500">Stock</div>
-                                            <div className="font-medium text-slate-900">{variation.stock_quantity}</div>
-                                        </div>
-                                    )}
-                                    <div className="text-right">
-                                        <div className="text-sm text-slate-500">Price</div>
-                                        {FormatCurrency(variation.admin_price)}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="taxonomy" className="p-6 space-y-6">
-                    <div>
-                        <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Categories</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {product.categories.map((category) => (
-                                <div
-                                    key={category.id}
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-200"
-                                >
-                                    <Tag className="h-3 w-3" aria-hidden="true"/>
-                                    {category.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Tags</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {product.tags.map((tag) => (
-                                <div
-                                    key={tag.id}
-                                    className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors"
-                                >
-                                    {tag.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </TabsContent>
-                <TabsContent value="health-conditions" className="p-6 space-y-6">
-                    <div>
-                        <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Health Conditions</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {product.health_conditions?.map((health_condition, index) => (
-                                <div
-                                    key={index}
-                                    className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors"
-                                >
-                                    {health_condition.name}
-                                </div>
-                            ))}
-
-                        </div>
-                    </div>
-                </TabsContent>
-            </Tabs>
-        </div>
-    </div>
-)
-
-const AdminSidebar = ({product}: { product: ProductData }) => (
-    <aside className="space-y-6">
-        <div className="grid gap-4">
-            <ProductMetricCard
-                title="Total Revenue"
-                value={`₹${(product.revenue || 245680).toLocaleString('en-IN')}`}
-                icon={DollarSign}
-                trend={{value: 12.5, isPositive: true}}
-                description="This month"
-            />
-            <ProductMetricCard
-                title="Units Sold"
-                value={product.total_sales || 1284}
-                icon={BarChart3}
-                trend={{value: 8.2, isPositive: true}}
-                description="This month"
-            />
-            <ProductMetricCard
-                title="Conversion Rate"
-                value={`${product.conversion_rate || 3.2}%`}
-                icon={Zap}
-                trend={{value: 2.1, isPositive: true}}
-                description="Last 30 days"
-            />
-            <ProductMetricCard
-                title="Page Views"
-                value={(product.views || 12450).toLocaleString()}
-                icon={Eye}
-                trend={{value: 15.3, isPositive: true}}
-                description="This month"
-            />
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-slate-100">
-                    <Settings className="h-4 w-4 text-slate-600" aria-hidden="true"/>
-                </div>
-                <h3 className="font-semibold text-slate-900">Quick Actions</h3>
-            </div>
-
-            <div className="space-y-3">
-                <ActionButton icon={Edit} label="Edit Product" variant="primary"/>
-                <ActionButton icon={Eye} label="Preview Live" variant="secondary"/>
-                <ActionButton icon={Activity} label="View Analytics" variant="secondary"/>
-                <ActionButton icon={Share2} label="Share Product" variant="secondary"/>
-
-                <div className="pt-3 border-t border-slate-100">
-                    <ActionButton icon={Archive} label="Archive" variant="secondary"/>
-                    <div className="mt-2">
-                        <ActionButton icon={Trash2} label="Delete Product" variant="danger"/>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-emerald-100">
-                    <Shield className="h-4 w-4 text-emerald-600" aria-hidden="true"/>
-                </div>
-                <h3 className="font-semibold text-slate-900">Product Health</h3>
-            </div>
-
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">SEO Score</span>
-                    <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden" role="progressbar"
-                             aria-valuenow={85} aria-valuemin={0} aria-valuemax={100}>
-                            <div className="w-4/5 h-full bg-emerald-500 rounded-full"/>
-                        </div>
-                        <span className="text-sm font-medium text-slate-900">85%</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Content Quality</span>
-                    <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden" role="progressbar"
-                             aria-valuenow={78} aria-valuemin={0} aria-valuemax={100}>
-                            <div className="w-3/4 h-full bg-blue-500 rounded-full"/>
-                        </div>
-                        <span className="text-sm font-medium text-slate-900">78%</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Image Optimization</span>
-                    <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden" role="progressbar"
-                             aria-valuenow={95} aria-valuemin={0} aria-valuemax={100}>
-                            <div className="w-full h-full bg-emerald-500 rounded-full"/>
-                        </div>
-                        <span className="text-sm font-medium text-slate-900">95%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </aside>
-)
-
-const AdminProductDetails = ({slug}: AdminProductDetailsProps) => {
-    const {data, isPending, isError, refetch} = useQuery({
+    const { data, isPending, isError, refetch } = useQuery({
         queryKey: ['admin-product', slug],
         queryFn: async (): Promise<ProductData> => {
             const response = await productService.getSingleProduct(slug)
-            console.log(response)
             if (!response?.data) throw new Error('Product not found')
             return response.data
         },
@@ -472,17 +83,28 @@ const AdminProductDetails = ({slug}: AdminProductDetailsProps) => {
         refetchOnWindowFocus: false,
     })
 
-    if (isPending) return <AdminProductDetailsSkeleton/>
+    const handlePreview = React.useCallback(() => {
+        window.open(`/products/${slug}`, '_blank')
+    }, [slug])
+
+    const handleEdit = React.useCallback(() => {
+        if (data?.uuid) router.push(`/admin/products/edit-product/${data.uuid}`)
+    }, [router, data?.uuid])
+
+    const handleBack = React.useCallback(() => {
+        router.back()
+    }, [router])
+
+    if (isPending) return <AdminProductDetailsSkeleton />
 
     if (isError || !data) {
         return (
-            <div
-                className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center p-4">
                 <ErrorFallback
                     title="Failed to load product"
                     message="Unable to fetch product details. Please check your connection and try again."
-                    primaryAction={{label: 'Retry', onClick: () => refetch()}}
-                    secondaryAction={{label: 'Back to Products', onClick: () => window.history.back()}}
+                    primaryAction={{ label: 'Retry', onClick: refetch }}
+                    secondaryAction={{ label: 'Back to Products', onClick: handleBack }}
                 />
             </div>
         )
@@ -490,33 +112,45 @@ const AdminProductDetails = ({slug}: AdminProductDetailsProps) => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-            <div className="container mx-auto px-6 py-8">
-                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 mb-1">{data.name}</h1>
-                        <div className="flex items-center gap-4 text-sm text-slate-500">
-                            <span>Product ID: #{data.id}</span>
-                            <span>•</span>
-                            <span>Last updated 2 hours ago</span>
+            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+                <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 sm:mb-8">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1 truncate">{data.name}</h1>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-500">
+                            <span className="truncate">Product ID: #{data.uuid}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="truncate">Last updated 2 hours ago</span>
                         </div>
                     </div>
-                    <div className="flex gap-3 flex-wrap">
-                        <ActionButton icon={Eye} label="Preview" variant="secondary"/>
-                        <ActionButton icon={Edit} label="Edit Product" variant="primary"/>
+                    <div className="flex gap-2 sm:gap-3 flex-wrap">
+                        <ProductActionButton
+                            icon={Eye}
+                            label="Preview"
+                            variant="secondary"
+                            onClickAction={handlePreview}
+                        />
+                        <ProductActionButton
+                            icon={Edit}
+                            label="Edit Product"
+                            variant="primary"
+                            onClickAction={handleEdit}
+                        />
                     </div>
                 </header>
 
-                <main className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <main className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                     <div className="lg:col-span-8">
-                        <AdminProductInfo product={data}/>
+                        <AdminProductInfo product={data} />
                     </div>
                     <div className="lg:col-span-4">
-                        <AdminSidebar product={data}/>
+                        <AdminProductSidebar product={data} />
                     </div>
-                </main>`
+                </main>
             </div>
         </div>
     )
-}
+})
+
+AdminProductDetails.displayName = 'AdminProductDetails'
 
 export default AdminProductDetails

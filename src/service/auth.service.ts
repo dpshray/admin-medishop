@@ -48,6 +48,7 @@ class AuthService extends HttpServices {
                 },
                 config: {
                     auth: true,
+                    file: true,
                 }
             })
         } catch (error) {

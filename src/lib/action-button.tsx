@@ -21,20 +21,21 @@ interface RowActionsProps<TData> {
     viewLabel?: string
 }
 
-const RowActions = <TData,>({
-                                row,
-                                onEditAction,
-                                onDeleteAction,
-                                onViewAction,
-                                className,
-                                editLabel = "Edit",
-                                deleteLabel = "Delete",
-                                viewLabel = "View",
-                            }: RowActionsProps<TData>) => {
+const RowActions = <TData, >({
+                                 row,
+                                 onEditAction,
+                                 onDeleteAction,
+                                 onViewAction,
+                                 className,
+                                 editLabel = "Edit",
+                                 deleteLabel = "Delete",
+                                 viewLabel = "View",
+                             }: RowActionsProps<TData>) => {
     const handleEdit = useCallback(() => onEditAction?.(row), [onEditAction, row])
     const handleDelete = useCallback(() => onDeleteAction?.(row), [onDeleteAction, row])
     const handleView = useCallback(() => onViewAction?.(row), [onViewAction, row])
 
+    const commonClassName = 'w-fit justify-start rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 h-auto cursor-pointer'
     return (
         <TooltipProvider delayDuration={200}>
             <div className={cn("flex items-center justify-end gap-1.5", className)}>
@@ -44,7 +45,8 @@ const RowActions = <TData,>({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-slate-100 hover:text-slate-700 active:scale-95 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                                className={cn('h-8 w-8 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-slate-100 hover:text-slate-700 active:scale-95 dark:hover:bg-slate-800 dark:hover:text-slate-300',
+                                    commonClassName)}
                                 onClick={handleView}
                                 aria-label={viewLabel}
                             >
@@ -94,7 +96,8 @@ const RowActions = <TData,>({
                                 <Trash2 className="h-4 w-4" aria-hidden="true"/>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="top" sideOffset={5} className="border-red-600 bg-red-600 text-white [&_svg]:bg-red-400 [&_svg]:fill-red-400">
+                        <TooltipContent side="top" sideOffset={5}
+                                        className="border-red-600 bg-red-600 text-white [&_svg]:bg-red-400 [&_svg]:fill-red-400">
                             <p className="text-xs font-medium">{deleteLabel}</p>
                         </TooltipContent>
                     </Tooltip>
@@ -174,7 +177,8 @@ const GlobalStatusToggle = <T extends Record<string, any>>({
                     )}
                 />
                 {isUpdating && (
-                    <Loader2 className="absolute -right-7 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" aria-hidden="true"/>
+                    <Loader2 className="absolute -right-7 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400"
+                             aria-hidden="true"/>
                 )}
             </div>
             <Label htmlFor={`status-${id}`} className="sr-only">

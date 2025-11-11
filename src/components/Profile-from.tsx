@@ -41,6 +41,7 @@ export default function ProfileFrom() {
         queryKey: ['profile'],
         queryFn: async () => {
             const res = await authService.getLoggedInUser()
+            console.log(res.data)
             return res.data
         }
     })
@@ -52,6 +53,7 @@ export default function ProfileFrom() {
 
     const updateMutation = useMutation({
         mutationFn: async (data: ProfileFormData) => {
+            console.log('data', data)
             return await authService.updateProfile(data)
         },
         onSuccess: () => {

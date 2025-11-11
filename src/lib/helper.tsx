@@ -115,9 +115,10 @@ const defaultStatusConfig: StatusConfig = {
 }
 
 export const StatusBadge = memo(({status}: { status: PAYMENT_STATUS | ORDER_STATUS | STATUS_TYPE | string }) => {
-    const config = statusConfigMap[status.toUpperCase()] || defaultStatusConfig
+    if (!status) return null
+    const key = String(status).toUpperCase()
+    const config = statusConfigMap[key] || defaultStatusConfig
     const Icon = config.icon
-
     return (
         <Badge variant="outline" className={cn("gap-1.5 capitalize", config.className)}>
             {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true"/>}
@@ -151,9 +152,11 @@ const currencyFormatter = new Intl.NumberFormat('en-NP', {
     maximumFractionDigits: 2,
 })
 
-export const FormatCurrency = (amount: number): string => {
-    return currencyFormatter.format(amount)
+export const FormatCurrency = (amount?: number | string): string => {
+    if (amount == null || isNaN(Number(amount))) return "N/A"
+    return currencyFormatter.format(Number(amount))
 }
+
 
 export const StripHtml = (html: string, maxLength: number = 100): string => {
     const text = html.replace(/<[^>]*>/g, '').trim()

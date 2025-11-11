@@ -1,4 +1,4 @@
-import ProductDetailsClient from "@/app/admin/products/view-product/ProductDetailsClient";
+import ProductDetailsClient from "@/app/admin/products/view-product/[slug]/ProductDetailsClient";
 import {Suspense} from "react";
 import LoadingSkeleton from "@/app/admin/vendors/view-vendor/[slug]/loading";
 

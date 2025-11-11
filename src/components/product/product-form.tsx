@@ -18,6 +18,8 @@ import {toast} from "sonner"
 import {useRouter} from "next/navigation"
 import ProductManageFormSkeleton from "@/app/admin/products/add-product/laoding";
 import {MAX_FILE_SIZE} from "@/config/app-constant";
+import {useQuery} from "@tanstack/react-query";
+import healthConditionService from "@/service/healthCondition.service";
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
@@ -45,6 +47,21 @@ const ProductManageForm = ({
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [isDataLoaded, setIsDataLoaded] = useState(false)
+
+
+    const {data: healthCondition} = useQuery({
+        queryKey: ["health-condition"],
+        queryFn: async () => {
+            return await healthConditionService.getHealthConditionList().then((res) => res.items)
+        }
+    })
+    console.log('Health Condition', healthCondition)
+    const healthConditionOptions =
+        healthCondition?.map((item: any) => ({
+            value: item.id,
+            label: item.name,
+        })) || []
+    console.log('Health Condition Options', healthConditionOptions)
 
     const categoriesOptions: SelectOption[] = categories.map((category) => ({
         id: category.id,
@@ -78,6 +95,7 @@ const ProductManageForm = ({
         featured_image: new File([], ""),
         gallery_images: [],
         prescription_required: false,
+        health_condition: []
     }
 
     const updateDefaultValues: ProductUpdate = {
@@ -97,6 +115,7 @@ const ProductManageForm = ({
         featured_image: null,
         gallery_images: [],
         prescription_required: false,
+        health_condition: []
     }
 
     const defaultValues = isUpdateMode ? updateDefaultValues : createDefaultValues
@@ -109,7 +128,7 @@ const ProductManageForm = ({
         setValue,
         watch,
         reset,
-        formState: {errors, isSubmitting},
+        formState: {errors, isSubmitting },
     } = useForm<ProductCreate | ProductUpdate>({
         resolver: zodResolver(schema),
         defaultValues,
@@ -124,6 +143,7 @@ const ProductManageForm = ({
     const watchCategories = watch("categories") as number[] || []
     const watchTags = watch("tags") as number[] || []
     const watchBrandId = watch("brand_id")
+    const watchHealthCondition = watch("health_condition") as number[] || []
 
     const categorySelectOptions = categoriesOptions.map((category) => ({
         value: category.id,
@@ -159,6 +179,7 @@ const ProductManageForm = ({
                 setValue("categories", productData.categories?.map((cat: any) => cat.id) || [])
                 setValue("tags", productData.tags?.map((tag: any) => tag.id) || [])
                 setValue("prescription_required", productData.prescription_required || false)
+                setValue("health_condition", productData.health_condition?.map((healthCondition: any) => healthCondition.id) || [])
 
                 if (mappedVariations.length > 0) {
                     replace(mappedVariations)
@@ -197,6 +218,12 @@ const ProductManageForm = ({
             typeof value === "string" ? parseInt(value, 10) : value
         )
         setValue("tags", numericValues, {shouldValidate: true})
+    }, [setValue])
+    const handleHealthConditionChange = useCallback((values: (string | number)[]) => {
+        const numericValues = values.map((value) =>
+            typeof value === "string" ? parseInt(value, 10) : value
+        )
+        setValue("health_condition", numericValues, {shouldValidate: true})
     }, [setValue])
 
     const handleSizeUnitChange = useCallback((index: number) => (value: string | number) => {
@@ -244,9 +271,9 @@ const ProductManageForm = ({
                     router.push("/admin/products")
                 }
             }
-        } catch (error) {
-            console.error("Submit error:", error)
-            toast.error(`Error ${isUpdateMode ? "updating" : "creating"} product`)
+        } catch (error:any) {
+            console.error("Submit error:", error?.message)
+            toast.error(error?.message || "Failed to submit product")
         }
     }, [isUpdateMode, productUuid, onSuccessAction, router])
 
@@ -344,6 +371,8 @@ const ProductManageForm = ({
                                                     showPreviews
                                                     maxFileSize={MAX_FILE_SIZE}
                                                     required
+                                                    helperText={'Only one image is allowed and max file size is ' + MAX_FILE_SIZE + 'KB'}
+
                                                 />
                                                 <FileInputField
                                                     label="Gallery Images"
@@ -354,6 +383,7 @@ const ProductManageForm = ({
                                                     showPreviews
                                                     maxFileSize={MAX_FILE_SIZE}
                                                     required
+                                                    helperText={'Multiple images are allowed and max file size is ' + MAX_FILE_SIZE + 'KB'}
                                                 />
                                             </div>
                                         </section>
@@ -369,7 +399,7 @@ const ProductManageForm = ({
                                         </div>
                                         <h2 className="text-lg font-semibold">Categories & Tags</h2>
                                     </header>
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                         <MultiSelectField
                                             options={categorySelectOptions}
                                             value={watchCategories}
@@ -389,6 +419,18 @@ const ProductManageForm = ({
                                             placeholder="Select tags"
                                             label="Tags"
                                             error={errors.tags?.message}
+                                            maxSelected={10}
+                                            searchable
+                                            clearable
+                                            required={!isUpdateMode}
+                                        />
+                                        <MultiSelectField
+                                            options={healthConditionOptions}
+                                            value={watchHealthCondition}
+                                            onValueChange={handleHealthConditionChange}
+                                            placeholder="Select health conditions"
+                                            label="Health Conditions"
+                                            error={errors.health_condition?.message}
                                             maxSelected={10}
                                             searchable
                                             clearable

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useQuery } from "@tanstack/react-query"
 import kitBagService from "@/service/kit-bag.service"
+import KitBagDetailsSkeleton from "@/app/admin/kit-bags/[slug]/loading";
 
 interface KitbagItemVariant {
     name: string
@@ -33,7 +34,7 @@ interface Kitbag {
 export default function KitBagDetails() {
     const { slug } = useParams()
 
-    const { data } = useQuery<Kitbag>({
+    const { data , isLoading} = useQuery<Kitbag>({
         queryKey: ["kitbag", slug],
         queryFn: async () => {
             const res = await kitBagService.getKitBag(slug as string)
@@ -41,6 +42,8 @@ export default function KitBagDetails() {
         },
         enabled: !!slug,
     })
+
+    if(isLoading) return <KitBagDetailsSkeleton/>
 
     const calculateTotal = () =>
         data?.items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0) ?? 0

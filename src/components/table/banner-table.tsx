@@ -119,8 +119,10 @@ export default function BannerTable() {
     )
 
     const handleBannerSuccess = useCallback(async () => {
-        await refetch()
-    }, [refetch])
+        setCurrentPage(1);
+        await refetch();
+    }, [refetch]);
+
 
     const columns: ColumnDef<BannerType>[] = useMemo(
         () => [

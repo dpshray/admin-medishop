@@ -4,7 +4,7 @@ import {useCallback, useMemo, useState} from "react"
 import {useRouter} from "next/navigation"
 import {useQuery} from "@tanstack/react-query"
 
-import {RefreshCw} from "lucide-react"
+import { RefreshCw} from "lucide-react"
 import orderService from "@/service/order/order.service"
 import {ParamsType} from "@/types/types"
 import {Button} from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {NoDataFound, StatusBadge} from "@/lib/helper"
 import {RowActions} from "@/lib/action-button"
 import {DEFAULT_PAGE, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, QUERY_STALE_TIME} from "@/config/app-constant"
 import {ColumnDef} from "@tanstack/react-table";
+import {Badge} from "@/components/ui/badge";
 
 
 type PaymentStatus = "PAID" | "UNPAID" | "PENDING"
@@ -33,6 +34,7 @@ interface OrderType {
     mobile: string
     address: string
     assigned_to: string
+    gift_wrap: boolean
 }
 
 interface OrdersResponse {
@@ -165,6 +167,16 @@ export default function AdminOrderTable() {
             ),
             enableSorting: true,
             size: 120,
+        },
+        {
+            accessorKey: "gift_wrap",
+            header: "Gift Wrap",
+            cell: ({row}) => (
+                <Badge
+                    variant={'outline'}
+                    className={cn(row.original.gift_wrap ? "bg-green-500" : "bg-red-500", "font-medium text-white")}>{row.original.gift_wrap ? "Yes" : "No"}</Badge>
+            )
+
         },
         {
             accessorKey: "status",

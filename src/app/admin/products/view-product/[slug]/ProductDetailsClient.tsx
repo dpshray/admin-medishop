@@ -31,8 +31,9 @@ export interface ProductVariation {
     size_value: number
     size_unit: string
     admin_price: number
-    status?: string
+    units_in_stock?: number
     stock_quantity?: number
+    status?: string
 }
 
 export interface ProductImage {
@@ -40,32 +41,42 @@ export interface ProductImage {
     url: string
 }
 
-export interface ProductData {
-    uuid: string
-    id: number
+export interface HealthCondition {
     name: string
-    slug: string
-    brand: Brand
-    description: string
-    added_date: string
-    no_of_vendors: number
-    categories: Category[]
-    tags: ProductTag[]
-    variations: ProductVariation[]
-    featured_image: ProductImage
-    gallery_images: ProductImage[]
+}
+
+export interface ProductAnalytics {
     status?: string
     rating?: number
     revenue?: number
     total_sales?: number
     conversion_rate?: number
     views?: number
-    health_conditions?: { name: string }[]
 }
 
-interface AdminProductDetailsProps {
+export interface ProductData extends ProductAnalytics {
+    id: number
+    uuid: string
+    name: string
+    slug: string
+    description: string
+    added_date: string
+    brand: Brand
+    categories: Category[]
+    tags: ProductTag[]
+    variations: ProductVariation[]
+    featured_image: ProductImage
+    gallery_images: ProductImage[]
+    health_conditions?: HealthCondition[]
+    prescription_required?: boolean
+    no_of_vendors: number
+    total_units_in_stock: number
+}
+
+export interface AdminProductDetailsProps {
     slug: string
 }
+
 
 const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ slug }) => {
     const router = useRouter()
@@ -74,6 +85,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
         queryKey: ['admin-product', slug],
         queryFn: async (): Promise<ProductData> => {
             const response = await productService.getSingleProduct(slug)
+            console.log('Response from Product Service:', response)
             if (!response?.data) throw new Error('Product not found')
             return response.data
         },

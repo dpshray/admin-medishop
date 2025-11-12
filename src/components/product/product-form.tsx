@@ -16,10 +16,11 @@ import {useBrands, useCategories, useProductUnits, useTags} from "@/hooks/all-ho
 import productService from "@/service/product/product.service"
 import {toast} from "sonner"
 import {useRouter} from "next/navigation"
-import ProductManageFormSkeleton from "@/app/admin/products/add-product/laoding";
-import {MAX_FILE_SIZE} from "@/config/app-constant";
-import {useQuery} from "@tanstack/react-query";
-import healthConditionService from "@/service/healthCondition.service";
+import ProductManageFormSkeleton from "@/app/admin/products/add-product/laoding"
+import {MAX_FILE_SIZE} from "@/config/app-constant"
+import {useQuery} from "@tanstack/react-query"
+import healthConditionService from "@/service/healthCondition.service"
+import {Switch} from "@/components/ui/switch"
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
@@ -32,7 +33,6 @@ interface SelectOption {
     id: number
     name: string
 }
-
 
 const ProductManageForm = ({
                                mode = "create",
@@ -48,20 +48,18 @@ const ProductManageForm = ({
     const [isLoading, setIsLoading] = useState(false)
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-
     const {data: healthCondition} = useQuery({
         queryKey: ["health-condition"],
         queryFn: async () => {
             return await healthConditionService.getHealthConditionList().then((res) => res.items)
         }
     })
-    console.log('Health Condition', healthCondition)
+
     const healthConditionOptions =
         healthCondition?.map((item: any) => ({
             value: item.id,
             label: item.name,
         })) || []
-    console.log('Health Condition Options', healthConditionOptions)
 
     const categoriesOptions: SelectOption[] = categories.map((category) => ({
         id: category.id,
@@ -144,6 +142,7 @@ const ProductManageForm = ({
     const watchTags = watch("tags") as number[] || []
     const watchBrandId = watch("brand_id")
     const watchHealthCondition = watch("health_condition") as number[] || []
+    const watchPrescriptionRequired = watch("prescription_required")
 
     const categorySelectOptions = categoriesOptions.map((category) => ({
         value: category.id,
@@ -219,6 +218,7 @@ const ProductManageForm = ({
         )
         setValue("tags", numericValues, {shouldValidate: true})
     }, [setValue])
+
     const handleHealthConditionChange = useCallback((values: (string | number)[]) => {
         const numericValues = values.map((value) =>
             typeof value === "string" ? parseInt(value, 10) : value
@@ -252,6 +252,10 @@ const ProductManageForm = ({
         remove(index)
     }, [remove])
 
+    const handlePrescriptionToggle = useCallback((checked: boolean) => {
+        setValue("prescription_required", checked, {shouldValidate: true})
+    }, [setValue])
+
     const onSubmit = useCallback(async (data: ProductCreate | ProductUpdate) => {
         try {
             if (isUpdateMode && productUuid) {
@@ -271,7 +275,7 @@ const ProductManageForm = ({
                     router.push("/admin/products")
                 }
             }
-        } catch (error:any) {
+        } catch (error: any) {
             console.error("Submit error:", error?.message)
             toast.error(error?.message || "Failed to submit product")
         }
@@ -351,6 +355,26 @@ const ProductManageForm = ({
                                     className="min-h-[100px]"
                                 />
 
+                                <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50/50">
+                                    <div className="space-y-0.5">
+                                        <label
+                                            htmlFor="prescription-required"
+                                            className="text-sm font-medium text-slate-900 cursor-pointer"
+                                        >
+                                            Prescription Required
+                                        </label>
+                                        <p className="text-sm text-slate-500">
+                                            Enable if this product requires a valid prescription
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        id="prescription-required"
+                                        checked={watchPrescriptionRequired}
+                                        onCheckedChange={handlePrescriptionToggle}
+                                        aria-label="Toggle prescription requirement"
+                                    />
+                                </div>
+
                                 {!isUpdateMode && (
                                     <>
                                         <Separator className="my-8"/>
@@ -372,7 +396,6 @@ const ProductManageForm = ({
                                                     maxFileSize={MAX_FILE_SIZE}
                                                     required
                                                     helperText={'Only one image is allowed and max file size is ' + MAX_FILE_SIZE + 'KB'}
-
                                                 />
                                                 <FileInputField
                                                     label="Gallery Images"

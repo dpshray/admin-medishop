@@ -16,6 +16,7 @@ import vendorService from "@/service/vendor.service"
 import {toast} from "sonner"
 import {AlertTriangle, CheckCircle2, Package2, Plus, Save, Search, SquareMenu, TrendingUp, X} from "lucide-react"
 import {VendorProductForm, VendorProductSchema} from "@/lib/schema/schema"
+import vendorProductService from "@/service/product/vendor-product.service";
 
 interface Variation {
     id: number
@@ -96,7 +97,7 @@ const VendorProductModal = ({trigger, open: controlledOpen, onOpenChange}: Vendo
     const fetchProducts = useCallback(async () => {
         try {
             setIsLoading(true)
-            const response = await vendorService.getProductsByVendor()
+            const response = await vendorProductService.getVendorAvailableProducts()
             setProducts(response?.items || [])
         } catch (error) {
             toast.error("Failed to load products. Please try again.")
@@ -245,7 +246,7 @@ const VendorProductModal = ({trigger, open: controlledOpen, onOpenChange}: Vendo
                     </div>
                 </DialogHeader>
 
-                <div className="px-6 pb-6">
+                <div className="px-6 pb-6 w-full max-w-7xl mx-auto">
                     {isLoading ? (
                         <LoadingSkeleton/>
                     ) : (

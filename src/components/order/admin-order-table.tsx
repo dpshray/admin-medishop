@@ -64,15 +64,12 @@ export default function AdminOrderTable() {
             return response
         },
         staleTime: QUERY_STALE_TIME,
-        refetchOnWindowFocus: false,
     })
     const handleView = useCallback((order: OrderType): void => {
         router.push(`/admin/orders/${order.order_uuid}`)
     }, [router])
 
-    const handleEdit = useCallback((order: OrderType): void => {
-        router.push(`/admin/orders/${order.order_uuid}/edit`)
-    }, [router])
+
 
     const handleDeleteClick = useCallback((order: OrderType): void => {
         setSelectedOrder(order)

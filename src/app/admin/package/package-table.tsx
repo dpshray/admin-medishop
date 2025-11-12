@@ -13,6 +13,7 @@ import {Badge} from "@/components/ui/badge"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
 import {cn} from "@/lib/utils";
+import {FormatCurrency} from "@/lib/helper";
 
 export interface Package {
     id: number
@@ -142,11 +143,11 @@ export default function PackageTable() {
                 return (
                     <div className="flex flex-col gap-0.5">
                         <span className="font-semibold text-base">
-                            Rs. {discountedPrice.toFixed(2)}
+                            {FormatCurrency(discountedPrice)}
                         </span>
                         {discount && (
                             <span className="text-xs text-muted-foreground line-through">
-                                Rs. {price.toFixed(2)}
+                               {FormatCurrency(price)} {price.toFixed(2) || 0.00}
                             </span>
                         )}
                     </div>

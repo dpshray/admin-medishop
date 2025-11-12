@@ -5,6 +5,7 @@ import {cn} from "@/lib/utils"
 import React, {memo} from "react"
 import {ORDER_STATUS, PAYMENT_STATUS, STATUS_TYPE} from "@/types/enum"
 import {Badge} from "@/components/ui/badge"
+import {CURRENCY_SYMBOL} from "@/config/app-constant";
 
 interface NoDataFoundProps {
     title?: string
@@ -156,7 +157,7 @@ export const FormatDate = (dateString: string): string => {
 
 const currencyFormatter = new Intl.NumberFormat('en-NP', {
     style: 'currency',
-    currency: 'NPR',
+    currency: CURRENCY_SYMBOL,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
 })

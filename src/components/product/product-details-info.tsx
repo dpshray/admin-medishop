@@ -1,6 +1,5 @@
 'use client'
 import {
-    Activity,
     Archive,
     BarChart3,
     Building2,
@@ -398,7 +397,7 @@ const AdminProductSidebar = React.memo(({product}: { product: ProductData }) => 
             <div className="grid gap-3 sm:gap-4">
                 <ProductMetricCard
                     title="Total Revenue"
-                    value={`₹${(product.revenue || 245680).toLocaleString('en-IN')}`}
+                    value={FormatCurrency( 2000)}
                     icon={DollarSign}
                     trend={{value: 12.5, isPositive: true}}
                     description="This month"

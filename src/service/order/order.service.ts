@@ -63,7 +63,7 @@ class OrderService extends HttpServices {
     async cancelOrder(order_uuid: string) {
         try {
             const response = await this.postRequest({
-                url: `/admin/orders/${order_uuid}/cancel-assign`,
+                url: `/admin/orders/${order_uuid}/cancel-order`,
                 config: {
                     auth: true,
                 },
@@ -83,7 +83,6 @@ class OrderService extends HttpServices {
                     params
                 }
             })
-            console.log('response from getAssignedVendorOrders', response?.data)
             return response?.data
         } catch (error) {
             throw error

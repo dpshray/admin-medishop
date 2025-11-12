@@ -6,15 +6,16 @@ import {ColumnDef} from "@tanstack/react-table"
 import userService from "@/service/user.service"
 import {DataTable} from "@/components/table/ReusableTable"
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
-import {Badge} from "@/components/ui/badge"
 import {Button} from "@/components/ui/button"
 import {RowActions} from "@/lib/action-button"
-import {toast} from "sonner"
 import {PaginatedResponse, ParamsType} from "@/types/types"
 import {AlertTriangle} from "lucide-react"
 import {Checkbox} from "@/components/ui/checkbox"
 import {useRouter} from "next/navigation"
-import {cn} from "@/lib/utils";
+import {StatusBadge} from "@/lib/helper";
+import {STATUS_TYPE} from "@/types/enum";
+import {CURRENCY_SYMBOL} from "@/config/app-constant";
+
 
 interface UserTable {
     id: number
@@ -33,9 +34,6 @@ export default function UserTable() {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(10)
     const [search, setSearch] = useState("")
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-    const [selectedUser, setSelectedUser] = useState<UserTable | null>(null)
-    const [isDeleting, setIsDeleting] = useState(false)
     const router = useRouter()
 
     const {data, isLoading, isError, error, refetch, isFetching} = useQuery<PaginatedResponse<UserTable>, Error>({
@@ -71,7 +69,6 @@ export default function UserTable() {
 
     const handleRefresh = useCallback(async () => {
         await refetch()
-        toast.success("Users refreshed")
     }, [refetch])
 
     const columns: ColumnDef<UserTable>[] = useMemo(
@@ -124,7 +121,8 @@ export default function UserTable() {
                 accessorKey: "status",
                 header: "Status",
                 cell: ({row}) => (
-                    <Badge className={cn("", row.original.status ? "bg-green-500" : "bg-red-500")}>{row.original.status ? "Verified" : "Unverified"}</Badge>
+
+                    <StatusBadge status={row.original.status ? STATUS_TYPE.VERIFIED : STATUS_TYPE.UNVERIFIED}/>
                 ),
                 size: 100,
             },
@@ -142,7 +140,7 @@ export default function UserTable() {
             },
             {
                 accessorKey: "total_purchase_amount",
-                header: "Total Purchase (Rs.)",
+                header: `Total Purchase (${CURRENCY_SYMBOL})`,
                 cell: ({row}) => <span
                     className="font-medium text-green-600">{row.original.total_purchase_amount}</span>,
                 size: 150,

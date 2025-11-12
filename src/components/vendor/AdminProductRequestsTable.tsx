@@ -90,6 +90,7 @@ export default function AdminProductRequestsTable() {
                 search
             }
             const response = await vendorProductService.vendorProductListByAdmin(params)
+            console.log("Vendor product list response:", response)
             setCurrentPage(response.page)
             return response
         },

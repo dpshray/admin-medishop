@@ -1,5 +1,6 @@
 import {User} from "@/components/dashboard/users-table";
 import {Download, Package, Settings} from "lucide-react";
+import {CURRENCY_SYMBOL} from "@/config/app-constant";
 
 export const users: User[] = [
     {
@@ -110,7 +111,7 @@ export const adminVendorDashboardCards = [
     },
     {
         title: "Sales",
-        value: "$23,450",
+        value: `${CURRENCY_SYMBOL} 32,450`,
         change: "-3%",
         changeType: "negative" as const,
         icon: Download,
@@ -165,7 +166,7 @@ export const adminDashboardData = [
         bgColor: "bg-red-100",
     },
 ]
-export   const notifications = [
+export const notifications = [
     {
         id: 1,
         user: "Chris Tompson",
@@ -216,7 +217,7 @@ export   const notifications = [
     },
 ]
 
-export const userDetailsData ={
+export const userDetailsData = {
     "id": 3,
     "uuid": "22eb9d4a-3b11-4373-9d67-ea3ef374a8b6",
     "name": "user00",

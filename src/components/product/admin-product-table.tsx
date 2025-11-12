@@ -16,14 +16,15 @@ import {PaginatedResponse} from "@/types/types";
 import productService from "@/service/product/product.service";
 import ActionModal from "@/components/modal/ConfirmModal";
 import {
+    CURRENCY_SYMBOL,
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
     LOW_STOCK_THRESHOLD,
     OUT_OF_STOCK,
     PAGE_SIZE_OPTIONS,
-    PAYMENT_PREFIX,
     QUERY_STALE_TIME
 } from "@/config/app-constant";
+import {FormatCurrency} from "@/lib/helper";
 
 type Variation = {
     id: number;
@@ -235,11 +236,11 @@ export default function AdminProductTable() {
                 size: 150,
             },
             {
-                header: `${PAYMENT_PREFIX} Price`,
+                header: `Price (${CURRENCY_SYMBOL} ) `,
                 accessorKey: "lowest_variant_price",
                 cell: ({row}) => (
                     <span className="font-semibold text-emerald-600">
-            {PAYMENT_PREFIX} {row.original.lowest_variant_price.toLocaleString('en-NP', {minimumFractionDigits: 2})}
+            {CURRENCY_SYMBOL} {FormatCurrency(row.original.lowest_variant_price)}
           </span>
                 ),
                 size: 120,

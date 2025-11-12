@@ -21,6 +21,7 @@ export const createProductSchema = z.object({
     featured_image: z.instanceof(File),
     gallery_images: z.array(z.instanceof(File)).min(1, "At least one gallery image is required"),
     health_condition: z.array(z.number()),
+    discount_percent: z.coerce.number().min(0).max(100, "Discount must be between 0 and 100"),
 
 })
 
@@ -35,6 +36,7 @@ export const updateProductSchema = z.object({
     featured_image: z.instanceof(File).nullable().optional(),
     gallery_images: z.array(z.instanceof(File)).optional(),
     health_condition: z.array(z.number()).optional(),
+    discount_percent: z.coerce.number().min(0).max(100, "Discount must be between 0 and 100").optional(),
 })
 
 export type ProductCreate = z.infer<typeof createProductSchema>

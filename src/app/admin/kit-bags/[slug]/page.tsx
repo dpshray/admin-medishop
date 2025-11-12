@@ -10,6 +10,7 @@ import {Separator} from "@/components/ui/separator"
 import {useQuery} from "@tanstack/react-query"
 import kitBagService from "@/service/kit-bag.service"
 import KitBagDetailsSkeleton from "@/app/admin/kit-bags/[slug]/loading"
+import {cn} from "@/lib/utils";
 
 interface KitbagItemVariant {
     name: string
@@ -30,6 +31,10 @@ interface Kitbag {
     created_at: string
     no_of_kitbag_items: number | null
     items: KitbagItem[]
+    user?: {
+        name: string
+        email: string
+    }
 }
 
 export default function KitBagDetails() {
@@ -39,6 +44,7 @@ export default function KitBagDetails() {
         queryKey: ["kitbag", slug],
         queryFn: async () => {
             const res = await kitBagService.getKitBag(slug as string)
+            console.log('Response From KitBag Service:', res)
             return res?.data
         },
         enabled: !!slug,
@@ -87,8 +93,8 @@ export default function KitBagDetails() {
                                 <ShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primaryColor"/>
                             </div>
                             <div>
-                                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary to-[#6b4fc0] bg-clip-text text-transparent">
-                                    My KitBag
+                                <h1 className={cn("text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary to-[#6b4fc0] bg-clip-text text-transparent", "capitalize")}>
+                                    {data?.user?.name}&#39;s KitBag
                                 </h1>
                                 <p className="text-xs sm:text-sm lg:text-base text-muted-foreground mt-0.5 sm:mt-1">
                                     Your selected items collection
@@ -111,8 +117,10 @@ export default function KitBagDetails() {
                                 {calculations.totalItems} {calculations.totalItems === 1 ? "Item" : "Items"}
                             </Badge>
                             {calculations.savings > 0 && (
-                                <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold text-xs sm:text-sm">
-                                    <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 sm:mr-2" aria-hidden="true"/>
+                                <Badge
+                                    className="bg-green-500 hover:bg-green-600 text-white font-bold text-xs sm:text-sm">
+                                    <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1.5 sm:mr-2"
+                                                  aria-hidden="true"/>
                                     Saved {FormatCurrency(calculations.savings)}
                                 </Badge>
                             )}
@@ -124,8 +132,10 @@ export default function KitBagDetails() {
                     <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         <section className="lg:col-span-2 space-y-4 sm:space-y-5" aria-labelledby="items-heading">
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h2 id="items-heading" className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
-                                    <div className="w-1 h-4 sm:h-5 rounded-full bg-primaryColor flex-shrink-0" aria-hidden="true"/>
+                                <h2 id="items-heading"
+                                    className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+                                    <div className="w-1 h-4 sm:h-5 rounded-full bg-primaryColor flex-shrink-0"
+                                         aria-hidden="true"/>
                                     Your Items
                                 </h2>
                                 <Badge variant="outline" className="text-xs sm:text-sm lg:text-base font-bold">
@@ -140,24 +150,30 @@ export default function KitBagDetails() {
                                     />
                                 ))
                             ) : (
-                                <div className="text-center py-8 sm:py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
-                                    <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 text-muted-foreground/50" aria-hidden="true"/>
+                                <div
+                                    className="text-center py-8 sm:py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
+                                    <ShoppingBag
+                                        className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 text-muted-foreground/50"
+                                        aria-hidden="true"/>
                                     <p className="text-sm sm:text-base font-medium">No items in your KitBag</p>
                                 </div>
                             )}
                         </section>
 
                         <aside className="lg:col-span-1" aria-labelledby="summary-heading">
-                            <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-primary/10 hover:border-primary/20 transition-all p-4 sm:p-6 lg:p-8 sticky top-4 lg:top-6 space-y-4 sm:space-y-6">
+                            <div
+                                className="bg-white rounded-xl sm:rounded-2xl border-2 border-primary/10 hover:border-primary/20 transition-all p-4 sm:p-6 lg:p-8 sticky top-4 lg:top-6 space-y-4 sm:space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <h2 id="summary-heading" className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
+                                    <h2 id="summary-heading"
+                                        className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                                         Summary
                                     </h2>
                                     <div
                                         className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-primaryColor/10 flex items-center justify-center flex-shrink-0"
                                         aria-hidden="true"
                                     >
-                                        <ShoppingBag className="w-5 h-5 sm:w-5.5 sm:h-5.5 lg:w-6 lg:h-6 text-primaryColor"/>
+                                        <ShoppingBag
+                                            className="w-5 h-5 sm:w-5.5 sm:h-5.5 lg:w-6 lg:h-6 text-primaryColor"/>
                                     </div>
                                 </div>
 
@@ -188,7 +204,8 @@ export default function KitBagDetails() {
                                         <div className="bg-green-50 p-3 sm:p-4 rounded-xl border-2 border-green-200">
                                             <div className="flex justify-between items-center gap-2">
                                                 <dt className="text-xs sm:text-sm text-green-700 font-bold flex items-center gap-1.5 sm:gap-2">
-                                                    <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" aria-hidden="true"/>
+                                                    <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"
+                                                                  aria-hidden="true"/>
                                                     You Save
                                                 </dt>
                                                 <dd className="text-base sm:text-lg lg:text-xl font-black text-green-600 break-all text-right">
@@ -201,12 +218,14 @@ export default function KitBagDetails() {
 
                                 <Separator className="bg-border/60"/>
 
-                                <div className="bg-gradient-to-r from-primaryColor/10 to-primaryColor/5 p-4 sm:p-5 rounded-xl">
-                                    <div className="flex justify-between items-center gap-2">
+                                <div
+                                    className="bg-gradient-to-r from-primaryColor/10 to-primaryColor/5 p-4 sm:p-5 rounded-xl">
+                                    <div className="flex flex-col items-center gap-2">
                                         <span className="text-base sm:text-lg lg:text-xl font-black text-foreground">
                                             Total
                                         </span>
-                                        <span className="text-lg sm:text-xl lg:text-2xl font-black text-primaryColor break-all text-right">
+                                        <span
+                                            className="text-lg sm:text-xl lg:text-2xl font-black text-primaryColor break-all text-right">
                                             {FormatCurrency(calculations.total)}
                                         </span>
                                     </div>

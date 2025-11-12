@@ -1,5 +1,5 @@
-import React, {memo, useCallback, useMemo, useState} from "react";
-import {AlertTriangle, CheckCircle2, Copy, ExternalLink, Shield, XCircle} from "lucide-react";
+import React, {memo, useCallback, useState} from "react";
+import {Copy, ExternalLink} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 
@@ -22,9 +22,7 @@ interface DocumentSectionProps {
     icon: React.ComponentType<{ className?: string }>;
 }
 
-interface VerificationBadgeProps {
-    isVerified: boolean | null;
-}
+
 
 interface StatCardProps {
     icon: React.ComponentType<{ className?: string }>;
@@ -34,46 +32,6 @@ interface StatCardProps {
     iconColor: string;
 }
 
-
-export const VerificationBadge: React.FC<VerificationBadgeProps> = memo(({isVerified}) => {
-    const badgeConfig = useMemo(() => {
-        if (isVerified === true)
-            return {
-                className: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
-                icon: CheckCircle2,
-                text: "Verified Partner",
-                showTrust: true,
-            };
-        if (isVerified === false)
-            return {
-                className: "bg-red-50 text-red-700 border-red-200",
-                icon: XCircle,
-                text: "Not Verified",
-                showTrust: false,
-            };
-        return {
-            className: "bg-amber-50 text-amber-700 border-amber-200",
-            icon: AlertTriangle,
-            text: "Under Review",
-            showTrust: false,
-        };
-    }, [isVerified]);
-
-    const IconComponent = badgeConfig.icon;
-    return (
-        <div className="flex items-center gap-3">
-            <Badge className={`${badgeConfig.className} px-3 py-1.5 font-medium`}>
-                <IconComponent className="w-3.5 h-3.5 mr-1.5"/> {badgeConfig.text}
-            </Badge>
-            {badgeConfig.showTrust && (
-                <div
-                    className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                    <Shield className="w-3 h-3"/> <span>Trusted</span>
-                </div>
-            )}
-        </div>
-    );
-});
 
 export const VendorStatCard: React.FC<StatCardProps> = memo(({icon: Icon, label, value, bgColor, iconColor}) => (
     <div
@@ -178,8 +136,6 @@ export const GetVerificationStatus = (isVerified: boolean | null) => {
     return {text: "Under Review", color: "text-amber-600"};
 };
 
-
-VerificationBadge.displayName = "VerificationBadge";
 VendorStatCard.displayName = "VendorStatCard";
 DocumentSection.displayName = "DocumentSection";
 InfoField.displayName = "InfoField";

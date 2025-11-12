@@ -76,7 +76,11 @@ export default function OrderDetails() {
 
     const {data, error, isLoading, isError} = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],
-        queryFn: () => orderService.getOrderDetails(orderUuid),
+        queryFn: async () => {
+            const response = await orderService.getOrderDetails(orderUuid)
+            console.log("Order Details", response)
+            return response
+        },
         enabled: !!orderUuid,
         staleTime: QUERY_STALE_TIME,
         retry: 2,

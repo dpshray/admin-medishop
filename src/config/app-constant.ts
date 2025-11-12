@@ -14,7 +14,8 @@ const OUT_OF_STOCK = 0;
 
 
 //Payment Constant
-const PAYMENT_PREFIX = "Rs" satisfies string
+const PAYMENT_PREFIX = "Npr" satisfies string
+const CURRENCY_SYMBOL = "Npr";
 
 
 //File Constant
@@ -30,5 +31,6 @@ export {
     PAGE_SIZE_OPTIONS,
     PAYMENT_PREFIX,
     QUERY_REFETCH_INTERVAL,
-    MAX_FILE_SIZE
+    MAX_FILE_SIZE,
+    CURRENCY_SYMBOL
 }

@@ -17,7 +17,7 @@ import productService from "@/service/product/product.service"
 import {toast} from "sonner"
 import {useRouter} from "next/navigation"
 import ProductManageFormSkeleton from "@/app/admin/products/add-product/laoding"
-import {MAX_FILE_SIZE} from "@/config/app-constant"
+import {CURRENCY_SYMBOL, MAX_FILE_SIZE} from "@/config/app-constant"
 import {useQuery} from "@tanstack/react-query"
 import healthConditionService from "@/service/healthCondition.service"
 import {Switch} from "@/components/ui/switch"
@@ -93,7 +93,8 @@ const ProductManageForm = ({
         featured_image: new File([], ""),
         gallery_images: [],
         prescription_required: false,
-        health_condition: []
+        health_condition: [],
+        discount_percent: 0
     }
 
     const updateDefaultValues: ProductUpdate = {
@@ -113,7 +114,8 @@ const ProductManageForm = ({
         featured_image: null,
         gallery_images: [],
         prescription_required: false,
-        health_condition: []
+        health_condition: [],
+        discount_percent: 0
     }
 
     const defaultValues = isUpdateMode ? updateDefaultValues : createDefaultValues
@@ -126,9 +128,9 @@ const ProductManageForm = ({
         setValue,
         watch,
         reset,
-        formState: {errors, isSubmitting },
+        formState: {errors, isSubmitting},
     } = useForm<ProductCreate | ProductUpdate>({
-        resolver: zodResolver(schema),
+        resolver: zodResolver(schema) as any,
         defaultValues,
         mode: "onBlur",
     })
@@ -179,6 +181,7 @@ const ProductManageForm = ({
                 setValue("tags", productData.tags?.map((tag: any) => tag.id) || [])
                 setValue("prescription_required", productData.prescription_required || false)
                 setValue("health_condition", productData.health_condition?.map((healthCondition: any) => healthCondition.id) || [])
+                setValue("discount_percent", productData.discount_percent || 0)
 
                 if (mappedVariations.length > 0) {
                     replace(mappedVariations)
@@ -353,26 +356,38 @@ const ProductManageForm = ({
                                     placeholder="Enter detailed product description"
                                     error={errors.description?.message}
                                     className="min-h-[100px]"
+                                    required={!isUpdateMode}
                                 />
 
-                                <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50/50">
-                                    <div className="space-y-0.5">
-                                        <label
-                                            htmlFor="prescription-required"
-                                            className="text-sm font-medium text-slate-900 cursor-pointer"
-                                        >
-                                            Prescription Required
-                                        </label>
-                                        <p className="text-sm text-slate-500">
-                                            Enable if this product requires a valid prescription
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        id="prescription-required"
-                                        checked={watchPrescriptionRequired}
-                                        onCheckedChange={handlePrescriptionToggle}
-                                        aria-label="Toggle prescription requirement"
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <TextInputField
+                                        {...register("discount_percent")}
+                                        label="Discount (%)"
+                                        type="number"
+                                        placeholder="Enter discount percentage"
+                                        error={errors.discount_percent?.message}
+                                        required={!isUpdateMode}
                                     />
+                                    <div
+                                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50/50">
+                                        <div className="space-y-0.5">
+                                            <label
+                                                htmlFor="prescription-required"
+                                                className="text-sm font-medium text-slate-900 cursor-pointer"
+                                            >
+                                                Prescription Required
+                                            </label>
+                                            <p className="text-sm text-slate-500">
+                                                Enable if this product requires a valid prescription
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            id="prescription-required"
+                                            checked={watchPrescriptionRequired}
+                                            onCheckedChange={handlePrescriptionToggle}
+                                            aria-label="Toggle prescription requirement"
+                                        />
+                                    </div>
                                 </div>
 
                                 {!isUpdateMode && (
@@ -546,7 +561,7 @@ const ProductManageForm = ({
                                                             required
                                                         />
                                                         <TextInputField
-                                                            label="Price (NRs)"
+                                                            label={`Price (${CURRENCY_SYMBOL})`}
                                                             {...register(`variations.${index}.platform_price`, {
                                                                 valueAsNumber: true
                                                             })}
@@ -580,11 +595,7 @@ const ProductManageForm = ({
                                         type="submit"
                                         size="lg"
                                         disabled={isSubmitting}
-                                        className={`sm:w-auto w-full ${
-                                            isUpdateMode
-                                                ? "bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50"
-                                                : "bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50"
-                                        } focus:ring-2 focus:ring-offset-2`}
+                                        className="sm:w-auto w-full bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50 focus:ring-2 focus:ring-offset-2"
                                     >
                                         {isSubmitting ? (
                                             <>

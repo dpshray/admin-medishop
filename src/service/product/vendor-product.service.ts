@@ -58,10 +58,13 @@ class VendorProductService extends HttpServices {
         }
     }
 
-    async getVendorProducts(params?: any) {
+    /*Vendor Product Side*/
+
+//Vendor Product List
+    async getVendorProductsList(params?: any) {
         try {
             const res = await this.getRequest({
-                url: '',
+                url: '/vendor/product-list',
                 config: {
                     auth: true,
                     params
@@ -73,6 +76,51 @@ class VendorProductService extends HttpServices {
             throw error
         }
     }
+
+//Vendor available product
+    async getVendorAvailableProducts(params?: ParamsType) {
+        try {
+            const res = await this.getRequest({
+                url: "vendor/available-product",
+                config: {
+                    auth: true,
+                    params,
+                }
+            })
+            return res?.data
+        } catch (error) {
+            console.log('Error from getProductsByVendor', error)
+            throw error;
+        }
+    }
+
+    async getVendorProductDetail(slug: string) {
+        try {
+            const res = await this.getRequest({
+                url: `/vendor/product-detail/${slug}`,
+                config: {
+                    auth: true,
+                }
+            })
+            return res?.data
+        } catch (error) {
+            throw error
+        }
+    }
+    ///vendor/product-delete/cb7c026b-9cab-435f-912a-f4d498e45628
+    async deleteVendorProductFromVendor(uuid: string) {
+        try {
+            return await this.deleteRequest({
+               url: `/vendor/product-delete/${uuid}`,
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
 
 
 }

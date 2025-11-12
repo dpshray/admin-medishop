@@ -85,21 +85,7 @@ class VendorService extends HttpServices {
 
     }
 
-    async getProductsByVendor(params?: ParamsType) {
-        try {
-            const res = await this.getRequest({
-                url: "/vendor/product",
-                config: {
-                    auth: true,
-                    params,
-                }
-            })
-            return res?.data
-        } catch (error) {
-            console.log('Error from getProductsByVendor', error)
-            throw error;
-        }
-    }
+
 
     async addProductByVendor(product_uuid: string, data: any) {
         try {

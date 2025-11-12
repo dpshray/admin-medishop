@@ -8,11 +8,11 @@ import {useMutation, useQuery} from "@tanstack/react-query"
 import categoriesService from "@/service/categories.service"
 import {RowActions} from "@/lib/action-button"
 import ActionModal from "@/components/modal/ConfirmModal"
-import {Badge} from "@/components/ui/badge"
 import {toast} from "sonner"
 import {CategoryFormModal, CategoryFormValues} from "@/components/categories/CategoryFromModal"
 import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
 import {ParamsType} from "@/types/types";
+import {Badge} from "@/components/ui/badge";
 
 interface Category {
     id: number;
@@ -28,14 +28,9 @@ interface CategoryResponse {
     total_items?: number
 }
 
-interface PaginationParams {
-    page: number
-    per_page: number
-}
 
 export default function CategoryTable() {
     const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(10)
     const [totalPages, setTotalPages] = useState(1)
     const [totalItems, setTotalItems] = useState(0)
     const [search, setSearch] = useState("")
@@ -44,9 +39,9 @@ export default function CategoryTable() {
     const [isFormModalOpen, setFormModalOpen] = useState(false)
 
     const {data, isLoading, isError, error, refetch} = useQuery<CategoryResponse, Error>({
-        queryKey: ["admin-categories", currentPage, pageSize, search],
+        queryKey: ["admin-categories", currentPage, search],
         queryFn: async () => {
-            const params: ParamsType = {page: currentPage, per_page: pageSize, search: search}
+            const params: ParamsType = {page: currentPage, search: search}
             return categoriesService.getAllCategories(params).then(response => {
                 setTotalPages(response.total_page)
                 setTotalItems(response.total_items || 0)
@@ -154,28 +149,6 @@ export default function CategoryTable() {
             enableHiding: false,
         },
         {
-            accessorKey: "id",
-            header: "ID",
-            size: 80,
-            cell: ({row}) => <Badge variant="outline" className="font-mono">#{row.original.id}</Badge>
-        },
-        {
-            accessorKey: "name",
-            header: "Category Name",
-            size: 200,
-            cell: ({row}) => <div className="font-medium text-gray-900">{row.original.name}</div>
-        },
-        {
-            accessorKey: "discount_percent",
-            header: "Discount",
-            size: 180,
-            cell: ({row}) =>
-                <span className="text-sm mx-auto px-2 py-1 rounded">
-                    {row.original.discount_percent || "0"}
-                    {"%"}
-                </span>
-        },
-        {
             accessorKey: "image",
             header: "Image",
             size: 120,
@@ -184,6 +157,27 @@ export default function CategoryTable() {
             ),
             enableSorting: false,
         },
+        {
+            accessorKey: "name",
+            header: "Category Name",
+            size: 200,
+            cell: ({row}) => <div className="flex flex-col gap-1">
+                <span className="font-medium text-gray-900">{row.original.name}</span>
+                <Badge variant="outline" className="w-fit text-xs">
+                    {row.original.slug}
+                </Badge>
+            </div>
+        },
+        {
+            accessorKey: "discount_percent",
+            header: "Discount (" + "%" + ")",
+            size: 180,
+            cell: ({row}) =>
+                <span className="text-sm mx-auto px-2 py-1 rounded">
+                    {row.original.discount_percent || "0"}
+                </span>
+        },
+
         {
             id: "actions",
             header: "Actions",
@@ -252,7 +246,6 @@ export default function CategoryTable() {
                 pagination={{
                     page: currentPage,
                     totalPages,
-                    pageSize,
                     onPageChange: handlePageChange,
                     dataCount: 15,
                 }}

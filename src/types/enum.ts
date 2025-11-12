@@ -33,11 +33,20 @@ enum ORDER_STATUS {
 enum ORDER_TYPE {
     PRODUCT = "PRODUCT",
     PACKAGE = "PACKAGE",
+    KITBAG = "KITBAG",
+}
+
+enum USER_TYPE {
+    ADMIN = "ADMIN",
+    VENDOR = "VENDOR",
+    USER = "USER",
+    GUEST = "GUEST",
 }
 
 export {
     STATUS_TYPE,
     PAYMENT_STATUS,
     ORDER_STATUS,
-    ORDER_TYPE
+    ORDER_TYPE,
+    USER_TYPE
 }

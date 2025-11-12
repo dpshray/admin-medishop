@@ -15,7 +15,6 @@ import {cn} from "@/lib/utils"
 import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
 import {RowActions} from "@/lib/action-button"
 import {DEFAULT_PAGE_SIZE} from "@/config/app-constant";
-import {TableHeader} from "@/components/ui/table";
 import {Package2} from "lucide-react";
 import TableHeading from "@/components/table/table-headers";
 
@@ -139,10 +138,25 @@ export default function BrandAdminTable() {
             enableHiding: false,
         },
         {
+            accessorKey: "image",
+            header: "Image",
+            size: 100,
+            cell: ({row}) =>
+                <GlobalTableHoverImage src={row.original.image} alt={row.original.name}
+                                       fallbackSrc="/placeholder.png"/>,
+            enableSorting: false,
+        },
+        {
             accessorKey: "name",
             header: "Brand Name",
             size: 200,
-            cell: ({row}) => <div className="font-medium text-gray-900">{row.original.name}</div>,
+            cell: ({row}) =>
+                <div className="flex flex-col gap-1">
+                    <span className="font-medium text-gray-900">{row.original.name}</span>
+                    <Badge variant="outline" className="w-fit text-xs">
+                        {row.original.slug}
+                    </Badge>
+                </div>
         },
         {
             accessorKey: "is_featured",
@@ -175,20 +189,6 @@ export default function BrandAdminTable() {
                     {row.original.is_popular ? "Popular" : "Standard"}
                 </Badge>
             ),
-        },
-        {
-            accessorKey: "image",
-            header: "Image",
-            size: 100,
-            cell: ({row}) => <GlobalTableHoverImage src={row.original.image} alt={row.original.name}
-                                                    fallbackSrc="/placeholder.png"/>,
-            enableSorting: false,
-        },
-        {
-            accessorKey: "slug",
-            header: "Slug",
-            size: 150,
-            cell: ({row}) => <code className="text-sm bg-gray-100 px-2 py-1 rounded">{row.original.slug}</code>,
         },
         {
             id: "actions",

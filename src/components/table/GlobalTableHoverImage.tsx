@@ -32,7 +32,7 @@ export default function GlobalTableHoverImage({
                                                   thumbnailClassName,
                                                   hoverClassName,
                                                   showViewText = true,
-                                                  viewText = "View",
+                                                  viewText = alt,
                                                   fallbackSrc = "/placeholder.svg",
                                                   priority = false,
                                                   quality = 75,

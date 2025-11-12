@@ -4,7 +4,7 @@ import {useCallback, useMemo, useState} from "react"
 import {useRouter} from "next/navigation"
 import {useQuery} from "@tanstack/react-query"
 
-import { RefreshCw} from "lucide-react"
+import {RefreshCw} from "lucide-react"
 import orderService from "@/service/order/order.service"
 import {ParamsType} from "@/types/types"
 import {Button} from "@/components/ui/button"
@@ -17,16 +17,14 @@ import {RowActions} from "@/lib/action-button"
 import {DEFAULT_PAGE, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, QUERY_STALE_TIME} from "@/config/app-constant"
 import {ColumnDef} from "@tanstack/react-table";
 import {Badge} from "@/components/ui/badge";
+import {ORDER_STATUS, PAYMENT_STATUS} from "@/types/enum";
 
-
-type PaymentStatus = "PAID" | "UNPAID" | "PENDING"
-type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED"
 
 interface OrderType {
     order_uuid: string
     payment_method: string
-    payment_status: PaymentStatus
-    status: OrderStatus
+    payment_status: PAYMENT_STATUS
+    status: ORDER_STATUS
     no_of_ordered_items: number
     order_code: string
     name: string
@@ -216,7 +214,7 @@ export default function AdminOrderTable() {
             enableHiding: false,
             size: 80,
         }
-    ], [handleDeleteClick, handleEdit, handleView])
+    ], [handleDeleteClick, handleView])
 
     const handleSearch = useCallback((value: string): void => {
         setSearch(value)

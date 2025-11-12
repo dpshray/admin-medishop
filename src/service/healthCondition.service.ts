@@ -11,6 +11,7 @@ class HealthConditionService extends HttpServices {
                     params
                 }
             })
+            console.log('Health Condition List', res?.data)
             return res?.data
         } catch (error) {
             throw error

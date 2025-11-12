@@ -20,6 +20,7 @@ export const createProductSchema = z.object({
     prescription_required: z.boolean().optional().default(false),
     featured_image: z.instanceof(File),
     gallery_images: z.array(z.instanceof(File)).min(1, "At least one gallery image is required"),
+    health_condition: z.array(z.number()),
 
 })
 
@@ -33,6 +34,7 @@ export const updateProductSchema = z.object({
     prescription_required: z.boolean().optional(),
     featured_image: z.instanceof(File).nullable().optional(),
     gallery_images: z.array(z.instanceof(File)).optional(),
+    health_condition: z.array(z.number()).optional(),
 })
 
 export type ProductCreate = z.infer<typeof createProductSchema>

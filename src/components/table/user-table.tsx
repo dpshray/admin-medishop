@@ -40,7 +40,9 @@ export default function UserTable() {
         queryKey: ["users", currentPage, pageSize, search],
         queryFn: async () => {
             const params: ParamsType = {page: currentPage, per_page: pageSize, search}
-            return await userService.getAllUser(params)
+            const res=await userService.getAllUser(params)
+            console.log('User response:', res)
+            return res
         },
     })
 

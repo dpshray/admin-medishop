@@ -156,7 +156,7 @@ export default function VendorClientPage({slug}: VendorClientPageProps) {
         {
             icon: Calendar,
             label: "Status",
-            value: "Active",
+            value: vendor_details.is_verified ? "Verified" : "Not Verified",
             bgColor: "bg-gradient-to-br from-amber-50 to-orange-100/60",
             iconColor: "text-amber-600"
         }

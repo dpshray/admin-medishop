@@ -1,6 +1,7 @@
 import axiosInstance from "@/config/axiosConfig";
 import {AxiosRequestConfig} from 'axios';
-import {useRouter} from "next/navigation";
+
+;
 
 interface RequestProps<T = any> {
     url: string;
@@ -121,7 +122,7 @@ class HttpServices {
                                                           config,
                                                       }: RequestProps<TBody>): Promise<TResponse> {
         this.setHeaders(config);
-        const axiosConfig = { ...this.buildAxiosConfig(config), data };
+        const axiosConfig = {...this.buildAxiosConfig(config), data};
         return axiosInstance.delete(url, axiosConfig);
     }
 

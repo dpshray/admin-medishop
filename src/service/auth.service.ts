@@ -1,4 +1,5 @@
 import HttpServices from "@/service/http.service";
+import {toast} from "sonner";
 
 class AuthService extends HttpServices {
     async login(data: any) {
@@ -42,7 +43,7 @@ class AuthService extends HttpServices {
         try {
             return await this.postRequest({
                 url: "/user/profile",
-                data:{
+                data: {
                     ...data,
                     "_method": "PUT"
                 },
@@ -51,7 +52,9 @@ class AuthService extends HttpServices {
                     file: true,
                 }
             })
-        } catch (error) {
+        } catch (error: any) {
+            console.log('Error from updateProfile', error)
+            toast.error(error?.message || 'Failed to update profile')
             throw error;
         }
     }

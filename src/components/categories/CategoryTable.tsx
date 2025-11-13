@@ -19,6 +19,7 @@ interface Category {
     slug: string;
     name: string;
     image: string;
+    menu_order?: number;
     discount_percent?: number;
 }
 
@@ -167,6 +168,12 @@ export default function CategoryTable() {
                     {row.original.slug}
                 </Badge>
             </div>
+        },
+        {
+            accessorKey: "menu_order",
+            header: "Menu Order",
+            size: 120,
+            cell: ({row}) => <span className="text-sm mx-auto px-2 py-1 rounded">{row.original.menu_order || "0"}</span>
         },
         {
             accessorKey: "discount_percent",

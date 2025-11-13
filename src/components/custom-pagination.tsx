@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo} from "react";
+import { useMemo, useCallback } from "react";
 import {
     Pagination,
     PaginationContent,
@@ -10,7 +10,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
-import {cn} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface CustomPaginationProps {
     currentPage: number;
@@ -26,28 +26,31 @@ interface CustomPaginationProps {
     };
 }
 
-export default function CustomPagination({
-                                             currentPage,
-                                             totalPages,
-                                             onPageChangeAction,
-                                             className = "",
-                                             siblingCount = 1,
-                                             showBoundaries = true,
-                                             showControls = true,
-                                             labels = {previous: "Previous", next: "Next"},
-                                         }: CustomPaginationProps) {
-    const handlePageClick = (page: number) => {
-        if (page !== currentPage && page >= 1 && page <= totalPages) {
-            onPageChangeAction(page);
-        }
-    };
+const CustomPagination = ({
+                              currentPage,
+                              totalPages,
+                              onPageChangeAction,
+                              className = "",
+                              siblingCount = 1,
+                              showBoundaries = true,
+                              showControls = true,
+                              labels = { previous: "Previous", next: "Next" },
+                          }: CustomPaginationProps) => {
+    const handlePageClick = useCallback(
+        (page: number) => {
+            if (page !== currentPage && page >= 1 && page <= totalPages) {
+                onPageChangeAction(page);
+            }
+        },
+        [currentPage, totalPages, onPageChangeAction]
+    );
 
     const pageRange = useMemo<(number | "ellipsis")[]>(() => {
         const totalPageNumbers = siblingCount * 2 + 1;
         const totalVisibleItems = totalPageNumbers + (showBoundaries ? 2 : 0);
 
         if (totalPages <= totalVisibleItems) {
-            return Array.from({length: totalPages}, (_, i) => i + 1);
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
 
         const pages: (number | "ellipsis")[] = [];
@@ -57,20 +60,55 @@ export default function CustomPagination({
         const showLeftDots = leftSibling > (showBoundaries ? 2 : 1);
         const showRightDots = rightSibling < (showBoundaries ? totalPages - 1 : totalPages);
 
-        if (showBoundaries) pages.push(1);
-        if (showLeftDots) pages.push("ellipsis");
+        if (showBoundaries) {
+            pages.push(1);
+        }
+
+        if (showLeftDots) {
+            pages.push("ellipsis");
+        }
 
         for (let i = leftSibling; i <= rightSibling; i++) {
             pages.push(i);
         }
 
-        if (showRightDots) pages.push("ellipsis");
-        if (showBoundaries && totalPages !== 1) pages.push(totalPages);
+        if (showRightDots) {
+            pages.push("ellipsis");
+        }
+
+        if (showBoundaries && totalPages > 1) {
+            pages.push(totalPages);
+        }
 
         return pages;
     }, [currentPage, totalPages, siblingCount, showBoundaries]);
 
-    if (totalPages <= 1) return null;
+    const handlePrevious = useCallback(
+        (e: React.MouseEvent<HTMLAnchorElement>) => {
+            e.preventDefault();
+            handlePageClick(currentPage - 1);
+        },
+        [currentPage, handlePageClick]
+    );
+
+    const handleNext = useCallback(
+        (e: React.MouseEvent<HTMLAnchorElement>) => {
+            e.preventDefault();
+            handlePageClick(currentPage + 1);
+        },
+        [currentPage, handlePageClick]
+    );
+
+    if (totalPages < 1) {
+        return null;
+    }
+
+    if (totalPages === 1) {
+        return null;
+    }
+
+    const isPreviousDisabled = currentPage === 1;
+    const isNextDisabled = currentPage === totalPages;
 
     return (
         <Pagination className={className}>
@@ -80,11 +118,11 @@ export default function CustomPagination({
                         <PaginationPrevious
                             href="#"
                             aria-label={labels.previous}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handlePageClick(currentPage - 1);
-                            }}
-                            className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                            aria-disabled={isPreviousDisabled}
+                            onClick={handlePrevious}
+                            className={cn(
+                                isPreviousDisabled && "pointer-events-none opacity-50"
+                            )}
                         >
                             {labels.previous}
                         </PaginationPrevious>
@@ -92,14 +130,15 @@ export default function CustomPagination({
                 )}
 
                 {pageRange.map((page, index) => (
-                    <PaginationItem key={index}>
+                    <PaginationItem key={page === "ellipsis" ? `ellipsis-${index}` : page}>
                         {page === "ellipsis" ? (
-                            <PaginationEllipsis/>
+                            <PaginationEllipsis aria-label="More pages" />
                         ) : (
                             <PaginationLink
                                 href="#"
                                 isActive={page === currentPage}
-                                aria-label={`Page ${page}`}
+                                aria-label={`Go to page ${page}`}
+                                aria-current={page === currentPage ? "page" : undefined}
                                 onClick={(e) => {
                                     e.preventDefault();
                                     handlePageClick(page as number);
@@ -116,11 +155,11 @@ export default function CustomPagination({
                         <PaginationNext
                             href="#"
                             aria-label={labels.next}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handlePageClick(currentPage + 1);
-                            }}
-                            className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
+                            aria-disabled={isNextDisabled}
+                            onClick={handleNext}
+                            className={cn(
+                                isNextDisabled && "pointer-events-none opacity-50"
+                            )}
                         >
                             {labels.next}
                         </PaginationNext>
@@ -129,4 +168,6 @@ export default function CustomPagination({
             </PaginationContent>
         </Pagination>
     );
-}
+};
+
+export default CustomPagination;

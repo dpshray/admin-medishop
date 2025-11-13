@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
 
     images: {
         qualities:[90,75,85],
+        domains: [
+            "192.168.100.18",
+            "192.168.100.23",
+            "images.pexels.com",
+            "api.medishop.dworklabs.com",
+            "images.unsplash.com",
+        ],
         remotePatterns: [
             {
                 protocol: "https",
@@ -24,10 +31,10 @@ const nextConfig: NextConfig = {
             {
                 protocol: "http",
                 hostname: '192.168.100.23'
-            },{
+            }
+            ,{
                 protocol: "http",
                 hostname: "192.168.100.18",
-                pathname: "/storage/**",
             },
             {
                 protocol: "https",

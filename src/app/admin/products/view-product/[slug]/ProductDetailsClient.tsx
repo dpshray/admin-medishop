@@ -96,7 +96,10 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
     })
 
     const handlePreview = React.useCallback(() => {
-        window.open(`/products/${slug}`, '_blank')
+        const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL
+        if (websiteUrl) {
+            window.open(`${websiteUrl}/product/${data?.slug}`, '_blank')
+        }
     }, [slug])
 
     const handleEdit = React.useCallback(() => {

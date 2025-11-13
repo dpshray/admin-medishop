@@ -73,7 +73,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = memo(({title, doc
                             className="h-10 justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
                             onClick={() => handleDocumentClick(doc)}
                         >
-                            <span className="text-xs font-medium">Document {index + 1}</span>
+                            <span className="text-xs font-medium">{title}</span>
                             <ExternalLink className="w-3 h-3 text-slate-400"/>
                         </Button>
                     ))}

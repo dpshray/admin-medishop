@@ -33,6 +33,7 @@ interface OrderType {
     address: string
     assigned_to: string
     gift_wrap: boolean
+    is_already_assigned_to_vendor: boolean
 }
 
 interface OrdersResponse {
@@ -68,7 +69,6 @@ export default function AdminOrderTable() {
     const handleView = useCallback((order: OrderType): void => {
         router.push(`/admin/orders/${order.order_uuid}`)
     }, [router])
-
 
 
     const handleDeleteClick = useCallback((order: OrderType): void => {
@@ -159,6 +159,16 @@ export default function AdminOrderTable() {
             header: "Payment",
             cell: ({row}) => (
                 <StatusBadge status={row.original.payment_status}/>
+            ),
+            enableSorting: true,
+            size: 120,
+        },
+        {
+            accessorKey: 'is_already_assigned_to_vendor',
+            header: 'Order Assigned',
+            cell: ({row}) => (
+                <StatusBadge
+                    status={row.original.is_already_assigned_to_vendor ? ORDER_STATUS.PENDING : ORDER_STATUS.CONFIRMED}/>
             ),
             enableSorting: true,
             size: 120,

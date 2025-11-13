@@ -41,6 +41,10 @@ interface OrderData {
     status: ORDER_STATUS | string
     created_at: string
     ordered_items: OrderedItem[]
+    order_assigned_to?: {
+        vendor_uuid: string
+        store_name: string
+    }
 }
 
 interface VendorType {
@@ -78,7 +82,7 @@ export default function OrderDetails() {
         queryKey: ["order-details", orderUuid],
         queryFn: async () => {
             const response = await orderService.getOrderDetails(orderUuid)
-            console.log("Order Details", response)
+            console.log("Order Details page ", response)
             return response
         },
         enabled: !!orderUuid,
@@ -108,7 +112,6 @@ export default function OrderDetails() {
         if (!data?.status) return false
         return data.status !== "CANCELLED" && data.status !== "COMPLETED"
     }, [data?.status])
-
 
     const itemCount = useMemo(() => data?.ordered_items?.length || 0, [data?.ordered_items])
     const useGridLayout = itemCount > 2
@@ -221,9 +224,8 @@ export default function OrderDetails() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 print:bg-white">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
-                <Card
-                    className="border-2 hover:border-primaryColor/30 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden">
+            <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
+                <Card className="border-2 hover:border-primaryColor/30 transition-all duration-300 hover:shadow-xl overflow-hidden">
                     <CardHeader className="border-b bg-gradient-to-br from-primary/5 to-purple-50/50 p-4 sm:p-6 lg:p-8">
                         <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-6">
                             <div className="space-y-2 sm:space-y-3">
@@ -231,8 +233,7 @@ export default function OrderDetails() {
                                     Order Details
                                 </h1>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <code
-                                        className="text-xs sm:text-sm bg-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm break-all">
+                                    <code className="text-xs sm:text-sm bg-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm break-all">
                                         #{data.order_code}
                                     </code>
                                     <Button
@@ -243,11 +244,9 @@ export default function OrderDetails() {
                                         aria-label="Copy order code"
                                     >
                                         {copied ? (
-                                            <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600"
-                                                   aria-hidden="true"/>
+                                            <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" aria-hidden="true"/>
                                         ) : (
-                                            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary"
-                                                  aria-hidden="true"/>
+                                            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" aria-hidden="true"/>
                                         )}
                                     </Button>
                                 </div>
@@ -282,34 +281,27 @@ export default function OrderDetails() {
 
                         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
                             <section className="space-y-3 sm:space-y-4" aria-labelledby="order-summary-heading">
-                                <h2 id="order-summary-heading"
-                                    className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0"
-                                             aria-hidden="true"/>
+                                <h2 id="order-summary-heading" className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
+                                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
                                     Order Summary
                                 </h2>
-                                <div
-                                    className="space-y-2 sm:space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                <div className="space-y-2 sm:space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                     <dl className="space-y-2 sm:space-y-3">
-                                        <div
-                                            className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
+                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
                                             <dt className="text-muted-foreground font-medium">Order Date</dt>
                                             <dd className="text-foreground font-semibold text-right">{data.created_at}</dd>
                                         </div>
-                                        <div
-                                            className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
+                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
                                             <dt className="text-muted-foreground font-medium">Payment Method</dt>
                                             <dd className="capitalize text-foreground font-semibold text-right">
                                                 {data.payment_method}
                                             </dd>
                                         </div>
-                                        <div
-                                            className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
+                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
                                             <dt className="text-muted-foreground font-medium">Order Status</dt>
                                             <dd><StatusBadge status={data.status}/></dd>
                                         </div>
-                                        <div
-                                            className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
+                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
                                             <dt className="text-muted-foreground font-medium">Payment Status</dt>
                                             <dd><StatusBadge status={data.payment_status}/></dd>
                                         </div>
@@ -328,28 +320,23 @@ export default function OrderDetails() {
 
                             {showDescriptionSection && (
                                 <section className="space-y-3 sm:space-y-4" aria-labelledby="order-notes-heading">
-                                    <h2 id="order-notes-heading"
-                                        className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0"
-                                                  aria-hidden="true"/>
+                                    <h2 id="order-notes-heading" className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
+                                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
                                         Order Notes
                                     </h2>
-                                    <div
-                                        className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                    <div className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                         <p className="text-xs sm:text-sm lg:text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
                                             {data.description}
                                         </p>
                                     </div>
 
                                     {showGiftWrap && (
-                                        <div className="space-y-3 sm:space-y-4">
+                                        <div className="space-y-3 sm:space-y-4 mt-4">
                                             <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0"
-                                                          aria-hidden="true"/>
+                                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
                                                 Gift Wrap
                                             </h3>
-                                            <div
-                                                className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
+                                            <div className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
                                                 <p className="text-xs sm:text-sm lg:text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
                                                     {data.gift_wrap_remarks}
                                                 </p>
@@ -364,14 +351,11 @@ export default function OrderDetails() {
 
                         <section className="space-y-3 sm:space-y-4" aria-labelledby="ordered-items-heading">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h2 id="ordered-items-heading"
-                                    className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0"
-                                             aria-hidden="true"/>
+                                <h2 id="ordered-items-heading" className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
+                                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
                                     Ordered Items
                                 </h2>
-                                <span
-                                    className="text-xs sm:text-sm lg:text-base font-medium text-muted-foreground bg-muted/50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                                <span className="text-xs sm:text-sm lg:text-base font-medium text-muted-foreground bg-muted/50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
                                     {itemCount} {itemCount === 1 ? "item" : "items"}
                                 </span>
                             </div>
@@ -391,22 +375,28 @@ export default function OrderDetails() {
                                     ))}
                                 </div>
                             ) : (
-                                <div
-                                    className="text-center py-8 sm:py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
-                                    <Package
-                                        className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 text-muted-foreground/50"
-                                        aria-hidden="true"/>
+                                <div className="text-center py-8 sm:py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
+                                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 text-muted-foreground/50" aria-hidden="true"/>
                                     <p className="text-sm sm:text-base font-medium">No items in this order</p>
                                 </div>
                             )}
                         </section>
                     </CardContent>
 
-                    <CardFooter className="border-t bg-muted/30 p-4 sm:p-6 lg:p-8 print:hidden">
+                    <CardFooter className="flex flex-col items-start border-t bg-muted/30 p-4 sm:p-6 lg:p-8 print:hidden">
+                        {data?.order_assigned_to && (
+                            <div className="w-full mb-4 sm:mb-6">
+                                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Currently Assigned To</p>
+                                <p className="font-semibold text-sm sm:text-base text-foreground">
+                                    {data.order_assigned_to.store_name}
+                                </p>
+                            </div>
+                        )}
+
                         <div className="w-full space-y-4 sm:space-y-6">
                             <div className="grid gap-3 sm:gap-4 sm:grid-cols-[1fr,auto] items-end">
                                 <SearchSelectField
-                                    label="Assign Vendor"
+                                    label={`${data?.order_assigned_to?.store_name ? "Change" : "Assign"} Vendor`}
                                     placeholder="Select vendor to assign"
                                     options={vendorOptions}
                                     value={selectedVendor?.value ?? ""}
@@ -429,8 +419,7 @@ export default function OrderDetails() {
                             {!canCancelOrder && (
                                 <Alert className="border-2 border-amber-200 bg-amber-50/50">
                                     <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" aria-hidden="true"/>
-                                    <AlertDescription
-                                        className="text-xs sm:text-sm lg:text-base text-amber-800 font-medium">
+                                    <AlertDescription className="text-xs sm:text-sm lg:text-base text-amber-800 font-medium">
                                         This order cannot be cancelled as it is already {data.status}.
                                     </AlertDescription>
                                 </Alert>

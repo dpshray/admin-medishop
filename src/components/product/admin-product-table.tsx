@@ -240,7 +240,7 @@ export default function AdminProductTable() {
                 accessorKey: "lowest_variant_price",
                 cell: ({row}) => (
                     <span className="font-semibold text-emerald-600">
-            {CURRENCY_SYMBOL} {FormatCurrency(row.original.lowest_variant_price)}
+             {FormatCurrency(row.original.lowest_variant_price)}
           </span>
                 ),
                 size: 120,

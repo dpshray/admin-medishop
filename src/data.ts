@@ -55,7 +55,7 @@ export const vendorDashboardCards = [
     },
     {
         title: "Sales",
-        value: "$23,450",
+        value: `${CURRENCY_SYMBOL} 23,450`,
         change: "-3%",
         changeType: "negative" as const,
         icon: Download,
@@ -131,7 +131,7 @@ export const adminVendorDashboardCards = [
 export const adminDashboardData = [
     {
         title: "Monthly Revenue",
-        value: "$45,200",
+        value: `${CURRENCY_SYMBOL} 12,345`,
         change: "+15%",
         changeType: "positive" as const,
         icon: Download,
@@ -149,7 +149,7 @@ export const adminDashboardData = [
     },
     {
         title: "Total Payments",
-        value: "$120,540",
+        value: ` ${CURRENCY_SYMBOL} 12,450`,
         change: "+9%",
         changeType: "positive" as const,
         icon: Settings,
@@ -217,89 +217,6 @@ export const notifications = [
     },
 ]
 
-export const userDetailsData = {
-    "id": 3,
-    "uuid": "22eb9d4a-3b11-4373-9d67-ea3ef374a8b6",
-    "name": "user00",
-    "email": "user@gmail.com",
-    "mobile_number": "9828285118",
-    "status": true,
-    "email_verified": "Verified",
-    "orders": [
-        {
-            "order_id": 1,
-            "order_code": "I1q1k4pIf3L88f0zf1GB",
-            "price": 9258.5,
-            "payment_method": "Cash on Delivery",
-            "payment_status": "UNPAID",
-            "order_address": "Shyambhu, Kathmandu",
-            "status": "PENDING",
-            "created_at": "2025-10-24 10:56:46",
-            "order_items_detail": [
-                {
-                    "item_type": "Product",
-                    "product_name": "Fugiat sit molestias sit.",
-                    "variant_name": "Variant-6",
-                    "quantity": 1,
-                    "price": 3258.5,
-                    "total": 3258.5,
-                    "featured_image": "http://192.168.100.18:8000/storage/516/tablets.jpg",
-                    "gallery_images": "http://192.168.100.18:8000/storage/517/cream.jpg"
-                },
-                {
-                    "item_type": "Package",
-                    "product_name": null,
-                    "variant_name": null,
-                    "quantity": 1,
-                    "price": 6000,
-                    "total": 6000,
-                    "featured_image": null,
-                    "gallery_images": null
-                }
-            ]
-        }
-    ],
-    "user_favourite": [
-        {
-            "type": "Product",
-            "id": 138,
-            "name": "Esse vel delectus omnis.",
-            "slug": "esse-vel-delectus-omnis",
-            "description": "<p>Doloribus voluptatibus sit dignissimos et hic. Tempore aut porro ut at. Sit maxime cum sunt quia voluptatem.</p><p>Aut sunt omnis asperiores omnis eius quo. Omnis fugiat sequi autem voluptas.</p><p>Odit officiis reprehenderit qui et. Placeat fugiat et blanditiis sit. Omnis et reprehenderit iure possimus impedit nesciunt consequatur. Sit incidunt eum ad dicta sed nihil. Dolorum eos iure incidunt.</p>",
-            "featured_image": "http://192.168.100.18:8000/storage/776/visc-inhaler.jpg"
-        }
-    ],
-    "user_wishlist": [
-        {
-            "type": "Product",
-            "id": 86,
-            "name": "Fugiat sit molestias sit.",
-            "slug": "fugiat-sit-molestias-sit",
-            "description": "<p>Sunt animi nulla corrupti rerum iure harum. Pariatur aspernatur natus voluptatibus sequi placeat aliquam.</p><p>Aliquid distinctio minus amet at. Illum optio debitis soluta reprehenderit exercitationem ea non illo. Accusamus iste tempore vero unde blanditiis alias sequi iste.</p><p>Soluta iusto iure accusantium neque velit beatae natus. Animi commodi laudantium quaerat autem. Dolore omnis optio eum et.</p>",
-            "featured_image": "http://192.168.100.18:8000/storage/516/tablets.jpg"
-        },
-        {
-            "type": "Package",
-            "id": 5,
-            "name": "Smart Kit",
-            "slug": "smart-kit",
-            "description": "<p>Aperiam quia sit non perspiciatis voluptates sit. Est quo distinctio est et ad nam. Blanditiis suscipit sit est amet et atque.</p><p>Velit hic atque voluptatem dolores consequatur. Voluptatibus est sed deserunt quasi qui ullam. Aut quis corporis velit odit qui ea vel.</p><p>Voluptas vitae accusamus sed consequatur est voluptatem nam velit. Nihil magni voluptatibus quaerat iure voluptatem excepturi. Officia eum consequatur vel ut magni repellendus dolorum. Consequatur ipsa expedita voluptatem qui et minima.</p>",
-            "featured_image": "http://192.168.100.18:8000/storage/2611/package-1.jpg"
-        }
-    ],
-    "User_cart": [
-        {
-            "cart_id": 1,
-            "item_name": "Esse vel delectus omnis.",
-            "item_slug": "esse-vel-delectus-omnis",
-            "brand_name": "Sanofi",
-            "variant_name": "Variant-2",
-            "image": "http://192.168.100.18:8000/storage/776/visc-inhaler.jpg",
-            "quantity": 1,
-            "price": 1342,
-            "subtotal": 1342
-        }
-    ]
-}
+
 
 

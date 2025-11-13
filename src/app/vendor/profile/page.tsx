@@ -1,7 +1,8 @@
-import ProfileFrom from "@/components/Profile-from";
+
+import ProfileDetails from "@/components/profile/profile-details";
 
 export default function VendorProfilePage() {
     return (
-        <ProfileFrom/>
+        <ProfileDetails/>
     )
 }

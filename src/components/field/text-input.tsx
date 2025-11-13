@@ -12,6 +12,7 @@ interface CommonProps {
     icon?: ElementType;
     required?: boolean;
     className?: string;
+    helperText?: string;
 }
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "id" | "className" | "required">, CommonProps {
@@ -23,7 +24,7 @@ interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaEl
     textareaProps?: React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 }
 
-type TextInputFieldProps = InputProps | TextareaProps;
+type TextInputFieldProps = InputProps | TextareaProps
 
 export default function TextInputField({
                                            label,
@@ -32,6 +33,7 @@ export default function TextInputField({
                                            textarea = false,
                                            className,
                                            required,
+                                           helperText,
                                            ...props
                                        }: TextInputFieldProps) {
     const id = useId();
@@ -94,6 +96,9 @@ export default function TextInputField({
                 <p id={`${id}-error`} className="text-sm text-destructive" role="alert">
                     {error}
                 </p>
+            )}
+            {helperText && (
+                <p className="text-sm text-muted-foreground">{helperText}</p>
             )}
         </div>
     );

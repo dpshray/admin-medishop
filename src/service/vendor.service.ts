@@ -86,7 +86,6 @@ class VendorService extends HttpServices {
     }
 
 
-
     async addProductByVendor(product_uuid: string, data: any) {
         try {
             return await this.postRequest({
@@ -112,6 +111,24 @@ class VendorService extends HttpServices {
             })
         } catch (error) {
             console.log('Error from vendorDashboard', error)
+            throw error;
+        }
+    }
+
+    //fetch all product by vendor by admin
+    async getAllProductOfVendor(uuid: string, params?: ParamsType) {
+        try {
+            const response = await this.getRequest({
+                ///admin/fetch-vendor-products/0eebfe00-8bfd-4957-9947-503731e37a33?per_page=1
+                url: `/admin/fetch-vendor-products/${uuid}`,
+                config: {
+                    auth: true,
+                    params,
+                }
+            })
+            return response?.data
+        } catch (error) {
+            console.log('Error from fetchAllProductOfVendor', error)
             throw error;
         }
     }

@@ -14,6 +14,7 @@ import {Switch} from "@/components/ui/switch"
 import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
 import {Banknote, FileText, MapPin, Package, Plus, Save, Shield, Store, User, XCircle} from "lucide-react"
+import {useRouter} from "next/navigation";
 
 interface VendorFormProps {
     mode: "create" | "edit"
@@ -63,6 +64,7 @@ export default function VendorManageForm({
                                          }: VendorFormProps) {
     const isEditMode = mode === "edit"
     const schema = isEditMode ? updateVendorSchema : createVendorSchema
+    const route=useRouter()
 
     type FormValues = typeof schema extends typeof createVendorSchema
         ? VendorFormValues
@@ -138,7 +140,7 @@ export default function VendorManageForm({
             try {
                 const response = await vendorService.getVendor(vendorId)
                 const apiData: ApiVendorData = response?.data
-
+                console.log('fetched vendor data: ', apiData,)
                 if (!apiData) throw new Error("No vendor data found")
 
                 const normalizedData: Partial<FormValues> = {
@@ -183,9 +185,11 @@ export default function VendorManageForm({
             if (isEditMode && vendorId) {
                 response = await vendorService.updateVendor(vendorId, data)
                 toast.success(response?.message || "Vendor updated successfully")
+                if (response) route.push('/admin/vendors')
             } else {
                 response = await vendorService.createVendor(data)
                 toast.success(response?.message || "Vendor created successfully")
+                if (response) route.push('/admin/vendors')
                 reset()
             }
             onSuccess?.(response)
@@ -459,8 +463,6 @@ export default function VendorManageForm({
                                 </section>
 
                                 <div className="grid grid-cols-2 gap-4">
-
-
                                     <Button
                                         type="button"
                                         variant={'outline'}

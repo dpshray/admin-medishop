@@ -90,7 +90,7 @@ export function CategoryFormModal({
         defaultValues: {
             name: "",
             discount_percent: undefined,
-            menu_order: null,
+            menu_order: undefined,
             image: undefined
         }
     })
@@ -127,6 +127,7 @@ export function CategoryFormModal({
             discount_percent: data.discount_percent || undefined,
             menu_order: data.menu_order || null
         }
+        console.log("Cleaned Data:", cleanedData);
         await onSubmitAction(cleanedData)
     }
 

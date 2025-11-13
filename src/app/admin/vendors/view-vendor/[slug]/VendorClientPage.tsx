@@ -105,7 +105,11 @@ export default function VendorClientPage({slug}: VendorClientPageProps) {
 
     const {data, isError, isPending} = useQuery<ApiResponse>({
         queryKey: ["vendor", slug],
-        queryFn: async () => await vendorService.getVendor(slug),
+        queryFn: async () => {
+            const res =  await vendorService.getVendor(slug)
+            console.log('Vendor response:', res)
+            return res
+        },
         staleTime: QUERY_STALE_TIME,
         gcTime: 10 * 60 * 1000,
         retry: 2,

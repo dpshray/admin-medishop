@@ -34,9 +34,13 @@ interface OrderData {
     ordered_items: OrderedItem[]
 }
 
+
+
 const statusOptions = [
     {value: 'Processing', label: 'Processing'},
     {value: 'Delivered', label: 'Delivered'},
+    {value: 'Cancelled', label: 'Cancelled'},
+    {value: 'Pending', label: 'Pending'},
 ]
 
 export default function VendorOrderDetailsPage() {
@@ -49,6 +53,7 @@ export default function VendorOrderDetailsPage() {
         queryFn: () => vendorOrderService.getVendorOrderDetail(slug as string),
         enabled: !!slug,
     })
+
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({slug, status}: { slug: string; status: string }) => {
@@ -92,7 +97,7 @@ export default function VendorOrderDetailsPage() {
         () => Boolean(vendorOrder?.latitude && vendorOrder?.longitude),
         [vendorOrder?.latitude, vendorOrder?.longitude]
     )
-    
+
     const coordinatesText = useMemo(() => {
         if (!hasCoordinates || !vendorOrder) return null
         return `${vendorOrder.latitude}, ${vendorOrder.longitude}`

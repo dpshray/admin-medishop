@@ -8,12 +8,13 @@ import {Download, Edit3, Eye, MoreHorizontal, Plus, Settings, Users} from "lucid
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {adminDashboardData} from "@/data";
 import {DashboardCard} from "@/components/dashboard/dashboard-card";
+import {CURRENCY_SYMBOL} from "@/config/app-constant";
 
 export default function AdminPage() {
     const recentActivities = [
         {
             type: "subscription",
-            message: "New Pro subscription - $99.00/month",
+            message: "New Pro subscription -  Npr 99.00/month",
             time: "2 min ago",
         },
         {
@@ -158,7 +159,7 @@ export default function AdminPage() {
                         {customer.status}
                       </span>
                                         </TableCell>
-                                        <TableCell className="font-medium">${customer.mrr}</TableCell>
+                                        <TableCell className="font-medium">{`${CURRENCY_SYMBOL} ${customer.mrr}`}</TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -232,11 +233,11 @@ export default function AdminPage() {
 
                 <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
+                        <CardTitle>Quick Action List</CardTitle>
                         <CardDescription>Common tasks and shortcuts</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
+                        <div className="space-y-2 " >
                             {[
                                 {
                                     title: "Add New User",
@@ -258,6 +259,7 @@ export default function AdminPage() {
                                 <button
                                     key={index}
                                     className="w-full p-3 text-left rounded-lg border hover:bg-gray-50 transition-colors"
+                                    disabled
                                 >
                                     <div className="flex items-center gap-3">
                                         <action.icon className="w-5 h-5 text-blue-600"/>

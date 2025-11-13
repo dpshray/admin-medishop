@@ -62,6 +62,7 @@ export default function AdminOrderTable() {
             }
             const response = await orderService.getAllOrders(params)
             setCurrentPage(response.page)
+            console.log("Orders response:", response)
             return response
         },
         staleTime: QUERY_STALE_TIME,
@@ -168,7 +169,7 @@ export default function AdminOrderTable() {
             header: 'Order Assigned',
             cell: ({row}) => (
                 <StatusBadge
-                    status={row.original.is_already_assigned_to_vendor ? ORDER_STATUS.PENDING : ORDER_STATUS.CONFIRMED}/>
+                    status={row.original.is_already_assigned_to_vendor ? ORDER_STATUS.ASSIGNED : ORDER_STATUS.PENDING}/>
             ),
             enableSorting: true,
             size: 120,

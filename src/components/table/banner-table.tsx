@@ -155,7 +155,7 @@ export default function BannerTable() {
                 size: 80,
                 enableSorting: false,
                 cell: ({row}) => (
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-start justify-start">
                         <GlobalTableHoverImage
                             src={row.original.image}
                             alt={row.original.title || "Banner image"}

@@ -3,7 +3,7 @@ import type {NextConfig} from "next";
 const nextConfig: NextConfig = {
 
     images: {
-        qualities:[90,75,85],
+        qualities: [90, 75, 85],
         domains: [
             "192.168.100.18",
             "192.168.100.23",
@@ -30,9 +30,11 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: "http",
-                hostname: '192.168.100.23'
-            }
-            ,{
+                hostname: "127.0.0.1",
+                port: "8000",
+                pathname: "/storage/**",
+            },
+            {
                 protocol: "http",
                 hostname: "192.168.100.18",
             },

@@ -126,20 +126,11 @@ export default function AdminProductRequestsTable() {
 
     const handleView = useCallback((product: VendorProduct) => {
         startTransition(() => {
-            router.push(`/admin/vendor-products/${product.id}`)
+            router.push(`/admin/vendor-product/${product.id}`)
         })
     }, [router])
 
-    const handleEdit = useCallback((productId: number) => {
-        startTransition(() => {
-            router.push(`/admin/vendor-product/${productId}`)
-        })
-    }, [router])
 
-    const handleDeleteClick = useCallback((product: VendorProduct) => {
-        setSelectedProduct(product)
-        setDeleteModalOpen(true)
-    }, [])
 
     const confirmDeleteProduct = useCallback(async () => {
         if (!selectedProduct) return
@@ -230,7 +221,7 @@ export default function AdminProductRequestsTable() {
         },
         {
             accessorKey: "status",
-            header: "Status",
+            header: "Product Status",
             cell: ({row}) => (
                 <StatusCell
                     status={row.original.status}
@@ -248,8 +239,6 @@ export default function AdminProductRequestsTable() {
             cell: ({row}) => (
                 <RowActions
                     row={row}
-                    onDeleteAction={() => handleDeleteClick(row.original)}
-                    onEditAction={() => handleEdit(row.original.id)}
                     onViewAction={() => handleView(row.original)}
                 />
             ),
@@ -257,7 +246,7 @@ export default function AdminProductRequestsTable() {
             enableHiding: false,
             size: 80,
         }
-    ], [handleDeleteClick, handleView, handleEdit, handleAccept, handleReject])
+    ], [handleView, handleAccept, handleReject])
 
     const handleSearch = useCallback((value: string) => {
         setSearch(value)
@@ -331,10 +320,8 @@ export default function AdminProductRequestsTable() {
                 pagination={{
                     page: currentPage,
                     totalPages: data?.total_page ?? 1,
-                    pageSize,
                     onPageChange: handlePageChange,
                     onPageSizeChange: handlePageSizeChange,
-                    pageSizeOptions: [...PAGE_SIZE_OPTIONS],
                     dataCount: data?.total_items ?? 0,
                 }}
                 noDataText="No vendor products found. Products will appear here once vendors add them."

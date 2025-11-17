@@ -1,6 +1,7 @@
 'use client'
 import {use} from "react";
-import VendorManageForm from "@/components/vendor/VendorEditForm";
+import VendorForm from "@/components/vendor/admin/VendorForm";
+
 
 interface EditVendorProps {
     params: Promise<{
@@ -12,7 +13,7 @@ export default function EditVendor({params}: EditVendorProps) {
     const {slug} = use(params);
 
     return (
-        <VendorManageForm
+        <VendorForm
             mode="edit"
             vendorId={slug}
             onSuccess={(data) => {

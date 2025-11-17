@@ -20,6 +20,7 @@ const CURRENCY_SYMBOL = "Npr";
 
 //File Constant
 const MAX_FILE_SIZE = 5 * 1024 * 1024
+const IMAGE_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif']
 
 
 export {
@@ -32,5 +33,6 @@ export {
     PAYMENT_PREFIX,
     QUERY_REFETCH_INTERVAL,
     MAX_FILE_SIZE,
-    CURRENCY_SYMBOL
+    CURRENCY_SYMBOL,
+    IMAGE_ALLOWED_EXTENSIONS
 }

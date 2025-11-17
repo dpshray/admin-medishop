@@ -1,14 +1,16 @@
-"use client"
+"use client";
 
-import {z} from "zod"
+import { z } from "zod";
 
-export const VariationSchema = z.object({
-    variation_id: z.number().optional(),
-    name: z.string(),
-    size_value: z.number(),
-    size_unit: z.string(),
-    platform_price: z.number(),
-})
+const VariationSchema = z.object({
+    variant_name: z.string(),
+    variant_price: z.number(),
+    variant_stock: z.number(),
+    variant_unit: z.string(),
+    variant_expiry_date: z.string(),
+    variant_batch_no: z.string(),
+    variant_manufacturer: z.string(),
+});
 
 export const createProductSchema = z.object({
     brand_id: z.number(),
@@ -16,14 +18,15 @@ export const createProductSchema = z.object({
     description: z.string(),
     categories: z.array(z.number()),
     tags: z.array(z.number()),
-    variations: z.array(VariationSchema),
+    variations: z.array(VariationSchema).min(1),
     prescription_required: z.boolean().optional().default(false),
+    generic_product_name_id: z.number(),
     featured_image: z.instanceof(File),
-    gallery_images: z.array(z.instanceof(File)).min(1, "At least one gallery image is required"),
+    gallery_images: z.array(z.instanceof(File)).min(1),
     health_condition: z.array(z.number()),
-    discount_percent: z.coerce.number().min(0).max(100, "Discount must be between 0 and 100"),
+    discount_percent: z.coerce.number().min(0).max(100),
 
-})
+});
 
 export const updateProductSchema = z.object({
     brand_id: z.number().optional(),
@@ -36,9 +39,10 @@ export const updateProductSchema = z.object({
     featured_image: z.instanceof(File).nullable().optional(),
     gallery_images: z.array(z.instanceof(File)).optional(),
     health_condition: z.array(z.number()).optional(),
-    discount_percent: z.coerce.number().min(0).max(100, "Discount must be between 0 and 100").optional(),
-})
+    discount_percent: z.coerce.number().min(0).max(100).optional(),
+    generic_product_name_id: z.number().optional(),
+});
 
-export type ProductCreate = z.infer<typeof createProductSchema>
-export type ProductUpdate = z.infer<typeof updateProductSchema>
-export type Variation = z.infer<typeof VariationSchema>
+export type ProductCreate = z.infer<typeof createProductSchema>;
+export type ProductUpdate = z.infer<typeof updateProductSchema>;
+export type Variation = z.infer<typeof VariationSchema>;

@@ -1,16 +1,16 @@
 'use client'
 
-import React, {memo, useCallback} from 'react'
-import {FormatCurrency, StatusBadge} from '@/lib/helper'
-import {FileText, Package, Trash2} from 'lucide-react'
-import {cn} from '@/lib/utils'
-import {ORDER_TYPE} from '@/types/enum'
-import {DocumentSection} from '@/components/vendor/page'
-import {Checkbox} from '@/components/ui/checkbox'
-import {Button} from '@/components/ui/button'
+import React, { memo, useCallback } from 'react'
+import { FormatCurrency, StatusBadge } from '@/lib/helper'
+import { FileText, Package, Trash2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {ORDER_TYPE, STATUS_TYPE} from '@/types/enum'
+import { DocumentSection } from '@/components/vendor/page'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
 
 export interface OrderedItem {
-    id?: string | number
+    order_item_id: number
     type: ORDER_TYPE | string
     prescription_required: boolean
     prescription_image?: string
@@ -20,6 +20,12 @@ export interface OrderedItem {
     quantity: number
     price: number
     subtotal: number
+    order_item_assigned_to?: OrderItemAssignedTo | null
+}
+
+interface OrderItemAssignedTo {
+    vendor_name: string
+    vendor_store_name: string
 }
 
 interface OrderedItemCardProps {
@@ -34,16 +40,16 @@ interface OrderedItemCardProps {
     onDeleteAction?: (item: OrderedItem) => void
 }
 
-const OrderedItemCard = memo(function OrderedItemCard({
-                                                          item,
-                                                          showAnimation = true,
-                                                          className = '',
-                                                          checked = false,
-                                                          onCheckAction,
-                                                          onDeleteAction,
-                                                          disabled = false,
-                                                          ariaLabel,
-                                                      }: OrderedItemCardProps) {
+const OrderedItemCard = memo<OrderedItemCardProps>(function OrderedItemCard({
+                                                                                item,
+                                                                                showAnimation = true,
+                                                                                className = '',
+                                                                                checked = false,
+                                                                                onCheckAction,
+                                                                                onDeleteAction,
+                                                                                disabled = false,
+                                                                                ariaLabel,
+                                                                            }) {
     const hasVariant = Boolean(item.variant_name || item.variant_size)
     const variantText = [item.variant_name, item.variant_size].filter(Boolean).join(' • ')
 
@@ -66,88 +72,134 @@ const OrderedItemCard = memo(function OrderedItemCard({
         [onDeleteAction, disabled, item]
     )
 
-    const cardId = item.id ? `order-item-${item.id}` : undefined
-    const checkboxId = cardId ? `${cardId}-checkbox` : undefined
+    const handleCardClick = useCallback(
+        (e: React.MouseEvent) => {
+            const target = e.target as HTMLElement
+            if (!disabled && !target.closest('button') && !target.closest('[role="button"]') && !target.closest('[role="checkbox"]')) {
+                handleCheckboxChange(!checked)
+            }
+        },
+        [disabled, checked, handleCheckboxChange]
+    )
+
+    const cardId = `order-item-${item.order_item_id}`
+    const checkboxId = `${cardId}-checkbox`
     const checkboxLabel = ariaLabel || `Select ${item.item_name}`
+    const priceLabel = `Price ${FormatCurrency(item.price)}`
+    const subtotalLabel = `Subtotal ${FormatCurrency(item.subtotal)}`
 
     return (
         <article
             id={cardId}
             className={cn(
-                'group relative bg-white p-3 sm:p-4 lg:p-5 rounded-xl border border-slate-200',
-                'hover:border-[var(--color-primaryColor)] hover:shadow-lg hover:scale-[1.01]',
+                'group relative bg-white p-3 sm:p-4 lg:p-5 rounded-lg sm:rounded-xl border border-slate-200',
+                'focus-within:ring-2 focus-within:ring-[var(--color-primaryColor)] focus-within:ring-offset-2',
                 showAnimation && 'transition-all duration-300 ease-out',
-                disabled && 'opacity-50 cursor-not-allowed',
+                disabled && 'opacity-50 cursor-not-allowed pointer-events-none',
                 checked && 'border-[var(--color-primaryColor)] shadow-md bg-purple-50/30',
-                !disabled && 'cursor-pointer',
-                className
+                !disabled && 'hover:border-[var(--color-primaryColor)] hover:shadow-lg hover:scale-[1.01] cursor-pointer',
+                className,
+                item.order_item_assigned_to && 'border-green-500 shadow-md',
             )}
             aria-labelledby={checkboxId}
-            role="group"
-            onClick={(e) => {
-                const target = e.target as HTMLElement
-                if (!disabled && !target.closest('button') && !target.closest('[role="button"]')) {
+            aria-describedby={`${cardId}-details`}
+            role="article"
+            onClick={handleCardClick}
+            tabIndex={disabled ? -1 : 0}
+            onKeyDown={(e) => {
+                if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
                     handleCheckboxChange(!checked)
                 }
             }}
         >
-            <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <header className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-                    <div className="flex-shrink-0 pt-0.5 z-10" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="flex-shrink-0 pt-0.5 z-10"
+                        onClick={(e) => e.stopPropagation()}
+                        role="presentation"
+                    >
                         <Checkbox
                             id={checkboxId}
                             checked={checked}
                             onCheckedChange={handleCheckboxChange}
                             disabled={disabled}
                             aria-label={checkboxLabel}
-                            className={cn('data-[state=checked]:bg-[var(--color-primaryColor)] data-[state=checked]:border-[var(--color-primaryColor)]', disabled && 'opacity-50 cursor-not-allowed',)}
+                            className={cn(
+                                'h-4 w-4 sm:h-5 sm:w-5',
+                                'data-[state=checked]:bg-[var(--color-primaryColor)] data-[state=checked]:border-[var(--color-primaryColor)]',
+                                'focus-visible:ring-2 focus-visible:ring-[var(--color-primaryColor)] focus-visible:ring-offset-2'
+                            )}
                         />
                     </div>
 
                     <div
-                        className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-purple-100 via-purple-50 to-slate-50 flex items-center justify-center border border-slate-200 group-hover:border-[var(--color-primaryColor)] group-hover:shadow-sm transition-all duration-300">
+                        className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-100 via-purple-50 to-slate-50 flex items-center justify-center border border-slate-200 group-hover:border-[var(--color-primaryColor)] group-hover:shadow-sm transition-all duration-300"
+                        aria-hidden="true"
+                    >
                         <Package
                             className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[var(--color-primaryColor)] group-hover:scale-110 transition-transform duration-300"
-                            aria-hidden="true"/>
+                        />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg leading-tight line-clamp-2 break-words group-hover:text-[var(--color-primaryColor)] transition-colors duration-300">
+                        <h3
+                            id={checkboxId}
+                            className="font-semibold text-slate-900 text-xs sm:text-sm lg:text-base leading-tight line-clamp-2 break-words group-hover:text-[var(--color-primaryColor)] transition-colors duration-300"
+                        >
                             {item.item_name}
                         </h3>
                         {hasVariant && (
-                            <p className="text-xs sm:text-sm text-slate-500 mt-1 truncate font-medium"
-                               title={variantText}>
+                            <p
+                                className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1 truncate font-medium"
+                                title={variantText}
+                                aria-label={`Variant: ${variantText}`}
+                            >
                                 {variantText}
                             </p>
                         )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <StatusBadge status={item.type}/>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    <StatusBadge status={item.type} />
+                    {item.order_item_assigned_to && (
+                        <StatusBadge status={STATUS_TYPE.ASSIGNED} />
+                    )}
                     {onDeleteAction && (
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleDeleteClick}
                             disabled={disabled}
-                            className=" text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                             aria-label={`Delete ${item.item_name}`}
                         >
-                            <Trash2 className="h-4 w-4"/>
+                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
                         </Button>
                     )}
                 </div>
-            </div>
+            </header>
 
-            <dl className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
-                <DetailItem label="Quantity" value={`${item.quantity}x`}/>
-                <DetailItem label="Unit Price" value={FormatCurrency(item.price)}/>
+            <dl
+                id={`${cardId}-details`}
+                className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4"
+            >
+                <DetailItem
+                    label="Quantity"
+                    value={`${item.quantity}×`}
+                    ariaLabel={`Quantity ${item.quantity}`}
+                />
+                <DetailItem
+                    label="Unit Price"
+                    value={FormatCurrency(item.price)}
+                    ariaLabel={priceLabel}
+                />
             </dl>
 
             {item.prescription_required && item.prescription_image && (
-                <div className="mb-3 sm:mb-4">
+                <div className="mb-3 sm:mb-4" role="region" aria-label="Prescription documents">
                     <DocumentSection
                         title="Prescription"
                         documents={[item.prescription_image]}
@@ -156,14 +208,32 @@ const OrderedItemCard = memo(function OrderedItemCard({
                 </div>
             )}
 
-            <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100">
+            <footer className="flex items-center justify-between pt-2.5 sm:pt-3 lg:pt-4 border-t border-slate-100">
+                <span className="text-[10px] sm:text-xs lg:text-sm text-slate-600 font-semibold uppercase tracking-wide">
+                    Subtotal
+                </span>
                 <span
-                    className="text-xs sm:text-sm text-slate-600 font-semibold uppercase tracking-wide">Subtotal</span>
-                <span
-                    className="text-base sm:text-lg lg:text-xl font-bold text-[var(--color-primaryColor)] group-hover:scale-105 transition-transform duration-300">
+                    className="text-sm sm:text-base lg:text-lg font-bold text-[var(--color-primaryColor)] group-hover:scale-105 transition-transform duration-300 tabular-nums"
+                    aria-label={subtotalLabel}
+                >
                     {FormatCurrency(item.subtotal)}
                 </span>
-            </div>
+            </footer>
+
+            {item.order_item_assigned_to && (
+                <div
+                    className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-600">
+                        <span className="font-semibold">Assigned to:</span>
+                        <span className="truncate" title={item.order_item_assigned_to.vendor_store_name}>
+                            {item.order_item_assigned_to.vendor_store_name}
+                        </span>
+                    </div>
+                </div>
+            )}
         </article>
     )
 })
@@ -171,13 +241,20 @@ const OrderedItemCard = memo(function OrderedItemCard({
 interface DetailItemProps {
     label: string
     value: string
+    ariaLabel?: string
 }
 
-const DetailItem = memo(function DetailItem({label, value}: DetailItemProps) {
+const DetailItem = memo<DetailItemProps>(function DetailItem({ label, value, ariaLabel }) {
     return (
-        <div className="space-y-1 p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
-            <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</dt>
-            <dd className="text-sm sm:text-base font-bold text-slate-900 truncate" title={value}>
+        <div className="space-y-0.5 sm:space-y-1 p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200">
+            <dt className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {label}
+            </dt>
+            <dd
+                className="text-xs sm:text-sm font-bold text-slate-900 truncate tabular-nums"
+                title={value}
+                aria-label={ariaLabel || value}
+            >
                 {value}
             </dd>
         </div>
@@ -187,5 +264,5 @@ const DetailItem = memo(function DetailItem({label, value}: DetailItemProps) {
 OrderedItemCard.displayName = 'OrderedItemCard'
 DetailItem.displayName = 'DetailItem'
 
-export {OrderedItemCard, DetailItem}
+export { OrderedItemCard, DetailItem }
 export default OrderedItemCard

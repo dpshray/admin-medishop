@@ -1,38 +1,36 @@
-'use client'
+"use client"
 
 import {useCallback, useMemo, useState, useTransition} from "react"
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
-import {useParams, useRouter} from "next/navigation"
+import {useRouter} from "next/navigation"
 import {toast} from "sonner"
-import {AlertCircle, ArrowLeft, Check, Copy, Download, FileText, Package, Printer, Save, XCircle} from "lucide-react"
-import ErrorState from "@/components/Error/ErrorState"
-import {Skeleton} from "@/components/ui/skeleton"
-import {Card, CardContent, CardFooter, CardHeader} from "@/components/ui/card"
+import {AlertCircle, Check, CheckSquare, Package, Save, Square, Store, UserCog,} from "lucide-react"
 import {Button} from "@/components/ui/button"
 import {Separator} from "@/components/ui/separator"
 import {Alert, AlertDescription} from "@/components/ui/alert"
-import CustomerInfo from "@/components/order/CustomerInfoCard"
 import SearchSelectField from "@/components/field/search-select"
-import {FormatCurrency, StatusBadge} from "@/lib/helper"
-import orderService from "@/service/order/order.service"
+import CustomerInfo from "@/components/order/CustomerInfoCard"
 import {OrderedItem, OrderedItemCard} from "@/components/order/OrderedItemCard"
-import {QUERY_STALE_TIME} from "@/config/app-constant"
 import {cn} from "@/lib/utils"
-import ActionModal from "@/components/modal/ConfirmModal"
 import {ORDER_STATUS, PAYMENT_STATUS} from "@/types/enum"
-
-const COPIED_TIMEOUT = 2000
+import OrderHeader from "@/components/order/order-details/order-header"
+import AssignmentSummary, {VendorAssignment,} from "@/components/order/order-details/order-assingment"
+import OrderSummary from "@/components/order/order-details/order-summary"
+import OrderNotes from "@/components/order/order-details/order-notes"
+import {useQuery} from "@tanstack/react-query"
+import orderService from "@/service/order/order.service"
+import {COPIED_TIMEOUT, QUERY_STALE_TIME} from "@/config/app-constant"
 
 interface OrderData {
+    order_id: number
     order_code: string
     user_type: "USER" | "VENDOR" | "GUEST"
     name: string
     email: string
     mobile: string
     address: string
-    latitude?: string
-    longitude?: string
-    description?: string
+    latitude: string
+    longitude: string
+    description: string
     price: number
     gift_wrap?: boolean
     gift_wrap_remarks?: string
@@ -44,22 +42,24 @@ interface OrderData {
     order_assigned_to?: {
         vendor_uuid: string
         store_name: string
-    }
-}
-
-interface VendorType {
-    vendor_uuid: string
-    user_name: string
-    store_name: string
-    is_assignable: boolean
+    } | null
 }
 
 interface VendorOption {
     value: string
     label: string
+    searchText?: string
 }
 
-const copyToClipboard = async (text: string): Promise<boolean> => {
+interface ItemAssignment {
+    itemId: string | number
+    vendorId: string
+    vendorName: string
+    storeName: string
+    assignmentType: "admin" | "vendor"
+}
+
+const copyToClipboard = async (text: string) => {
     try {
         await navigator.clipboard.writeText(text)
         return true
@@ -68,401 +68,461 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
     }
 }
 
-export default function OrderDetails() {
-    const params = useParams()
-    const orderUuid = params.slug as string
+interface OrderDetailsClientProps {
+    orderUuid: string
+}
+
+export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps) {
     const router = useRouter()
-    const queryClient = useQueryClient()
     const [isPending, startTransition] = useTransition()
     const [copied, setCopied] = useState(false)
     const [selectedVendor, setSelectedVendor] = useState<VendorOption | null>(null)
-    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+    const [selectedItems, setSelectedItems] = useState<Set<string | number>>(new Set())
+    const [itemAssignments, setItemAssignments] = useState<Map<string | number, ItemAssignment>>(new Map())
 
-    const {data, error, isLoading, isError} = useQuery<OrderData>({
+    const {data: vendorsData} = useQuery({
+        queryKey: ["assignable-vendors", orderUuid],
+        queryFn: async () => {
+            const res = await orderService.getAssignableVendorOrders(orderUuid)
+            return res.items
+        },
+        enabled: !!orderUuid,
+        staleTime: QUERY_STALE_TIME,
+        retry: 2,
+    })
+
+    const {data, isLoading} = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],
         queryFn: async () => {
-            const response = await orderService.getOrderDetails(orderUuid)
-            console.log("Order Details page ", response)
-            return response
+            const res = await orderService.getOrderDetails(orderUuid)
+            console.log("Order Details", res)
+            return res
         },
         enabled: !!orderUuid,
         staleTime: QUERY_STALE_TIME,
         retry: 2,
     })
 
-    const {data: vendorsData, isLoading: vendorsLoading} = useQuery({
-        queryKey: ["assignable-vendors", orderUuid],
-        queryFn: () => orderService.getAssignableVendorOrders(orderUuid),
-        enabled: !!orderUuid,
-        staleTime: QUERY_STALE_TIME,
-        retry: 2,
-    })
-
-    const vendors = useMemo(() => vendorsData?.items || [], [vendorsData])
-
-    const vendorOptions = useMemo<VendorOption[]>(
-        () => vendors.map((v: VendorType) => ({
-            value: v.vendor_uuid,
-            label: v.store_name || v.user_name,
-        })),
-        [vendors]
+    const vendorOptions = useMemo(
+        () =>
+            vendorsData?.map((v: any) => ({
+                value: v.vendor_uuid,
+                label: `${v.store_name} (${v.vendor_location})`,
+            })) || [],
+        [vendorsData]
     )
 
-    const canCancelOrder = useMemo(() => {
-        if (!data?.status) return false
-        return data.status !== "CANCELLED" && data.status !== "COMPLETED"
-    }, [data?.status])
 
-    const itemCount = useMemo(() => data?.ordered_items?.length || 0, [data?.ordered_items])
+    const canCancelOrder = useMemo(
+        () => data?.status !== ORDER_STATUS.CANCELLED && data?.status !== ORDER_STATUS.COMPLETED,
+        [data?.status]
+    )
+
+    const itemCount = data?.ordered_items.length || 0
     const useGridLayout = itemCount > 2
     const showDescriptionSection = Boolean(data?.description)
-    const showGiftWrap = Boolean(data?.gift_wrap)
+    const selectedCount = selectedItems.size
+    const allSelected = selectedCount === itemCount && itemCount > 0
 
-    const updateVendorMutation = useMutation({
-        mutationFn: (vendorId: string) => orderService.assignOrder(orderUuid, vendorId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ["order-details", orderUuid]})
-            toast.success("Vendor assigned successfully")
-            setSelectedVendor(null)
-        },
-        onError: (error) => {
-            const message = error instanceof Error ? error.message : "Failed to assign vendor"
-            toast.error(message)
-        },
-    })
+    const assignmentsByVendor = useMemo(() => {
+        const grouped = new Map<string, VendorAssignment>()
 
-    const cancelOrderMutation = useMutation({
-        mutationFn: () => orderService.cancelOrder(orderUuid),
-        onSuccess: () => {
-            toast.success("Order cancelled successfully")
-            startTransition(() => {
-                router.back()
-            })
-        },
-        onError: (error) => {
-            const message = error instanceof Error ? error.message : "Failed to cancel order"
-            toast.error(message)
-        },
-    })
+        data?.ordered_items.forEach((item) => {
+            if (item.order_item_assigned_to) {
+                const vendorKey = `existing-${item.order_item_assigned_to.vendor_name}`
+                if (!grouped.has(vendorKey)) {
+                    grouped.set(vendorKey, {
+                        vendor_name: item.order_item_assigned_to.vendor_name,
+                        vendor_store_name: item.order_item_assigned_to.vendor_store_name,
+                        assignmentType: "vendor",
+                        items: [],
+                    })
+                }
+                grouped.get(vendorKey)!.items.push({
+                    item_name: item.item_name,
+                    item_price: item.price,
+                    quantity: item.quantity,
+                    sub_total: item.subtotal,
+                })
+            }
+        })
 
-    const handleCancelModalClose = useCallback(() => {
-        setIsCancelModalOpen(false)
-    }, [])
+        itemAssignments.forEach((assignment) => {
+            const item = data?.ordered_items.find((i) => i.order_item_id === assignment.itemId)
+            if (item && !item.order_item_assigned_to) {
+                if (!grouped.has(assignment.vendorId)) {
+                    grouped.set(assignment.vendorId, {
+                        vendor_name: assignment.vendorName,
+                        vendor_store_name: assignment.storeName,
+                        assignmentType: assignment.assignmentType,
+                        items: [],
+                    })
+                }
+                grouped.get(assignment.vendorId)!.items.push({
+                    item_name: item.item_name,
+                    item_price: item.price,
+                    quantity: item.quantity,
+                    sub_total: item.subtotal,
+                })
+            }
+        })
 
-    const confirmCancelOrder = useCallback(() => {
-        cancelOrderMutation.mutate()
-        handleCancelModalClose()
-    }, [cancelOrderMutation, handleCancelModalClose])
+        return grouped
+    }, [itemAssignments, data?.ordered_items])
 
     const handleCopyOrderCode = useCallback(async () => {
-        if (!data?.order_code) return
+        if (!data) return
         const success = await copyToClipboard(data.order_code)
         if (success) {
             setCopied(true)
-            toast.success("Order code copied to clipboard")
+            toast.success("Order code copied")
             setTimeout(() => setCopied(false), COPIED_TIMEOUT)
-        } else {
-            toast.error("Failed to copy order code")
         }
-    }, [data?.order_code])
+    }, [data])
 
-    const handlePrint = useCallback(() => {
-        window.print()
-    }, [])
+    const handleSelectAll = useCallback(() => {
+        if (!data) return
+        if (allSelected) {
+            setSelectedItems(new Set())
+        } else {
+            setSelectedItems(new Set(data.ordered_items.map(item => item.order_item_id)))
+        }
+    }, [allSelected, data])
 
     const handleVendorChange = useCallback(
         (value: string | number | null) => {
-            const selected = vendorOptions.find((v) => v.value === value) || null
+            const selected = vendorOptions.find((v: any) => v.value === value) || null
             setSelectedVendor(selected)
         },
         [vendorOptions]
     )
 
-    const handleUpdateVendor = useCallback(() => {
-        if (!selectedVendor) return
-        updateVendorMutation.mutate(String(selectedVendor.value))
-    }, [selectedVendor, updateVendorMutation])
-
-    const handleCancelOrder = useCallback(() => {
-        setIsCancelModalOpen(true)
+    const handleCheckAction = useCallback((checked: boolean, item: OrderedItem) => {
+        setSelectedItems((prev) => {
+            const newSet = new Set(prev)
+            if (checked) {
+                newSet.add(item.order_item_id)
+            } else {
+                newSet.delete(item.order_item_id)
+            }
+            return newSet
+        })
     }, [])
 
-    const handleGoBack = useCallback(() => {
-        startTransition(() => {
-            router.back()
+
+    const handleAssignToAdmin = useCallback(() => {
+        const newAssignments = new Map(itemAssignments)
+        selectedItems.forEach((itemId) => {
+            newAssignments.set(itemId, {
+                itemId,
+                vendorId: "admin",
+                vendorName: "Admin",
+                storeName: "Self-Fulfillment",
+                assignmentType: "admin",
+            })
         })
-    }, [router])
+        setItemAssignments(newAssignments)
+        setSelectedItems(new Set())
+        toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to Admin`)
+    }, [selectedCount, selectedItems, itemAssignments])
+
+    const handleAssignToVendor = useCallback(async () => {
+        if (!selectedVendor || selectedCount === 0) return
+
+        const itemIds = Array.from(selectedItems) as number[]
+
+        try {
+            await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds)
+
+            const newAssignments = new Map(itemAssignments)
+            itemIds.forEach((itemId) => {
+                newAssignments.set(itemId, {
+                    itemId,
+                    vendorId: selectedVendor.value,
+                    vendorName: selectedVendor.label,
+                    storeName: (selectedVendor as any).storeName || selectedVendor.label,
+                    assignmentType: "vendor",
+                })
+            })
+            setItemAssignments(newAssignments)
+            setSelectedItems(new Set())
+            setSelectedVendor(null)
+            toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to vendor`)
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to assign items to vendor")
+        }
+    }, [selectedVendor, selectedCount, selectedItems, orderUuid, itemAssignments])
+
+
+    const handleClearAssignments = useCallback(() => {
+        setItemAssignments(new Map())
+        toast.success("All assignments cleared")
+    }, [])
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
-                    <Skeleton className="h-8 sm:h-10 w-24 sm:w-32 mb-4 sm:mb-6"/>
-                    <Card className="border-2 shadow-lg">
-                        <CardHeader className="border-b p-4 sm:p-6">
-                            <Skeleton className="h-6 sm:h-8 w-40 sm:w-48 mb-2 sm:mb-3"/>
-                            <Skeleton className="h-5 sm:h-6 w-24 sm:w-32"/>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                            <Skeleton className="h-48 sm:h-64"/>
-                            <Skeleton className="h-40 sm:h-48"/>
-                            <Skeleton className="h-32"/>
-                        </CardContent>
-                    </Card>
+            <div
+                className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+                <div className="text-center">
+                    <Package className="h-12 w-12 mx-auto animate-pulse text-primary mb-4"/>
+                    <p className="text-muted-foreground">Loading order details...</p>
                 </div>
             </div>
         )
     }
 
-    if (isError || !data) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "Failed to load order details. Please try again later."
-        return <ErrorState message={errorMessage}/>
+    if (!data) {
+        return (
+            <div
+                className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+                <div className="text-center">
+                    <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4"/>
+                    <p className="text-muted-foreground">Order not found</p>
+                </div>
+            </div>
+        )
     }
+
+    const unassignedCount = data.ordered_items.filter(item => !item.order_item_assigned_to).length
+    const assignedCount = itemCount - unassignedCount
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 print:bg-white">
-            <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
-                <Card className="border-2 hover:border-primaryColor/30 transition-all duration-300 hover:shadow-xl overflow-hidden">
-                    <CardHeader className="border-b bg-gradient-to-br from-primary/5 to-purple-50/50 p-4 sm:p-6 lg:p-8">
-                        <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-6">
-                            <div className="space-y-2 sm:space-y-3">
-                                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary to-[#6b4fc0] bg-clip-text text-transparent">
-                                    Order Details
-                                </h1>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <code className="text-xs sm:text-sm bg-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border-2 border-primary/20 font-mono font-semibold shadow-sm break-all">
-                                        #{data.order_code}
-                                    </code>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleCopyOrderCode}
-                                        className="border border-transparent hover:border-primary/10 transition-all h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-lg flex-shrink-0"
-                                        aria-label="Copy order code"
-                                    >
-                                        {copied ? (
-                                            <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" aria-hidden="true"/>
-                                        ) : (
-                                            <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" aria-hidden="true"/>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 sm:gap-3 flex-wrap items-start print:hidden">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handlePrint}
-                                    className="border-2 hover:bg-muted/50 hover:border-primary/40 transition-all text-xs sm:text-sm"
-                                >
-                                    <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true"/>
-                                    <span className="font-medium">Print</span>
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className="bg-primary hover:bg-primary/80 text-white shadow-md hover:shadow-lg transition-all text-xs sm:text-sm"
-                                    disabled
-                                    aria-label="Download order (coming soon)"
-                                >
-                                    <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true"/>
-                                    <span className="font-medium">Download</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div
+                    className="border hover:border-primary/30 hover:shadow-xl rounded-lg bg-white transition-all duration-300">
+                    <OrderHeader
+                        orderCode={data.order_code}
+                        copied={copied}
+                        onCopy={handleCopyOrderCode}
+                        onPrint={() => window.print()}
+                    />
 
-                    <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
+                    <main className="p-4 sm:p-6 lg:p-8 space-y-6">
                         <CustomerInfo data={data as any}/>
+                        <Separator/>
 
-                        <Separator className="bg-border/60"/>
-
-                        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-                            <section className="space-y-3 sm:space-y-4" aria-labelledby="order-summary-heading">
-                                <h2 id="order-summary-heading" className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
-                                    Order Summary
-                                </h2>
-                                <div className="space-y-2 sm:space-y-3 bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
-                                    <dl className="space-y-2 sm:space-y-3">
-                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
-                                            <dt className="text-muted-foreground font-medium">Order Date</dt>
-                                            <dd className="text-foreground font-semibold text-right">{data.created_at}</dd>
-                                        </div>
-                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
-                                            <dt className="text-muted-foreground font-medium">Payment Method</dt>
-                                            <dd className="capitalize text-foreground font-semibold text-right">
-                                                {data.payment_method}
-                                            </dd>
-                                        </div>
-                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
-                                            <dt className="text-muted-foreground font-medium">Order Status</dt>
-                                            <dd><StatusBadge status={data.status}/></dd>
-                                        </div>
-                                        <div className="flex justify-between text-xs sm:text-sm lg:text-base items-center gap-2">
-                                            <dt className="text-muted-foreground font-medium">Payment Status</dt>
-                                            <dd><StatusBadge status={data.payment_status}/></dd>
-                                        </div>
-                                    </dl>
-                                    <Separator className="my-2 bg-border/60"/>
-                                    <div className="text-right pt-2 sm:pt-3">
-                                        <p className="text-xs sm:text-sm text-muted-foreground mb-1 uppercase tracking-wide font-semibold">
-                                            Total Amount
-                                        </p>
-                                        <p className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-primary break-all">
-                                            {FormatCurrency(data.price)}
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-
+                        <div className="grid gap-6 lg:grid-cols-2">
+                            <OrderSummary data={data}/>
                             {showDescriptionSection && (
-                                <section className="space-y-3 sm:space-y-4" aria-labelledby="order-notes-heading">
-                                    <h2 id="order-notes-heading" className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
-                                        Order Notes
-                                    </h2>
-                                    <div className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
-                                        <p className="text-xs sm:text-sm lg:text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
-                                            {data.description}
-                                        </p>
-                                    </div>
-
-                                    {showGiftWrap && (
-                                        <div className="space-y-3 sm:space-y-4 mt-4">
-                                            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
-                                                Gift Wrap
-                                            </h3>
-                                            <div className="bg-gradient-to-br from-muted/30 to-purple-50/30 p-4 sm:p-5 lg:p-6 rounded-xl border-2 border-primary/10 hover:border-primary/20 transition-all">
-                                                <p className="text-xs sm:text-sm lg:text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
-                                                    {data.gift_wrap_remarks}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </section>
+                                <OrderNotes
+                                    description={data.description}
+                                    giftWrap={data.gift_wrap}
+                                    giftWrapRemarks={data.gift_wrap_remarks}
+                                />
                             )}
                         </div>
 
-                        <Separator className="bg-border/60"/>
+                        <Separator/>
 
-                        <section className="space-y-3 sm:space-y-4" aria-labelledby="ordered-items-heading">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <h2 id="ordered-items-heading" className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" aria-hidden="true"/>
-                                    Ordered Items
-                                </h2>
-                                <span className="text-xs sm:text-sm lg:text-base font-medium text-muted-foreground bg-muted/50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
-                                    {itemCount} {itemCount === 1 ? "item" : "items"}
-                                </span>
-                            </div>
-
-                            {itemCount > 0 ? (
-                                <div className={cn(
-                                    useGridLayout
-                                        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-                                        : "space-y-3 sm:space-y-4"
-                                )}>
-                                    {data.ordered_items.map((item, index) => (
-                                        <OrderedItemCard
-                                            key={`${item.item_name || index}-${orderUuid}`}
-                                            item={item}
-                                            showAnimation
-                                        />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 sm:py-12 text-muted-foreground bg-muted/30 rounded-xl border-2 border-dashed border-border">
-                                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 text-muted-foreground/50" aria-hidden="true"/>
-                                    <p className="text-sm sm:text-base font-medium">No items in this order</p>
-                                </div>
-                            )}
-                        </section>
-                    </CardContent>
-
-                    <CardFooter className="flex flex-col items-start border-t bg-muted/30 p-4 sm:p-6 lg:p-8 print:hidden">
-                        {data?.order_assigned_to && (
-                            <div className="w-full mb-4 sm:mb-6">
-                                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Currently Assigned To</p>
-                                <p className="font-semibold text-sm sm:text-base text-foreground">
-                                    {data.order_assigned_to.store_name}
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="w-full space-y-4 sm:space-y-6">
-                            <div className="grid gap-3 sm:gap-4 sm:grid-cols-[1fr,auto] items-end">
-                                <SearchSelectField
-                                    label={`${data?.order_assigned_to?.store_name ? "Change" : "Assign"} Vendor`}
-                                    placeholder="Select vendor to assign"
-                                    options={vendorOptions}
-                                    value={selectedVendor?.value ?? ""}
-                                    onChange={handleVendorChange}
-                                    disabled={vendorsLoading || updateVendorMutation.isPending}
-                                    helperText={vendorsLoading ? "Loading vendors..." : "Choose a vendor to fulfill this order"}
-                                />
-                                <Button
-                                    className="bg-primaryColor hover:bg-primaryColor/80 text-white transition-all disabled:opacity-50 shadow-md hover:shadow-lg w-full sm:w-auto text-xs sm:text-sm"
-                                    onClick={handleUpdateVendor}
-                                    disabled={!selectedVendor || updateVendorMutation.isPending || vendorsLoading}
-                                >
-                                    <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true"/>
-                                    <span className="font-medium">
-                                        {updateVendorMutation.isPending ? "Assigning..." : "Assign Vendor"}
+                        <section className="space-y-4">
+                            <div className="flex justify-between items-center flex-wrap gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h2 className="text-lg font-bold flex items-center gap-2">
+                                        <Package className="h-5 w-5 text-primary" aria-hidden="true"/>
+                                        <span>Ordered Items</span>
+                                    </h2>
+                                    <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full"
+                                          aria-label={`${itemCount} ${itemCount === 1 ? "item" : "items"}`}>
+                                        {itemCount} {itemCount === 1 ? "item" : "items"}
                                     </span>
-                                </Button>
-                            </div>
-
-                            {!canCancelOrder && (
-                                <Alert className="border-2 border-amber-200 bg-amber-50/50">
-                                    <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" aria-hidden="true"/>
-                                    <AlertDescription className="text-xs sm:text-sm lg:text-base text-amber-800 font-medium">
-                                        This order cannot be cancelled as it is already {data.status}.
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            <Separator className="bg-border/60"/>
-
-                            <div className="flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
-                                <Button
-                                    variant="outline"
-                                    onClick={handleGoBack}
-                                    disabled={isPending}
-                                    className="border-2 hover:bg-muted/50 hover:border-primary/40 transition-all text-xs sm:text-sm w-full sm:w-auto"
-                                >
-                                    <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true"/>
-                                    <span className="font-medium">Back</span>
-                                </Button>
-                                {canCancelOrder && (
-                                    <Button
-                                        variant="destructive"
-                                        onClick={handleCancelOrder}
-                                        disabled={cancelOrderMutation.isPending}
-                                        className="transition-all shadow-md hover:shadow-lg text-xs sm:text-sm w-full sm:w-auto"
-                                    >
-                                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true"/>
-                                        <span className="font-medium">
-                                            {cancelOrderMutation.isPending ? "Cancelling..." : "Cancel Order"}
+                                    {assignedCount > 0 && (
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full"
+                                              aria-label={`${assignedCount} assigned`}>
+                                            {assignedCount} pre-assigned
                                         </span>
+                                    )}
+                                    {selectedCount > 0 && (
+                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                                              aria-label={`${selectedCount} selected`}>
+                                            {selectedCount} selected
+                                        </span>
+                                    )}
+                                </div>
+
+                                {unassignedCount > 0 && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleSelectAll}
+                                        className="text-xs"
+                                        aria-label={allSelected ? "Deselect all items" : "Select all items"}
+                                    >
+                                        {allSelected ? (
+                                            <>
+                                                <Square className="h-3.5 w-3.5" aria-hidden="true"/> Deselect All
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckSquare className="h-3.5 w-3.5" aria-hidden="true"/> Select All
+                                            </>
+                                        )}
                                     </Button>
                                 )}
                             </div>
-                        </div>
-                    </CardFooter>
-                </Card>
-            </div>
 
-            <ActionModal
-                open={isCancelModalOpen}
-                setOpen={handleCancelModalClose}
-                title="Cancel Order"
-                description="Are you sure you want to cancel this order? This action cannot be undone."
-                onConfirm={confirmCancelOrder}
-            />
+                            {itemCount > 0 ? (
+                                <div
+                                    className={cn(
+                                        useGridLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"
+                                    )}
+                                    role="list"
+                                    aria-label="Ordered items"
+                                >
+                                    {data.ordered_items.map((item) => {
+                                        const localAssignment = itemAssignments.get(item.order_item_id)
+                                        const isAssigned = !!item.order_item_assigned_to
+                                        const assignment = isAssigned
+                                            ? {assignmentType: "vendor" as const}
+                                            : localAssignment
+
+                                        return (
+                                            <div key={item.order_item_id} className="relative" role="listitem">
+                                                <OrderedItemCard
+                                                    item={item}
+                                                    showAnimation
+                                                    checked={selectedItems.has(item.order_item_id)}
+                                                    onCheckAction={handleCheckAction}
+                                                    className={cn('')}
+                                                />
+                                                {assignment && (
+                                                    <div
+                                                        className={cn(
+                                                            "absolute top-2 right-2 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg z-10",
+                                                            assignment.assignmentType === "admin"
+                                                                ? "bg-blue-600"
+                                                                : "bg-green-600"
+                                                        )}
+                                                        role="status"
+                                                        aria-label={`Assigned to ${assignment.assignmentType === "admin" ? "Admin" : "Vendor"}`}
+                                                    >
+                                                        ✓ {assignment.assignmentType === "admin" ? "Admin" : "Vendor"}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 bg-muted/30 border border-dashed rounded-xl">
+                                    <Package className="h-12 w-12 mx-auto opacity-60 mb-2" aria-hidden="true"/>
+                                    <p className="font-medium">No items in this order</p>
+                                </div>
+                            )}
+                        </section>
+
+                        {assignmentsByVendor.size > 0 && (
+                            <>
+                                <Separator/>
+                                <AssignmentSummary
+                                    assignmentsByVendor={assignmentsByVendor}
+                                    onClear={handleClearAssignments}
+                                />
+                            </>
+                        )}
+                    </main>
+
+
+                    <footer className="border-t bg-muted/30 p-6 space-y-6 print:hidden">
+                        <div className="space-y-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <section className="space-y-4" aria-labelledby="admin-assignment-heading">
+                                <h3 id="admin-assignment-heading"
+                                    className="font-semibold text-base flex items-center gap-2">
+                                    <UserCog className="h-5 w-5 text-blue-600" aria-hidden="true"/>
+                                    Assign to Admin
+                                </h3>
+
+                                <div className="flex justify-between items-center p-4 bg-blue-50/50 border rounded-lg">
+                                    <p className="text-sm" aria-live="polite">
+                                        {selectedCount > 0 ? `${selectedCount} item${selectedCount > 1 ? "s" : ""} selected` : "Select items to assign"}
+                                    </p>
+
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={selectedCount === 0}
+                                        onClick={handleAssignToAdmin}
+                                        aria-label={`Assign ${selectedCount} selected item${selectedCount > 1 ? "s" : ""} to admin`}
+                                    >
+                                        <Check className="h-4 w-4"
+                                               aria-hidden="true"/> Assign {selectedCount > 0 && `(${selectedCount})`}
+                                    </Button>
+                                </div>
+                            </section>
+
+                            <section className="space-y-4" aria-labelledby="vendor-assignment-heading">
+                                <h3 id="vendor-assignment-heading"
+                                    className="font-semibold text-base flex items-center gap-2">
+                                    <Store className="h-5 w-5 text-green-600" aria-hidden="true"/>
+                                    Assign to Vendor
+                                </h3>
+
+                                <div className="p-4 bg-green-50/50 border rounded-lg space-y-4">
+                                    <SearchSelectField
+                                        label="Select Vendor"
+                                        placeholder="Choose vendor"
+                                        options={vendorOptions}
+                                        value={selectedVendor?.value ?? ""}
+                                        onChange={handleVendorChange}
+                                    />
+
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-sm" aria-live="polite">
+                                            {selectedCount > 0 && selectedVendor
+                                                ? `${selectedCount} item${selectedCount > 1 ? "s" : ""} selected`
+                                                : "Select items and vendor"}
+                                        </p>
+
+                                        <Button
+                                            size="sm"
+                                            className="bg-green-600 text-white hover:bg-green-700"
+                                            disabled={!selectedVendor || selectedCount === 0}
+                                            onClick={handleAssignToVendor}
+                                            aria-label={`Assign ${selectedCount} selected item${selectedCount > 1 ? "s" : ""} to vendor`}
+                                        >
+                                            <Save className="h-4 w-4"
+                                                  aria-hidden="true"/> Assign {selectedCount > 0 && `(${selectedCount})`}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        {!canCancelOrder && (
+                            <Alert className="border border-amber-200 bg-amber-50/50" role="alert">
+                                <AlertCircle className="h-5 w-5 text-amber-600" aria-hidden="true"/>
+                                <AlertDescription className="text-sm text-amber-800">
+                                    This order cannot be cancelled (Status: {data.status})
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <Separator/>
+
+                        <Button
+                            variant="outline"
+                            onClick={() => startTransition(() => router.back())}
+                            disabled={isPending}
+                            aria-label="Go back to previous page"
+                        >
+                            {isPending ? "Loading..." : "Back"}
+                        </Button>
+                    </footer>
+
+                    {unassignedCount === 0 && (
+                        <footer className="border-t bg-muted/30 p-6 print:hidden">
+                            <Button
+                                variant="outline"
+                                onClick={() => startTransition(() => router.back())}
+                                disabled={isPending}
+                                aria-label="Go back to previous page"
+                            >
+                                {isPending ? "Loading..." : "Back"}
+                            </Button>
+                        </footer>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }

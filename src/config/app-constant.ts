@@ -23,6 +23,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024
 const IMAGE_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif']
 
 
+// Copied Timeout
+const COPIED_TIMEOUT = 2000
 export {
     LOW_STOCK_THRESHOLD,
     OUT_OF_STOCK,
@@ -34,5 +36,6 @@ export {
     QUERY_REFETCH_INTERVAL,
     MAX_FILE_SIZE,
     CURRENCY_SYMBOL,
-    IMAGE_ALLOWED_EXTENSIONS
+    IMAGE_ALLOWED_EXTENSIONS,
+    COPIED_TIMEOUT
 }

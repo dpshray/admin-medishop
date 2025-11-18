@@ -1,27 +1,29 @@
-import HttpServices from "@/service/http.service";
+import HttpService from "@/service/http.service";
 import {ParamsType} from "@/types/types";
 
 
-class CouponService extends HttpServices {
-    async createCoupon(data: any) {
+class GenericNameService extends HttpService {
+
+
+    async createGenericName(data: any) {
         try {
             return await this.postRequest({
-                url: "/admin/coupon",
+                //admin/product-generic-name
+                url: '/admin/generic-product-name',
                 data,
                 config: {
                     auth: true,
                 }
             })
-
         } catch (error) {
             throw error;
         }
     }
 
-    async deleteCoupon(slug: string) {
+    async deleteGenericName(slug: string) {
         try {
             return await this.deleteRequest({
-                url: `/admin/coupon/${slug}`,
+                url: `/admin/generic-product-name/${slug}`,
                 config: {
                     auth: true,
                 }
@@ -31,10 +33,10 @@ class CouponService extends HttpServices {
         }
     }
 
-    async getCouponBySlug(slug: string) {
+    async getGenericName(slug: string) {
         try {
             return await this.getRequest({
-                url: `/admin/coupon/${slug}`,
+                url: `/admin/generic-product-name/${slug}`,
                 config: {
                     auth: true,
                 }
@@ -44,13 +46,13 @@ class CouponService extends HttpServices {
         }
     }
 
-    async updateCoupon(slug: string, data: any) {
+    async updateGenericName(slug: string, data: any) {
         try {
-            return this.postRequest({
-                url: `/admin/coupon/${slug}`,
+            return await this.postRequest({
+                url: `/admin/generic-product-name/${slug}`,
                 data: {
                     ...data,
-                    _method: "PUT",
+                    _method: "PUT"
                 },
                 config: {
                     auth: true,
@@ -61,10 +63,10 @@ class CouponService extends HttpServices {
         }
     }
 
-    async getAllCoupons(params?: ParamsType) {
+    async getAllGenericNames(params?: ParamsType) {
         try {
             const res = await this.getRequest({
-                url: "/admin/coupon",
+                url: '/admin/generic-product-name',
                 config: {
                     auth: true,
                     params
@@ -75,7 +77,8 @@ class CouponService extends HttpServices {
             throw error;
         }
     }
+
 }
 
-const couponService = new CouponService();
-export default couponService;
+const genericNameService = new GenericNameService();
+export default genericNameService;

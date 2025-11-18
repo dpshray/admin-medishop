@@ -20,7 +20,7 @@ export const createVendorSchema = z.object({
     location: z.string().min(1, "Location is required"),
     country: z.string().min(1, "Country is required"),
     postal_code: z.string().min(1, "Postal code is required"),
-    is_verified: z.boolean().default(false),
+    account_status: z.boolean().default(false),
     vendor_citizenship_card: z.instanceof(File, {message: "Citizenship card is required"}),
     vendor_tax_certificate: z.instanceof(File, {message: "Tax certificate is required"}),
     vendor_business_license: z.instanceof(File, {message: "Business license is required"}),
@@ -41,7 +41,7 @@ export const updateVendorSchema = z.object({
     location: z.string().optional(),
     country: z.string().optional(),
     postal_code: z.string().optional(),
-    is_verified: z.boolean().optional(),
+    account_status: z.boolean().optional(),
     vendor_citizenship_card: z.instanceof(File).optional(),
     vendor_tax_certificate: z.instanceof(File).optional(),
     vendor_business_license: z.instanceof(File).optional(),
@@ -55,6 +55,9 @@ export const VendorProductSchema = z.object({
             product_variation_id: z.number(),
             units_in_stock: z.number().min(0, "Size value must be non-negative"),
             price: z.number().min(0, "Price must be non-negative"),
+            variant_manufacturer: z.string().min(1, "Manufacturer is required"),
+            variant_batch_no: z.string().min(1, "Batch number is required"),
+            variant_expiry_date: z.string().min(1, "Expiry date is required"),
         })
     ).min(1, "At least one variation is required"),
 })

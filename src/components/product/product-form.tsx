@@ -1,18 +1,17 @@
 "use client"
 
-import {useFieldArray, useForm} from "react-hook-form"
+import {Controller, useFieldArray, useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import {Button} from "@/components/ui/button"
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import {Separator} from "@/components/ui/separator"
 import {Edit, Layers, Package, Plus, Save, Tags, X, XCircle} from "lucide-react"
-import {useCallback, useEffect, useState} from "react"
+import {useCallback, useEffect, useMemo, useState} from "react"
 import SearchSelectField from "@/components/field/search-select"
 import TextInputField from "@/components/field/text-input"
 import MultiSelectField from "@/components/field/multi-select-input"
 import FileInputField from "@/components/field/file-input"
+import DatePickerField from "@/components/field/date-picker"
 import {createProductSchema, ProductCreate, ProductUpdate, updateProductSchema} from "@/lib/schema/productSchema"
-import {useBrands, useCategories, useProductUnits, useTags} from "@/hooks/all-hook"
+import {useBrands, useCategories, useGenericName, useProductUnits, useTags} from "@/hooks/all-hook"
 import productService from "@/service/product/product.service"
 import {toast} from "sonner"
 import {useRouter} from "next/navigation"
@@ -21,28 +20,20 @@ import {CURRENCY_SYMBOL, MAX_FILE_SIZE} from "@/config/app-constant"
 import {useQuery} from "@tanstack/react-query"
 import healthConditionService from "@/service/healthCondition.service"
 import {Switch} from "@/components/ui/switch"
+import {cn} from "@/lib/utils"
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
     productUuid?: string
-    initialData?: Partial<ProductCreate>
     onSuccessAction?: () => void
 }
 
-interface SelectOption {
-    id: number
-    name: string
-}
-
-const ProductManageForm = ({
-                               mode = "create",
-                               productUuid,
-                               onSuccessAction,
-                           }: ProductManageFormProps) => {
+const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: ProductManageFormProps) => {
     const {categories} = useCategories()
     const {tags} = useTags()
     const {brands} = useBrands()
     const {productUnits} = useProductUnits()
+    const {genericNames} = useGenericName()
     const isUpdateMode = mode === "edit"
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
@@ -50,75 +41,87 @@ const ProductManageForm = ({
 
     const {data: healthCondition} = useQuery({
         queryKey: ["health-condition"],
-        queryFn: async () => {
-            return await healthConditionService.getHealthConditionList().then((res) => res.items)
-        }
+        queryFn: async () => await healthConditionService.getHealthConditionList().then((res) => res.items)
     })
 
-    const healthConditionOptions =
-        healthCondition?.map((item: any) => ({
-            value: item.id,
-            label: item.name,
-        })) || []
+    const genericNameOptions = useMemo(() =>
+            genericNames?.map((item: any) => ({value: item.id, label: item.name})) || [],
+        [genericNames]
+    )
 
-    const categoriesOptions: SelectOption[] = categories.map((category) => ({
-        id: category.id,
-        name: category.name
-    }))
+    const healthConditionOptions = useMemo(() =>
+            healthCondition?.map((item: any) => ({value: item.id, label: item.name})) || [],
+        [healthCondition]
+    )
 
-    const tagsOptions: SelectOption[] = tags.map((tag) => ({
-        id: tag.id,
-        name: tag.name
-    }))
+    const categoriesOptions = useMemo(() =>
+            categories.map((category) => ({id: category.id, name: category.name})),
+        [categories]
+    )
 
-    const brandsOptions: SelectOption[] = brands.map((brand) => ({
-        id: brand.id,
-        name: brand.name
-    }))
+    const tagsOptions = useMemo(() =>
+            tags.map((tag) => ({id: tag.id, name: tag.name})),
+        [tags]
+    )
 
-    const createDefaultValues: ProductCreate = {
-        name: "",
-        brand_id: brands[0]?.id ?? 0,
-        description: "",
-        variations: [
-            {
+    const brandsOptions = useMemo(() =>
+            brands.map((brand) => ({id: brand.id, name: brand.name})),
+        [brands]
+    )
+
+    const categorySelectOptions = useMemo(() =>
+            categoriesOptions.map((category) => ({value: category.id, label: category.name})),
+        [categoriesOptions]
+    )
+
+    const tagSelectOptions = useMemo(() =>
+            tagsOptions.map((tag) => ({value: tag.id, label: tag.name})),
+        [tagsOptions]
+    )
+
+    const defaultValues = useMemo(() => {
+        const baseVariation = {
+            variant_name: "",
+            variant_price: 1,
+            variant_stock: 1,
+            variant_unit: productUnits[0]?.value ?? "mg",
+            variant_batch_no: "",
+            variant_expiry_date: "",
+            variant_manufacturer: "",
+        }
+
+        if (isUpdateMode) {
+            return {
                 name: "",
-                size_value: 1,
-                size_unit: productUnits[0]?.value ?? "mg",
-                platform_price: 1,
-            },
-        ],
-        categories: [],
-        tags: [],
-        featured_image: new File([], ""),
-        gallery_images: [],
-        prescription_required: false,
-        health_condition: [],
-        discount_percent: 0
-    }
+                brand_id: 0,
+                description: "",
+                variations: [{...baseVariation, variant_unit: "mg"}],
+                categories: [],
+                tags: [],
+                featured_image: null,
+                gallery_images: [],
+                prescription_required: false,
+                health_condition: [],
+                discount_percent: 0
+            }
+        }
 
-    const updateDefaultValues: ProductUpdate = {
-        name: "",
-        brand_id: 0,
-        description: "",
-        variations: [
-            {
-                name: "",
-                size_value: 1,
-                size_unit: "mg",
-                platform_price: 1,
-            },
-        ],
-        categories: [],
-        tags: [],
-        featured_image: null,
-        gallery_images: [],
-        prescription_required: false,
-        health_condition: [],
-        discount_percent: 0
-    }
+        return {
+            name: "",
+            brand_id: 0,
+            description: "",
+            variations: [baseVariation],
+            categories: [],
+            tags: [],
+            featured_image: new File([], ""),
+            gallery_images: [],
+            prescription_required: false,
+            health_condition: [],
+            discount_percent: 0,
+            generic_product_name_id: 0,
+        }
+    }, [isUpdateMode, productUnits])
 
-    const defaultValues = isUpdateMode ? updateDefaultValues : createDefaultValues
     const schema = isUpdateMode ? updateProductSchema : createProductSchema
 
     const {
@@ -128,50 +131,38 @@ const ProductManageForm = ({
         setValue,
         watch,
         reset,
-        formState: {errors, isSubmitting},
+        formState: {errors, isSubmitting}
     } = useForm<ProductCreate | ProductUpdate>({
         resolver: zodResolver(schema) as any,
         defaultValues,
         mode: "onBlur",
     })
 
-    const {fields, append, remove, replace} = useFieldArray({
-        control,
-        name: "variations"
-    })
+    const {fields, append, remove, replace} = useFieldArray({control, name: "variations"})
 
     const watchCategories = watch("categories") as number[] || []
     const watchTags = watch("tags") as number[] || []
     const watchBrandId = watch("brand_id")
+    const watchGenericId = watch("generic_product_name_id")
     const watchHealthCondition = watch("health_condition") as number[] || []
     const watchPrescriptionRequired = watch("prescription_required")
 
-    const categorySelectOptions = categoriesOptions.map((category) => ({
-        value: category.id,
-        label: category.name
-    }))
-
-    const tagSelectOptions = tagsOptions.map((tag) => ({
-        value: tag.id,
-        label: tag.name
-    }))
-
     const fetchProductData = useCallback(async () => {
         if (!productUuid || !isUpdateMode) return
-
         try {
             setIsLoading(true)
             const response = await productService.getSingleProduct(productUuid)
-
+            console.log("Product Data:", response?.data)
             if (response?.data) {
                 const productData = response.data
-
                 const mappedVariations = productData.variations?.map((variation: any) => ({
-                    variation_id: variation.variation_id,
-                    name: variation.name || "",
-                    size_value: variation.size_value || 1,
-                    size_unit: variation.size_unit || "mg",
-                    platform_price: variation.admin_price || variation.platform_price || 1,
+                    variant_name: variation.variant_name || "",
+                    variant_price: variation.variant_price || 1,
+                    variant_stock: variation.variant_stock || 1,
+                    variant_unit: variation.variant_unit || "mg",
+                    variant_batch_no: variation.variant_batch_no || "",
+                    variant_expiry_date: variation.variant_expiry_date || "",
+                    variant_manufacturer: variation.variant_manufacturer || "",
                 })) || []
 
                 setValue("name", productData.name || "")
@@ -180,17 +171,14 @@ const ProductManageForm = ({
                 setValue("categories", productData.categories?.map((cat: any) => cat.id) || [])
                 setValue("tags", productData.tags?.map((tag: any) => tag.id) || [])
                 setValue("prescription_required", productData.prescription_required || false)
-                setValue("health_condition", productData.health_condition?.map((healthCondition: any) => healthCondition.id) || [])
+                setValue("health_condition", productData.health_conditions?.map((h: any) => h.id) || [])
                 setValue("discount_percent", productData.discount_percent || 0)
-
-                if (mappedVariations.length > 0) {
-                    replace(mappedVariations)
-                }
-
+                 setValue("generic_product_name_id",productData.generic_product?.generic_product_id || 0)
+                if (mappedVariations.length > 0) replace(mappedVariations)
                 setIsDataLoaded(true)
             }
         } catch (error) {
-            console.error("Error fetching product data:", error)
+            console.error("Failed to fetch product data:", error)
             toast.error("Failed to fetch product data")
         } finally {
             setIsLoading(false)
@@ -204,33 +192,27 @@ const ProductManageForm = ({
     }, [fetchProductData, isUpdateMode, productUuid, brands.length, productUnits.length])
 
     const handleBrandChange = useCallback((brandId: string | number) => {
-        const numericId = typeof brandId === "string" ? parseInt(brandId, 10) : brandId
-        setValue("brand_id", numericId, {shouldValidate: true})
+        setValue("brand_id", typeof brandId === "string" ? parseInt(brandId, 10) : brandId, {shouldValidate: true})
+    }, [setValue])
+
+    const handleGenericNameChange = useCallback((genericId: string | number) => {
+        setValue("generic_product_name_id", typeof genericId === "string" ? parseInt(genericId, 10) : genericId, {shouldValidate: true})
     }, [setValue])
 
     const handleCategoryChange = useCallback((values: (string | number)[]) => {
-        const numericValues = values.map((value) =>
-            typeof value === "string" ? parseInt(value, 10) : value
-        )
-        setValue("categories", numericValues, {shouldValidate: true})
+        setValue("categories", values.map(Number), {shouldValidate: true})
     }, [setValue])
 
     const handleTagChange = useCallback((values: (string | number)[]) => {
-        const numericValues = values.map((value) =>
-            typeof value === "string" ? parseInt(value, 10) : value
-        )
-        setValue("tags", numericValues, {shouldValidate: true})
+        setValue("tags", values.map(Number), {shouldValidate: true})
     }, [setValue])
 
     const handleHealthConditionChange = useCallback((values: (string | number)[]) => {
-        const numericValues = values.map((value) =>
-            typeof value === "string" ? parseInt(value, 10) : value
-        )
-        setValue("health_condition", numericValues, {shouldValidate: true})
+        setValue("health_condition", values.map(Number), {shouldValidate: true})
     }, [setValue])
 
     const handleSizeUnitChange = useCallback((index: number) => (value: string | number) => {
-        setValue(`variations.${index}.size_unit` as const, value as string, {shouldValidate: true})
+        setValue(`variations.${index}.variant_unit`, value as string, {shouldValidate: true})
     }, [setValue])
 
     const handleFeaturedImageChange = useCallback((files: File[]) => {
@@ -242,12 +224,14 @@ const ProductManageForm = ({
     }, [setValue])
 
     const handleAddVariation = useCallback(() => {
-        const defaultUnit = productUnits[0]?.value ?? "mg"
         append({
-            name: "",
-            size_value: 1,
-            size_unit: defaultUnit,
-            platform_price: 1
+            variant_name: "",
+            variant_price: 1,
+            variant_stock: 1,
+            variant_unit: productUnits[0]?.value ?? "mg",
+            variant_batch_no: "",
+            variant_expiry_date: "",
+            variant_manufacturer: "",
         })
     }, [append, productUnits])
 
@@ -259,13 +243,14 @@ const ProductManageForm = ({
         setValue("prescription_required", checked, {shouldValidate: true})
     }, [setValue])
 
+    const handleExpiryDateChange = useCallback((index: number) => (date: Date | undefined) => {
+        setValue(`variations.${index}.variant_expiry_date`, date ? date.toISOString().split('T')[0] : "", {shouldValidate: true})
+    }, [setValue])
+
     const onSubmit = useCallback(async (data: ProductCreate | ProductUpdate) => {
         try {
             if (isUpdateMode && productUuid) {
-                const response = await productService.updateProduct(
-                    productUuid,
-                    data as ProductUpdate
-                )
+                const response = await productService.updateProduct(productUuid, data as ProductUpdate)
                 if (response) {
                     toast.success(response?.message || "Product updated successfully")
                     onSuccessAction?.()
@@ -279,7 +264,6 @@ const ProductManageForm = ({
                 }
             }
         } catch (error: any) {
-            console.error("Submit error:", error?.message)
             toast.error(error?.message || "Failed to submit product")
         }
     }, [isUpdateMode, productUuid, onSuccessAction, router])
@@ -293,327 +277,237 @@ const ProductManageForm = ({
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-            <div className="container mx-auto px-4 py-6 lg:px-8">
-                <div className="max-w-6xl mx-auto space-y-6">
-                    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                                {isUpdateMode ? "Update Product" : "Create Product"}
-                            </h1>
-                            <p className="text-slate-600 mt-1">
-                                {isUpdateMode
-                                    ? "Modify the product details and save your changes"
-                                    : "Add a new product to your inventory with detailed information"
-                                }
-                            </p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <div
+                        className={cn("rounded-xl p-3 shadow-sm", isUpdateMode ? "bg-gradient-to-br from-amber-500 to-orange-500" : "bg-gradient-to-br from-blue-500 to-indigo-600")}>
+                        {isUpdateMode ? <Edit className="h-6 w-6 text-white"/> :
+                            <Package className="h-6 w-6 text-white"/>}
+                    </div>
+                    <div className="flex-1">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
+                            {isUpdateMode ? "Update Product" : "Create New Product"}
+                        </h1>
+                        <p className="mt-1 text-base text-slate-600 sm:text-lg">
+                            {isUpdateMode ? "Modify product details and save your changes" : "Add a new product with comprehensive information"}
+                        </p>
+                    </div>
+                </div>
+
+                <div onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-lg sm:p-8">
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="rounded-lg bg-blue-50 p-2">
+                                <Package className="h-5 w-5 text-blue-600"/>
+                            </div>
+                            <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Basic Information</h2>
                         </div>
-                    </header>
-
-                    <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-0">
-                            <CardHeader className="pb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${isUpdateMode ? "bg-amber-100" : "bg-blue-100"}`}>
-                                        {isUpdateMode ? (
-                                            <Edit className="w-5 h-5 text-amber-600"/>
-                                        ) : (
-                                            <Package className="w-5 h-5 text-blue-600"/>
-                                        )}
-                                    </div>
-                                    <CardTitle className="text-xl">Product Information</CardTitle>
+                        <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+                            <TextInputField {...register("name")} label="Product Name" placeholder="Enter product name"
+                                            error={errors.name?.message} required={!isUpdateMode} autoComplete="off"/>
+                            <SearchSelectField
+                                options={brandsOptions.map((brand) => ({value: brand.id, label: brand.name}))}
+                                value={watchBrandId} onChange={handleBrandChange} placeholder="Select Brand"
+                                label="Brand" error={errors.brand_id?.message} required={!isUpdateMode}/>
+                            <SearchSelectField label="Generic Name" options={genericNameOptions} value={watchGenericId}
+                                               onChange={handleGenericNameChange} placeholder="Select Generic Name"
+                                               error={errors.generic_product_name_id?.message}
+                                               required={!isUpdateMode}/>
+                        </div>
+                        <TextInputField {...register("description")} textarea label="Description"
+                                        placeholder="Enter detailed product description"
+                                        error={errors.description?.message} className="min-h-[100px] sm:min-h-[120px]"
+                                        required={!isUpdateMode}/>
+                        <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-6 sm:gap-6 md:grid-cols-2">
+                            <TextInputField {...register("discount_percent")} label="Discount Percentage" type="number"
+                                            placeholder="Enter discount percentage"
+                                            error={errors.discount_percent?.message} required={!isUpdateMode}/>
+                            <div
+                                className="flex items-center justify-between rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition-colors hover:border-slate-300 sm:p-5">
+                                <div className="space-y-0.5 sm:space-y-1">
+                                    <label htmlFor="prescription-required"
+                                           className="cursor-pointer text-sm font-semibold text-slate-900">Prescription
+                                        Required</label>
+                                    <p className="text-xs text-slate-500 sm:text-sm">Requires valid prescription</p>
                                 </div>
-                            </CardHeader>
+                                <Switch id="prescription-required" checked={watchPrescriptionRequired}
+                                        onCheckedChange={handlePrescriptionToggle}
+                                        aria-label="Toggle prescription requirement"/>
+                            </div>
+                        </div>
+                    </div>
 
-                            <CardContent className="space-y-8">
-                                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <TextInputField
-                                        {...register("name")}
-                                        label="Product Name"
-                                        placeholder="Enter product name"
-                                        error={errors.name?.message}
-                                        required={!isUpdateMode}
-                                        autoComplete="off"
-                                    />
-                                    <SearchSelectField
-                                        options={brandsOptions.map((brand) => ({
-                                            value: brand.id,
-                                            label: brand.name
-                                        }))}
-                                        value={watchBrandId}
-                                        onChange={handleBrandChange}
-                                        placeholder="Select Brand"
-                                        label="Brand"
-                                        error={errors.brand_id?.message}
-                                        required={!isUpdateMode}
-                                    />
-                                </section>
+                    <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-lg sm:p-8">
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="rounded-lg bg-orange-50 p-2">
+                                <Package className="h-5 w-5 text-orange-600"/>
+                            </div>
+                            <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Product Images</h2>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+                            <FileInputField
+                                label="Featured Image"
+                                accept="image/*"
+                                multiple={false}
+                                onFileChange={handleFeaturedImageChange}
+                                error={errors.featured_image?.message}
+                                showPreviews
+                                maxFileSize={MAX_FILE_SIZE}
+                                required={!isUpdateMode}
+                                helperText={`Only one image is allowed and max file size is ${MAX_FILE_SIZE}KB`}
+                            />
+                            <FileInputField
+                                label="Gallery Images"
+                                accept="image/*"
+                                multiple
+                                onFileChange={handleGalleryImagesChange}
+                                error={errors.gallery_images?.message}
+                                showPreviews
+                                maxFileSize={MAX_FILE_SIZE}
+                                required={!isUpdateMode}
+                                helperText={`Multiple images are allowed and max file size is ${MAX_FILE_SIZE}KB`}
+                            />
+                        </div>
+                    </div>
 
-                                <TextInputField
-                                    {...register("description")}
-                                    textarea
-                                    label="Product Description"
-                                    placeholder="Enter detailed product description"
-                                    error={errors.description?.message}
-                                    className="min-h-[100px]"
-                                    required={!isUpdateMode}
-                                />
+                    <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-lg sm:p-8">
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="rounded-lg bg-green-50 p-2">
+                                <Layers className="h-5 w-5 text-green-600"/>
+                            </div>
+                            <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Categories &
+                                Classification</h2>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+                            <MultiSelectField options={categorySelectOptions} value={watchCategories}
+                                              onValueChange={handleCategoryChange} placeholder="Select categories"
+                                              label="Categories" error={errors.categories?.message} maxSelected={10}
+                                              searchable clearable required={!isUpdateMode}/>
+                            <MultiSelectField options={tagSelectOptions} value={watchTags}
+                                              onValueChange={handleTagChange} placeholder="Select tags" label="Tags"
+                                              error={errors.tags?.message} maxSelected={10} searchable clearable
+                                              required={!isUpdateMode}/>
+                            <MultiSelectField options={healthConditionOptions} value={watchHealthCondition}
+                                              onValueChange={handleHealthConditionChange}
+                                              placeholder="Select health conditions" label="Health Conditions"
+                                              error={errors.health_condition?.message} maxSelected={10} searchable
+                                              clearable required={!isUpdateMode}/>
+                        </div>
+                    </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <TextInputField
-                                        {...register("discount_percent")}
-                                        label="Discount (%)"
-                                        type="number"
-                                        placeholder="Enter discount percentage"
-                                        error={errors.discount_percent?.message}
-                                        required={!isUpdateMode}
-                                    />
+                    <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-lg sm:p-8">
+                        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-lg bg-purple-50 p-2">
+                                    <Tags className="h-5 w-5 text-purple-600"/>
+                                </div>
+                                <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">Product Variations</h2>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" onClick={handleAddVariation}
+                                    className="w-full border-2 hover:border-blue-300 hover:bg-blue-50 sm:w-auto">
+                                <Plus className="mr-2 h-4 w-4"/>
+                                Add Variation
+                            </Button>
+                        </div>
+
+                        <div className="space-y-4 sm:space-y-5">
+                            {fields.map((field, index) => {
+                                const currentSizeUnit = watch(`variations.${index}.variant_unit`)
+                                return (
+                                    <div key={field.id}
+                                         className="rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50/50 to-white p-4 transition-all hover:border-slate-300 sm:p-6">
+                                        <div className="mb-4 flex items-center justify-between sm:mb-6">
+                                            <h3 className="flex items-center gap-2 font-semibold text-slate-800 sm:gap-3">
+                                                <span
+                                                    className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-bold text-white shadow-sm sm:h-8 sm:w-8">{index + 1}</span>
+                                                <span className="text-sm sm:text-base">Variation {index + 1}</span>
+                                            </h3>
+                                            {fields.length > 1 && (
+                                                <Button type="button" variant="ghost" size="sm"
+                                                        onClick={handleRemoveVariation(index)}
+                                                        className="rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700">
+                                                    <X className="mr-1 h-4 w-4"/>
+                                                    <span className="hidden sm:inline">Remove</span>
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+                                            <TextInputField
+                                                label="Variation Name" {...register(`variations.${index}.variant_name`)}
+                                                error={errors.variations?.[index]?.variant_name?.message}
+                                                placeholder="e.g. 500mg Tablet" required autoComplete="off"/>
+                                            <TextInputField
+                                                label="Stock Quantity" {...register(`variations.${index}.variant_stock`, {valueAsNumber: true})}
+                                                error={errors.variations?.[index]?.variant_stock?.message}
+                                                placeholder="e.g. 100" type="number" required/>
+                                            <SearchSelectField label="Unit" placeholder="Select Unit"
+                                                               options={productUnits.map((unit: any) => ({
+                                                                   value: unit.value,
+                                                                   label: unit.label || unit.value
+                                                               }))} value={currentSizeUnit}
+                                                               onChange={handleSizeUnitChange(index)}
+                                                               error={errors.variations?.[index]?.variant_unit?.message}
+                                                               required/>
+                                            <TextInputField
+                                                label={`Price (${CURRENCY_SYMBOL})`} {...register(`variations.${index}.variant_price`, {valueAsNumber: true})}
+                                                error={errors.variations?.[index]?.variant_price?.message}
+                                                placeholder="0.00" type="number" required/>
+                                            <TextInputField
+                                                label="Batch Number " {...register(`variations.${index}.variant_batch_no`)}
+                                                error={errors.variations?.[index]?.variant_batch_no?.message}
+                                                placeholder="e.g. BTH-2024-001" required/>
+                                            <Controller
+                                                name={`variations.${index}.variant_expiry_date`}
+                                                control={control}
+                                                render={({field}) => (
+                                                    <DatePickerField
+                                                        label="Expiry Date"
+                                                        placeholder="Select expiry date"
+                                                        value={field.value ? new Date(field.value) : undefined}
+                                                        onChangeAction={handleExpiryDateChange(index)}
+                                                        error={errors.variations?.[index]?.variant_expiry_date?.message}
+                                                        required
+                                                        minDate={new Date()}
+                                                        dateFormat="PPP"
+                                                        clearable
+                                                    />
+                                                )}
+                                            />
+                                            <TextInputField
+                                                label="Manufacturer" {...register(`variations.${index}.variant_manufacturer`)}
+                                                error={errors.variations?.[index]?.variant_manufacturer?.message}
+                                                placeholder="e.g. ABC Pharma" required/>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col justify-end gap-3 pt-4 sm:flex-row sm:gap-4">
+                        <Button type="button" variant="outline" size="lg" onClick={handleReset}
+                                className="w-full border-2 hover:bg-slate-50 sm:w-auto" disabled={isSubmitting}>
+                            <XCircle className="mr-2 h-4 w-4"/>
+                            Reset Form
+                        </Button>
+                        <Button type="submit" size="lg" disabled={isSubmitting}
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all sm:w-auto"
+                                onClick={handleSubmit(onSubmit)}>
+                            {isSubmitting ? (
+                                <>
                                     <div
-                                        className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50/50">
-                                        <div className="space-y-0.5">
-                                            <label
-                                                htmlFor="prescription-required"
-                                                className="text-sm font-medium text-slate-900 cursor-pointer"
-                                            >
-                                                Prescription Required
-                                            </label>
-                                            <p className="text-sm text-slate-500">
-                                                Enable if this product requires a valid prescription
-                                            </p>
-                                        </div>
-                                        <Switch
-                                            id="prescription-required"
-                                            checked={watchPrescriptionRequired}
-                                            onCheckedChange={handlePrescriptionToggle}
-                                            aria-label="Toggle prescription requirement"
-                                        />
-                                    </div>
-                                </div>
-
-                                {!isUpdateMode && (
-                                    <>
-                                        <Separator className="my-8"/>
-                                        <section className="space-y-6">
-                                            <header className="flex items-center gap-3 mb-4">
-                                                <div className="p-2 bg-orange-100 rounded-lg">
-                                                    <Package className="w-5 h-5 text-orange-600"/>
-                                                </div>
-                                                <h2 className="text-lg font-semibold">Product Images</h2>
-                                            </header>
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                                <FileInputField
-                                                    label="Featured Image"
-                                                    accept="image/*"
-                                                    multiple={false}
-                                                    onFileChange={handleFeaturedImageChange}
-                                                    error={errors.featured_image?.message}
-                                                    showPreviews
-                                                    maxFileSize={MAX_FILE_SIZE}
-                                                    required
-                                                    helperText={'Only one image is allowed and max file size is ' + MAX_FILE_SIZE + 'KB'}
-                                                />
-                                                <FileInputField
-                                                    label="Gallery Images"
-                                                    accept="image/*"
-                                                    multiple
-                                                    onFileChange={handleGalleryImagesChange}
-                                                    error={errors.gallery_images?.message}
-                                                    showPreviews
-                                                    maxFileSize={MAX_FILE_SIZE}
-                                                    required
-                                                    helperText={'Multiple images are allowed and max file size is ' + MAX_FILE_SIZE + 'KB'}
-                                                />
-                                            </div>
-                                        </section>
-                                    </>
-                                )}
-
-                                <Separator className="my-8"/>
-
-                                <section className="space-y-6">
-                                    <header className="flex items-center gap-3 mb-4">
-                                        <div className="p-2 bg-green-100 rounded-lg">
-                                            <Layers className="w-5 h-5 text-green-600"/>
-                                        </div>
-                                        <h2 className="text-lg font-semibold">Categories & Tags</h2>
-                                    </header>
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        <MultiSelectField
-                                            options={categorySelectOptions}
-                                            value={watchCategories}
-                                            onValueChange={handleCategoryChange}
-                                            placeholder="Select categories"
-                                            label="Categories"
-                                            error={errors.categories?.message}
-                                            maxSelected={10}
-                                            searchable
-                                            clearable
-                                            required={!isUpdateMode}
-                                        />
-                                        <MultiSelectField
-                                            options={tagSelectOptions}
-                                            value={watchTags}
-                                            onValueChange={handleTagChange}
-                                            placeholder="Select tags"
-                                            label="Tags"
-                                            error={errors.tags?.message}
-                                            maxSelected={10}
-                                            searchable
-                                            clearable
-                                            required={!isUpdateMode}
-                                        />
-                                        <MultiSelectField
-                                            options={healthConditionOptions}
-                                            value={watchHealthCondition}
-                                            onValueChange={handleHealthConditionChange}
-                                            placeholder="Select health conditions"
-                                            label="Health Conditions"
-                                            error={errors.health_condition?.message}
-                                            maxSelected={10}
-                                            searchable
-                                            clearable
-                                            required={!isUpdateMode}
-                                        />
-                                    </div>
-                                </section>
-
-                                <Separator className="my-8"/>
-
-                                <section className="space-y-6">
-                                    <header className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-purple-100 rounded-lg">
-                                                <Tags className="w-5 h-5 text-purple-600"/>
-                                            </div>
-                                            <h2 className="text-lg font-semibold">Product Variations</h2>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleAddVariation}
-                                            className="hover:bg-blue-50 hover:border-blue-200"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2"/>
-                                            Add Variation
-                                        </Button>
-                                    </header>
-
-                                    <div className="space-y-4">
-                                        {fields.map((field, index) => {
-                                            const currentSizeUnit = watch(`variations.${index}.size_unit`)
-
-                                            return (
-                                                <div
-                                                    key={field.id}
-                                                    className="border border-slate-200 rounded-xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors"
-                                                >
-                                                    <header className="flex items-center justify-between mb-6">
-                                                        <h3 className="font-medium text-slate-700 flex items-center gap-2">
-                                                            <span
-                                                                className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center justify-center font-semibold">
-                                                                {index + 1}
-                                                            </span>
-                                                            Variation {index + 1}
-                                                        </h3>
-                                                        {fields.length > 1 && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={handleRemoveVariation(index)}
-                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                            >
-                                                                <X className="w-4 h-4"/>
-                                                            </Button>
-                                                        )}
-                                                    </header>
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                                        <TextInputField
-                                                            label="Variation Name"
-                                                            {...register(`variations.${index}.name`)}
-                                                            error={errors.variations?.[index]?.name?.message}
-                                                            placeholder="Enter variation name"
-                                                            required
-                                                            autoComplete="off"
-                                                        />
-                                                        <TextInputField
-                                                            label="Quantity"
-                                                            {...register(`variations.${index}.size_value`, {
-                                                                valueAsNumber: true
-                                                            })}
-                                                            error={errors.variations?.[index]?.size_value?.message}
-                                                            placeholder="Enter size"
-                                                            type="number"
-                                                            required
-                                                        />
-                                                        <SearchSelectField
-                                                            label="Size Unit"
-                                                            placeholder="Select unit"
-                                                            options={productUnits.map((unit: any) => ({
-                                                                value: unit.value,
-                                                                label: unit.label || unit.value
-                                                            }))}
-                                                            value={currentSizeUnit}
-                                                            onChange={handleSizeUnitChange(index)}
-                                                            error={errors.variations?.[index]?.size_unit?.message}
-                                                            required
-                                                        />
-                                                        <TextInputField
-                                                            label={`Price (${CURRENCY_SYMBOL})`}
-                                                            {...register(`variations.${index}.platform_price`, {
-                                                                valueAsNumber: true
-                                                            })}
-                                                            error={errors.variations?.[index]?.platform_price?.message}
-                                                            placeholder="0.00"
-                                                            type="number"
-                                                            required
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                </section>
-
-                                <Separator className="my-8"/>
-
-                                <footer className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="lg"
-                                        onClick={handleReset}
-                                        className="sm:w-auto w-full"
-                                        disabled={isSubmitting}
-                                    >
-                                        <XCircle className="w-4 h-4 mr-2"/>
-                                        Reset
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        size="lg"
-                                        disabled={isSubmitting}
-                                        className="sm:w-auto w-full bg-primaryColor hover:bg-primaryColor/90 focus:ring-primaryColor/50 focus:ring-2 focus:ring-offset-2"
-                                    >
-                                        {isSubmitting ? (
-                                            <>
-                                                <div
-                                                    className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"/>
-                                                {isUpdateMode ? "Updating..." : "Creating..."}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="w-4 h-4 mr-2"/>
-                                                {isUpdateMode ? "Update Product" : "Create Product"}
-                                            </>
-                                        )}
-                                    </Button>
-                                </footer>
-                            </CardContent>
-                        </form>
-                    </Card>
+                                        className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"/>
+                                    {isUpdateMode ? "Updating..." : "Creating..."}
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="mr-2 h-4 w-4"/>
+                                    {isUpdateMode ? "Update Product" : "Create Product"}
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

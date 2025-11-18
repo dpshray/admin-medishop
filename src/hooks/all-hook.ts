@@ -1,11 +1,11 @@
 import {useQuery} from "@tanstack/react-query"
 import tagService from "@/service/tag.service"
 
-import {PaginatedResponse} from "@/types/types"
+import {PaginatedResponse, ParamsType} from "@/types/types"
 import categoriesService from "@/service/categories.service";
 import brandService from "@/service/brand.service";
 import productService from "@/service/product/product.service";
-import vendorService from "@/service/vendor.service";
+import genericNameService from "@/service/generic-name.service";
 
 export interface Tag {
     id: number
@@ -28,13 +28,12 @@ export interface Brand {
     name: string
 }
 
+
 const useTags = () => {
     const query = useQuery<PaginatedResponse<Tag>, Error>({
         queryKey: ["tags"],
         queryFn: async () => {
-            const res = await tagService.getAllTags()
-            console.log("Response from tag table", res)
-            return res
+            return await tagService.getAllTags()
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
@@ -58,9 +57,7 @@ const useCategories = () => {
     const query = useQuery<PaginatedResponse<Category>, Error>({
         queryKey: ["categories"],
         queryFn: async () => {
-            const res = await categoriesService.getAllCategories()
-            console.log("Response from category table", res)
-            return res
+            return await categoriesService.getAllCategories()
         },
         staleTime: 0,
         refetchOnWindowFocus: false,
@@ -112,7 +109,6 @@ const useProductUnits = () => {
         queryKey: ["product-units"],
         queryFn: async () => {
             const res = await productService.getProductUnitList()
-            console.log("Response from product unit table", res?.data)
             return res?.data
         },
         staleTime: 0,
@@ -124,6 +120,27 @@ const useProductUnits = () => {
         productUnits: query?.data ?? [],
     }
 }
+const useGenericName = () => {
+    const query = useQuery<any, Error>({
+        queryKey: ["generic-name"],
+        queryFn: async () => {
+            const params: ParamsType = { per_page: 1000 }
+            const res: any = await genericNameService.getAllGenericNames(params)
+            console.log("Response from generic name table", res)
+            return res
+        },
+        staleTime: 0,
+        refetchOnWindowFocus: false,
+    })
+
+    return {
+        ...query,
+        genericNames: query.data?.items ?? [],
+        total_page: query.data?.total_page,
+        total_items: query.data?.total_items,
+        page: query.data?.page
+    }
+}
 
 
 export {
@@ -131,4 +148,5 @@ export {
     useCategories,
     useBrands,
     useProductUnits,
+    useGenericName
 }

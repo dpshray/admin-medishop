@@ -43,9 +43,10 @@ export default function AdminLayout({children}: AdminLayoutProps) {
                 {label: "Products", href: "/admin/products", icon: Package},
                 {label: "Categories", href: "/admin/categories", icon: Layers},
                 {label: "Tags", href: "/admin/tags", icon: Tag},
-                // {label: "Promo Coupons", href: "/admin/coupons", icon: TicketPercent},
+                {label: "Promo Coupons", href: "/admin/coupons", icon: TicketPercent},
                 {label: "Packages", href: "/admin/package", icon: Warehouse},
                 {label: "Banners", href: "/admin/banners", icon: ImageIcon},
+                {label: "Generic  Name", href: "/admin/generic-name", icon: Package},
                 {label: "Kit Bags", href: "/admin/kit-bags", icon: Package},
             ],
         },
@@ -54,24 +55,24 @@ export default function AdminLayout({children}: AdminLayoutProps) {
             items: [
                 {label: "Orders", href: "/admin/orders", icon: ShoppingCart},
                 {label: "Vendor Products ", href: "/admin/vendor-product", icon: Package},
-                // {label: "Order History", href: "/admin/order-history", icon: FileText},
+                {label: "Order History", href: "/admin/order-history", icon: FileText},
             ],
         },
         {
             label: "Health Records",
             items: [
                 {label: "Health Condition", href: "/admin/health-condition", icon: FileText},
-                // {label: "Prescriptions", href: "/admin/prescriptions", icon: ClipboardList},
-                // {label: "Prescription History", href: "/admin/prescription-history", icon: FileText},
+                {label: "Prescriptions", href: "/admin/prescriptions", icon: ClipboardList},
+                {label: "Prescription History", href: "/admin/prescription-history", icon: FileText},
             ],
         },
-        // {
-        //     label: "Reports & Analytics",
-        //     items: [
-        //         {label: "Reports", href: "/admin/reports", icon: BarChart3},
-        //         {label: "Report History", href: "/admin/report-history", icon: ClipboardCheck},
-        //     ],
-        // },
+        {
+            label: "Reports & Analytics",
+            items: [
+                {label: "Reports", href: "/admin/reports", icon: BarChart3},
+                {label: "Report History", href: "/admin/report-history", icon: ClipboardCheck},
+            ],
+        },
         {
             label: "Settings",
             items: [

@@ -31,7 +31,6 @@ export default function VendorRegistrationForm() {
             location: "",
             country: "",
             postal_code: "",
-            is_verified: false,
             vendor_citizenship_card: undefined,
             vendor_tax_certificate: undefined,
             vendor_business_license: undefined,

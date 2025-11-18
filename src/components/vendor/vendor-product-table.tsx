@@ -14,21 +14,13 @@ import {RowActions} from "@/lib/action-button"
 import vendorProductService from "@/service/product/vendor-product.service"
 import {toast} from "sonner"
 import {DEFAULT_PAGE, DEFAULT_PAGE_SIZE, QUERY_STALE_TIME} from "@/config/app-constant"
-import {StatusBadge} from "@/lib/helper"
+import {FormatCurrency, StatusBadge} from "@/lib/helper"
 import VendorProductModal from "@/components/vendor/VendorProductModal"
 import {STATUS_TYPE} from "@/types/enum"
-
-interface ProductVariation {
-    product_variation_id: number
-    vendor_price: number
-    units_in_stock: number
-    variant_name: string
-    variant_size_value: string
-    variant_size_unit: string
-}
+import {ProductVariation} from "@/types/ProductTypes"
 
 interface VendorProduct {
-    accepted: boolean
+    accepted: boolean | null
     product_uuid: string
     product_name: string
     brand: string
@@ -38,7 +30,7 @@ interface VendorProduct {
 export default function VendorProductTable() {
     const router = useRouter()
     const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE)
-    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+    const [totalPage, setTotalPage] = useState(DEFAULT_PAGE)
     const [search, setSearch] = useState("")
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
     const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(null)
@@ -47,14 +39,15 @@ export default function VendorProductTable() {
     const [isAdding, setIsAdding] = useState(false)
 
     const {data, isLoading, isFetching, refetch} = useQuery({
-        queryKey: ["vendor-product", currentPage, pageSize, search],
+        queryKey: ["vendor-product", currentPage, search],
         queryFn: async () => {
             const res = await vendorProductService.getVendorProductsList({
                 page: currentPage,
-                pageSize,
                 search,
+                per_page: DEFAULT_PAGE_SIZE,
             })
-            console.log("Vendor product list response:", res)
+            setCurrentPage(res.page)
+            setTotalPage(res.total_page)
             return res
         },
         staleTime: QUERY_STALE_TIME,
@@ -67,7 +60,7 @@ export default function VendorProductTable() {
         [router]
     )
 
-    const handleDeleteClick = useCallback((product: VendorProduct):void => {
+    const handleDeleteClick = useCallback((product: VendorProduct) => {
         setSelectedProduct(product)
         setDeleteModalOpen(true)
     }, [])
@@ -76,15 +69,11 @@ export default function VendorProductTable() {
         if (!selectedProduct) return
         setIsDeleting(true)
         try {
-            await vendorProductService.deleteVendorProductFromVendor(selectedProduct.product_uuid).then((response) => {
-                console.log("Delete response:", response)
-                toast.success("Product deleted", {description: response.message || "Deleted successfully"})
-            })
+            const response = await vendorProductService.deleteVendorProductFromVendor(selectedProduct.product_uuid)
+            toast.success("Product deleted", {description: response.message || "Deleted successfully"})
             setDeleteModalOpen(false)
             setSelectedProduct(null)
             await refetch()
-
-
         } catch (error: any) {
             toast.error(error?.message || "Failed to delete product")
         } finally {
@@ -100,7 +89,7 @@ export default function VendorProductTable() {
                     <Checkbox
                         checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
                         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                        className="mx-auto"
+                        className=""
                         aria-label="Select all rows"
                     />
                 ),
@@ -119,22 +108,31 @@ export default function VendorProductTable() {
                 accessorKey: "product_name",
                 header: "Product",
                 cell: ({row}) => (
-                    <div
-                        className="flex flex-col items-start gap-1.5 min-w-0 cursor-pointer"
-                        onClick={() => handleView(row.original)}
-                    >
-            <span
-                className="font-medium text-sm truncate max-w-[200px] md:max-w-[300px]"
-                title={row.original.product_name}
-            >
-              {row.original.product_name}
-            </span>
-                        <span
-                            className="text-xs text-muted-foreground truncate max-w-[200px] md:max-w-[300px]"
-                            title={row.original.product_uuid}
+                    <div className="space-y-1">
+                        <div
+                            className="font-semibold text-gray-900 truncate max-w-[200px] cursor-pointer hover:text-[#4a358e] transition-colors"
+                            title={row.original.product_name}
+                            onClick={() => handleView(row.original)}
                         >
-              {row.original.product_uuid}
-            </span>
+                            {row.original.product_name}
+                        </div>
+                        {row.original.variations.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {row.original.variations.slice(0, 2).map((variation) => (
+                                    <span
+                                        key={variation.product_variation_id}
+                                        className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded"
+                                    >
+                    {variation.variant_name}
+                  </span>
+                                ))}
+                                {row.original.variations.length > 2 && (
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                    +{row.original.variations.length - 2} more
+                  </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ),
                 enableSorting: true,
@@ -153,15 +151,11 @@ export default function VendorProductTable() {
             },
             {
                 accessorKey: "variations",
-                header: () => <div className="text-right">Price (Rs.)</div>,
-                cell: ({row}) => {
-                    const price = row.original.variations?.[0]?.vendor_price
-                    const displayPrice =
-                        typeof price === "number" && !isNaN(price)
-                            ? price.toLocaleString("en-NP", {minimumFractionDigits: 2, maximumFractionDigits: 2})
-                            : "—"
-                    return <div className="text-right font-medium text-sm tabular-nums">{displayPrice}</div>
-                },
+                header: () => <div className="text-right">Price</div>,
+                cell: ({row}) =>
+                    <div
+                        className=" font-medium text-sm tabular-nums">{FormatCurrency(row.original.variations?.[0]?.vendor_price)}</div>
+                ,
                 enableSorting: true,
                 size: 120,
             },
@@ -170,8 +164,7 @@ export default function VendorProductTable() {
                 header: () => <div className="text-center">Stock</div>,
                 cell: ({row}) => {
                     const stock = row.original.variations?.[0]?.units_in_stock
-                    const displayStock =
-                        typeof stock === "number" && !isNaN(stock) ? stock.toLocaleString("en-NP") : "—"
+                    const displayStock = typeof stock === "number" && !isNaN(stock) ? stock.toLocaleString("en-NP") : "—"
                     return <div className="text-center font-medium text-sm tabular-nums">{displayStock}</div>
                 },
                 enableSorting: true,
@@ -179,13 +172,19 @@ export default function VendorProductTable() {
             },
             {
                 accessorKey: "accepted",
-                header: "Status",
-                cell: ({row}) => (
-                    <StatusBadge status={row.original.accepted ? STATUS_TYPE.ACCEPTED : STATUS_TYPE.PENDING}/>
-                ),
+                header: "Product Status",
+                cell: ({row}) => {
+                    let status;
+                    if (row.original.accepted === true) status = STATUS_TYPE.ACCEPTED;
+                    else if (row.original.accepted === false) status = STATUS_TYPE.REJECTED;
+                    else status = STATUS_TYPE.PENDING;
+
+                    return <StatusBadge status={status}/>;
+                },
                 enableSorting: true,
                 size: 120,
-            },
+            }
+            ,
             {
                 id: "actions",
                 header: () => <div className="text-center">Actions</div>,
@@ -204,10 +203,6 @@ export default function VendorProductTable() {
     )
 
     const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
-    const handlePageSizeChange = useCallback((size: number) => {
-        setPageSize(size)
-        setCurrentPage(DEFAULT_PAGE)
-    }, [])
     const handleRefresh = useCallback(() => refetch(), [refetch])
     const handleModalClose = useCallback(
         (open: boolean) => {
@@ -234,9 +229,8 @@ export default function VendorProductTable() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                     <h1 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">Vendor Products</h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                        Manage vendor product listings and inventory
-                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Manage vendor product listings and
+                        inventory</p>
                 </div>
                 <Button
                     onClick={handleRefresh}
@@ -247,9 +241,7 @@ export default function VendorProductTable() {
                     aria-label="Refresh product list"
                 >
                     <RefreshCw className={cn("h-3.5 w-3.5 md:h-4 md:w-4", isFetching && "animate-spin")}/>
-                    <span className="text-xs sm:text-sm">
-            {isFetching ? "Refreshing..." : "Refresh"}
-          </span>
+                    <span className="text-xs sm:text-sm">{isFetching ? "Refreshing..." : "Refresh"}</span>
                 </Button>
             </div>
 
@@ -261,14 +253,13 @@ export default function VendorProductTable() {
                 enableSorting
                 enableSearch
                 enableColumnVisibility
+                onSearchAction={setSearch}
                 searchPlaceholder="Search products..."
                 totalCount={data?.total_items ?? 0}
                 pagination={{
                     page: currentPage,
-                    totalPages: data?.total_page ?? 1,
-                    pageSize,
+                    totalPages: totalPage,
                     onPageChange: handlePageChange,
-                    onPageSizeChange: handlePageSizeChange,
                     dataCount: data?.total_items ?? 0,
                 }}
                 noDataText="No vendor products found."

@@ -6,7 +6,7 @@ import {cn} from "@/lib/utils"
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command"
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
 import {Button} from "@/components/ui/button"
-import {CheckIcon, ChevronDownIcon} from "lucide-react"
+import {Check, ChevronDown} from "lucide-react"
 
 interface OptionType {
     value: string | number
@@ -27,6 +27,7 @@ interface SearchSelectFieldProps extends Omit<React.HTMLAttributes<HTMLDivElemen
     inputClassName?: string
     emptyMessage?: string
     searchPlaceholder?: string
+    maxHeight?: number
 }
 
 export default function SearchSelectField({
@@ -43,16 +44,18 @@ export default function SearchSelectField({
                                               helperText,
                                               emptyMessage = "No options found.",
                                               searchPlaceholder,
+                                              maxHeight = 300,
                                               ...props
                                           }: SearchSelectFieldProps) {
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const listRef = useRef<HTMLDivElement>(null)
+    const selectedItemRef = useRef<HTMLDivElement>(null)
     const labelIdRef = useRef(`select-${Math.random().toString(36).slice(2, 11)}`)
     const errorIdRef = useRef(`error-${Math.random().toString(36).slice(2, 11)}`)
 
     const filteredOptions = useMemo(() => {
         if (!searchTerm.trim()) return options
-
         const search = searchTerm.toLowerCase()
         return options.filter(option =>
             option.label.toLowerCase().includes(search)
@@ -75,7 +78,16 @@ export default function SearchSelectField({
     }, [onChange])
 
     useEffect(() => {
-        if (!open) setSearchTerm("")
+        if (!open) {
+            setSearchTerm("")
+        } else if (open && selectedItemRef.current && listRef.current) {
+            setTimeout(() => {
+                selectedItemRef.current?.scrollIntoView({
+                    block: 'nearest',
+                    behavior: 'smooth'
+                })
+            }, 100)
+        }
     }, [open])
 
     const labelId = label ? labelIdRef.current : undefined
@@ -112,7 +124,7 @@ export default function SearchSelectField({
                         <span className={cn("truncate", !displayText && "text-muted-foreground")}>
                             {displayText || placeholder}
                         </span>
-                        <ChevronDownIcon
+                        <ChevronDown
                             size={16}
                             className={cn(
                                 "shrink-0 text-muted-foreground/80 transition-transform duration-200",
@@ -133,7 +145,15 @@ export default function SearchSelectField({
                             value={searchTerm}
                             onValueChange={setSearchTerm}
                         />
-                        <CommandList>
+                        <CommandList
+                            ref={listRef}
+                            style={{
+                                maxHeight: `${maxHeight}px`,
+                                overflowY: 'auto',
+                                overflowX: 'hidden',
+                                WebkitOverflowScrolling: 'touch'
+                            }}
+                        >
                             <CommandEmpty>{emptyMessage}</CommandEmpty>
                             <CommandGroup>
                                 {filteredOptions.length > 0 ? (
@@ -143,10 +163,11 @@ export default function SearchSelectField({
                                             value={option.value.toString()}
                                             onSelect={() => handleSelect(option.value)}
                                             className="cursor-pointer"
+                                            ref={value === option.value ? selectedItemRef : null}
                                         >
                                             <span className="flex-1">{option.label}</span>
                                             {value === option.value && (
-                                                <CheckIcon
+                                                <Check
                                                     size={16}
                                                     className="ml-2 shrink-0 text-primary"
                                                     aria-label="selected"

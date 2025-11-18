@@ -421,6 +421,7 @@ export function DataTable<TData, TValue>({
                                                 "hover:bg-gray-50/70 transition-colors border-b border-gray-100 last:border-0",
                                                 row.getIsSelected() && "bg-[#4a358e]/5 hover:bg-[#4a358e]/10"
                                             )}
+
                                         >
                                             {row.getVisibleCells().map((cell) => (
                                                 <TableCell key={cell.id} className="h-14 px-3 sm:px-4 text-xs sm:text-sm text-gray-700">

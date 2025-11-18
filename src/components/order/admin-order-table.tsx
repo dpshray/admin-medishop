@@ -26,14 +26,13 @@ interface OrderType {
     payment_status: PAYMENT_STATUS
     status: ORDER_STATUS
     no_of_ordered_items: number
+    git_wrap: boolean
+    is_already_assigned_to_vendor: boolean
     order_code: string
     name: string
     email: string
     mobile: string
     address: string
-    assigned_to: string
-    gift_wrap: boolean
-    is_already_assigned_to_vendor: boolean
 }
 
 interface OrdersResponse {
@@ -110,7 +109,7 @@ export default function AdminOrderTable() {
                 <Checkbox
                     checked={row.getIsSelected()}
                     onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label={`Select order ${row.original.order_code}`}
+                    aria-label={`Select order ${row.original.order_uuid}`}
                 />
             ),
             size: 40,
@@ -121,7 +120,7 @@ export default function AdminOrderTable() {
             accessorKey: "order_code",
             header: "Order Code",
             cell: ({row}) => (
-                <div className="font-medium text-sm">
+                <div className="font-medium text-sm cursor-pointer" onClick={() => handleView(row.original)}>
                     {row.original.order_code}
                 </div>
             ),
@@ -146,7 +145,7 @@ export default function AdminOrderTable() {
         },
         {
             accessorKey: "no_of_ordered_items",
-            header: "Items",
+            header: "Order Items",
             cell: ({row}) => (
                 <div className="text-sm font-medium text-center">
                     {row.original.no_of_ordered_items}
@@ -157,7 +156,7 @@ export default function AdminOrderTable() {
         },
         {
             accessorKey: "payment_status",
-            header: "Payment",
+            header: "Payment Status:",
             cell: ({row}) => (
                 <StatusBadge status={row.original.payment_status}/>
             ),
@@ -180,7 +179,7 @@ export default function AdminOrderTable() {
             cell: ({row}) => (
                 <Badge
                     variant={'outline'}
-                    className={cn(row.original.gift_wrap ? "bg-green-500" : "bg-red-500", "font-medium text-white")}>{row.original.gift_wrap ? "Yes" : "No"}</Badge>
+                    className={cn(row.original.git_wrap ? "bg-green-500" : "bg-red-500", "font-medium text-white")}>{row.original.git_wrap ? "Yes" : "No"}</Badge>
             )
 
         },
@@ -195,7 +194,7 @@ export default function AdminOrderTable() {
         },
         {
             accessorKey: "address",
-            header: "Delivery Info",
+            header: "Delivery Address",
             cell: ({row}) => (
                 <div className="flex flex-col gap-0.5">
                     <div className="text-sm">

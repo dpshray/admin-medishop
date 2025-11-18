@@ -47,10 +47,26 @@ class OrderService extends HttpServices {
         }
     }
 
-    async assignOrder(order_uuid: string, vendor_uuid: string) {
+    // order assign to vendor
+    async orderAssignToVendor(order_uuid: string, vendor_uuid: string, order_items_ids: number[]) {
         try {
-           return await this.getRequest({
+            return await this.postRequest({
                 url: `/admin/order/${order_uuid}/assign/${vendor_uuid}`,
+                data: {order_items_ids},
+                config: {
+                    auth: true,
+                },
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
+// order assign to admin/myself
+    async orderAssignToAdmin(order_uuid: string) {
+        try {
+            return await this.getRequest({
+                url: `/admin/order/${order_uuid}/assign`,
                 config: {
                     auth: true,
                 },

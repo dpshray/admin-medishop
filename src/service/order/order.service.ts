@@ -63,18 +63,22 @@ class OrderService extends HttpServices {
     }
 
 // order assign to admin/myself
-    async orderAssignToAdmin(order_uuid: string) {
+    async orderAssignToAdmin(order_uuid: string, order_items_ids: number[]) {
         try {
-            return await this.getRequest({
-                url: `/admin/order/${order_uuid}/assign`,
+            return await this.postRequest({
+                url: `/admin/order/${order_uuid}/assign-to-admin`,
+                data: {
+                    order_items_ids,
+                },
                 config: {
                     auth: true,
                 },
-            })
+            });
         } catch (error) {
-            throw error
+            throw error;
         }
     }
+
 
     async cancelOrder(order_uuid: string) {
         try {
@@ -104,6 +108,7 @@ class OrderService extends HttpServices {
             throw error
         }
     }
+
 
 
 }

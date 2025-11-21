@@ -43,6 +43,7 @@ export default function VendorOrderTable() {
         queryFn: async () => {
             const params = {page: currentPage, limit: pageSize}
             const res = await vendorOrderService.getVendorOrders(params)
+            console.log("Vendor orders response:", res)
             setTotalItems(res?.total_items || 0)
             setTotalPages(res?.total_page || 1)
             return res

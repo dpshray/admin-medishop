@@ -27,15 +27,15 @@ interface CustomPaginationProps {
 }
 
 const CustomPagination = ({
-                              currentPage,
-                              totalPages,
-                              onPageChangeAction,
-                              className = "",
-                              siblingCount = 1,
-                              showBoundaries = true,
-                              showControls = true,
-                              labels = { previous: "Previous", next: "Next" },
-                          }: CustomPaginationProps) => {
+    currentPage,
+    totalPages,
+    onPageChangeAction,
+    className = "",
+    siblingCount = 1,
+    showBoundaries = true,
+    showControls = true,
+    labels = { previous: "Previous", next: "Next" },
+}: CustomPaginationProps) => {
     const handlePageClick = useCallback(
         (page: number) => {
             if (page !== currentPage && page >= 1 && page <= totalPages) {

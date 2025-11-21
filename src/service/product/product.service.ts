@@ -94,10 +94,18 @@ class ProductService extends HttpServices {
         }
     }
 
-
-
-
-
+    async getProductVendorList( uuid: string, page: number = 1, per_page: number = 10) {
+        try {
+            return await this.getRequest({
+                url: `/admin/product/${uuid}/vendors?page=${page}&per_page=${per_page}`,
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
 }
 
 const productService = new ProductService();

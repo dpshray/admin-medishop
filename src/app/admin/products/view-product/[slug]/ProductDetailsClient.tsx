@@ -17,8 +17,10 @@ import {
     Package,
     Share2,
     Star,
+    Store,
     Tag,
     Trash2,
+    User,
     Users,
     Zap
 } from 'lucide-react'
@@ -35,6 +37,7 @@ import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
 import ImageGallery from '@/components/product/image-gallery'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import CustomPagination from '@/components/custom-pagination'
 
 export interface Brand {
     id: number
@@ -58,11 +61,11 @@ export interface ProductTag {
 
 export interface ProductVariation {
     variation_id: number
-    name: string
-    size_value: number
-    size_unit: string
-    admin_price: number
-    units_in_stock: number
+    variant_name: string
+    variant_size_value: number
+    variant_size_unit: string
+    variant_admin_price: number
+    variant_units_in_stock: number
     batch_number: number
     manufacture: string
     expiry_date: string
@@ -110,6 +113,8 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
     const [openDeleteModal, setOpenDeleteModal] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [copySuccess, setCopySuccess] = useState(false)
+    const [page, setPage] = useState(1)
+    const per_page = 4
 
     const { data, isPending, isError, refetch } = useQuery({
         queryKey: ['admin-product', slug],
@@ -123,6 +128,17 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
         retry: 2,
         refetchOnWindowFocus: false
     })
+
+    const { data: vendorRes, isPending: vendorsLoading } = useQuery({
+        queryKey: ['product-vendors', data?.uuid, page],
+        enabled: !!data?.uuid,
+        queryFn: async () => {
+            const res = await productService.getProductVendorList(data!.uuid, page, per_page)
+            return res.data
+        }
+    })
+
+    const vendors = vendorRes?.items ?? []
 
     const handlePreview = useCallback(() => {
         if (!data) return
@@ -451,7 +467,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                         </div>
 
                         <Tabs defaultValue="variations" className="w-full">
-                            <TabsList className="h-10 p-1 bg-slate-100 rounded-xl w-full sm:w-auto grid grid-cols-3 sm:inline-grid mb-6">
+                            <TabsList className="h-10 p-1 bg-slate-100 rounded-xl w-full sm:w-auto grid grid-cols-4 sm:inline-grid mb-6">
                                 <TabsTrigger
                                     value="variations"
                                     className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm font-medium px-3 sm:px-4"
@@ -470,6 +486,12 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                 >
                                     Health Conditions
                                 </TabsTrigger>
+                                <TabsTrigger
+                                    value="vendors"
+                                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm font-medium px-3 sm:px-4"
+                                >
+                                    Vendors
+                                </TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="variations" className="space-y-3">
@@ -483,13 +505,13 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                                 <div className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true" />
                                                 <span className="text-sm text-slate-600">Size:</span>
                                                 <span className="font-semibold text-slate-900">
-                                                    {variation.size_value}{variation.size_unit}
+                                                    {variation.variant_size_value}{variation.variant_size_unit}
                                                 </span>
                                             </div>
                                             {variation.status && <StatusBadge status={variation.status} />}
                                             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-lg">
                                                 <span className="text-sm text-green-700 font-medium">
-                                                    {variation.units_in_stock} in stock
+                                                    {variation.variant_units_in_stock} in stock
                                                 </span>
                                             </div>
                                         </div>
@@ -505,7 +527,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                             <div className="text-left sm:text-right">
                                                 <div className="text-xs text-slate-500 mb-1">Price</div>
                                                 <div className="text-lg font-bold text-blue-600">
-                                                    {FormatCurrency(variation.admin_price)}
+                                                    {FormatCurrency(variation.variant_admin_price)}
                                                 </div>
                                             </div>
                                         </div>
@@ -550,7 +572,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                     <h3 className="text-sm font-semibold text-slate-900 mb-4">
                                         Associated Health Conditions
                                     </h3>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-2">  
                                         {data.health_conditions?.map((healthCondition) => (
                                             <span
                                                 key={healthCondition.id}
@@ -562,6 +584,117 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                     </div>
                                 </div>
                             </TabsContent>
+
+                            <TabsContent value="vendors" className="space-y-4">
+                                {vendorsLoading && (
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-20 w-full rounded-md" />
+                                        <Skeleton className="h-20 w-full rounded-md" />
+                                    </div>
+                                )}
+
+                                {!vendorsLoading && vendors.length === 0 && (
+                                    <p className="text-sm text-slate-500">
+                                        No vendors are selling this product.
+                                    </p>
+                                )}  
+
+                                {!vendorsLoading && vendors.length > 0 && (
+                                    <div className="space-y-4">
+
+                                        {vendors.map((vendor: any) => (
+                                            <div
+                                                key={vendor.vendor_uuid}
+                                                className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow"
+                                            >
+                                                {/* Vendor Header */}
+                                                <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
+                                                    <div className="flex-1">
+                                                        <h3 className="flex items-center gap-1 font-semibold text-lg text-slate-900 mb-1">
+                                                            <span>👤</span>
+                                                            {vendor.vendor_name}
+                                                        </h3>
+                                                        <p className="flex items-center gap-1 text-sm text-slate-600 mb-2">
+                                                            <span>🏪</span>
+                                                            {vendor.store_name}
+                                                        </p>
+                                                        <div className="flex items-center gap-1 text-sm text-slate-500">
+                                                            <span>📞</span>
+                                                            <span>{vendor.mobile_number}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-blue-50 px-3 py-2 rounded-lg">
+                                                        <p className="text-xs text-slate-600 mb-0.5">Available Variants</p>
+                                                        <p className="text-2xl font-bold text-blue-600">
+                                                            {vendor.prices?.length || 0}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Price Variants */}
+                                                <div className="space-y-3">
+                                                    <h4 className="text-sm font-medium text-slate-700 mb-3">
+                                                        Product Variations
+                                                    </h4>
+                                                    
+                                                    {vendor.prices?.map((p: any) => (
+                                                        <div
+                                                            key={p.id}
+                                                            className="bg-gradient-to-r from-slate-50 to-white p-4 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-center mb-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="text-2xl font-bold text-blue-600">
+                                                                        {FormatCurrency(p.price)}
+                                                                    </span>
+                                                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
+                                                                        {p.units_in_stock} in stock
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                                                <div>
+                                                                    <p className="text-slate-500 text-xs mb-0.5">Batch Number</p>
+                                                                    <p className="text-slate-900 font-medium">{p.batch_number}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-slate-500 text-xs mb-0.5">Expiry Date</p>
+                                                                    <p className="text-slate-900 font-medium">
+                                                                        {new Date(p.expiry_date).toLocaleDateString('en-IN', {
+                                                                            year: 'numeric',
+                                                                            month: 'short',
+                                                                            day: 'numeric'
+                                                                        })}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mt-3 pt-3 border-t border-slate-100">
+                                                                <p className="text-slate-500 text-xs mb-1">Manufacturer</p>
+                                                                <p className="text-slate-700 text-sm">{p.manufacture}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                    </div>
+                                )}
+
+                                {vendorRes?.total_page > 1 && (
+                                    <CustomPagination
+                                        currentPage={page}
+                                        totalPages={vendorRes.total_page}
+                                        onPageChangeAction={(newPage) => setPage(newPage)}
+                                        className="pt-4"
+                                    />
+                                )}
+
+                            </TabsContent>
+
                         </Tabs>
                     </div>
                 </div>

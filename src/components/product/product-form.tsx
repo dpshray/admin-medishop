@@ -157,12 +157,12 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                 const productData = response.data
                 const mappedVariations = productData.variations?.map((variation: any) => ({
                     variant_name: variation.variant_name || "",
-                    variant_price: variation.variant_price || 1,
-                    variant_stock: variation.variant_stock || 1,
-                    variant_unit: variation.variant_unit || "mg",
-                    variant_batch_no: variation.variant_batch_no || "",
-                    variant_expiry_date: variation.variant_expiry_date || "",
-                    variant_manufacturer: variation.variant_manufacturer || "",
+                    variant_price: variation.variant_size_value || 1,
+                    variant_stock: variation.variant_units_in_stock || 1,
+                    variant_unit: variation.variant_size_unit || "mg",
+                    variant_batch_no: variation.batch_number || "",
+                    variant_expiry_date: variation.expiry_date || "",
+                    variant_manufacturer: variation.manufacture || "",
                 })) || []
 
                 setValue("name", productData.name || "")
@@ -249,6 +249,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
 
     const onSubmit = useCallback(async (data: ProductCreate | ProductUpdate) => {
         try {
+            console.log("Submitting form data:", data)
             if (isUpdateMode && productUuid) {
                 const response = await productService.updateProduct(productUuid, data as ProductUpdate)
                 if (response) {

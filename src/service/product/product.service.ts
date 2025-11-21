@@ -94,14 +94,16 @@ class ProductService extends HttpServices {
         }
     }
 
-    async getProductVendorList( uuid: string, page: number = 1, per_page: number = 10) {
+    async getProductVendorList( product_uuid:string, params?: ParamsType,) {
         try {
-            return await this.getRequest({
-                url: `/admin/product/${uuid}/vendors?page=${page}&per_page=${per_page}`,
+            const response = await this.getRequest({
+                url: `/admin/product/${product_uuid}/vendors`,
                 config: {
                     auth: true,
+                    params
                 }
             })
+            return response?.data
         } catch (error) {
             throw error
         }

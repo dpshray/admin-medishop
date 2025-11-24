@@ -1,4 +1,4 @@
-import OrderDetailsClient from "@/app/admin/orders/[slug]/OrderDetailsPage"
+import OrderDetailsClient from "@/app/admin/(order)/orders/[slug]/OrderDetailsPage"
 
 interface PageProps {
     params: Promise<{ slug: string }>

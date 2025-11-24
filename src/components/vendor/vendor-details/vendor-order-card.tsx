@@ -1,154 +1,56 @@
 'use client'
 
-import React, {memo, useCallback, useEffect, useMemo, useState} from 'react'
-import {FormatCurrency, StatusBadge} from '@/lib/helper'
-import {AlertCircle, CheckCircle2, FileText, Package, Trash2, X} from 'lucide-react'
-import {cn} from '@/lib/utils'
-import {ORDER_TYPE, STATUS_TYPE} from '@/types/enum'
-import {DocumentSection} from '@/components/vendor/page'
-import {Button} from '@/components/ui/button'
-import {DetailItem} from '@/components/order/OrderedItemCard'
-import TextInputField from '@/components/field/text-input'
-import {Badge} from '@/components/ui/badge'
+import React, { memo, useMemo, useCallback, useState } from 'react'
+import { FormatCurrency, StatusBadge } from '@/lib/helper'
+import { FileText, Package, Trash2, ShoppingBag, Box, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { DocumentSection } from '@/components/vendor/page'
+import { Button } from '@/components/ui/button'
+import { DetailItem } from '@/components/order/OrderedItemCard'
+import { Badge } from '@/components/ui/badge'
+import BatchAllocationEditor from "@/components/vendor/vendor-details/batch-allocation";
 
-export interface OrderItemAssignedTo {
-    vendor_name: string
-    vendor_store_name: string
-}
-
-export interface BatchAllocation {
+export interface AssignedBatchNumber {
+    batch_number_id: number
     batch_number: string
     quantity: number
 }
 
-export interface VendorOrderedItemBase {
-    order_item_id: number
-    type: ORDER_TYPE.PRODUCT | ORDER_TYPE.PACKAGE | ORDER_TYPE.KITBAG
+export interface BatchNumberList {
+    batch_number_id: number
+    quantity: number
+    batch_number: string
+}
+
+export interface ItemProduct {
+    OIP_ID: number
+    variant_id: number
+    product_name: string
+    variant_name: string
+    required_quantity: number
+    assigned_batch_numbers: AssignedBatchNumber[]
+    batch_numbers_list: BatchNumberList[]
+}
+
+export interface OrderedItem {
+    type: string
     prescription_required: boolean
-    prescription_image?: string
-    item_name: string
-    variant_name?: string
-    variant_size?: string
-    quantity: number
-    price: number
-    subtotal: number
-    order_item_assigned_to?: OrderItemAssignedTo | null
-}
-
-interface ProductItem extends VendorOrderedItemBase {
-    type: ORDER_TYPE.PRODUCT
-    batch_number?: string[]
-}
-
-interface PackageSubItem {
+    prescription_image: string | null
+    item_products: ItemProduct[]
     order_item_id: number
-    item_name: string
-    variant_name?: string
-    variant_size?: string
     quantity: number
     price: number
     subtotal: number
-    batch_number?: string[]
 }
 
-export interface PackageItem extends VendorOrderedItemBase {
-    type: ORDER_TYPE.PACKAGE
-    packageItems: PackageSubItem[]
-}
-
-export interface KitbagItem extends VendorOrderedItemBase {
-    type: ORDER_TYPE.KITBAG
-    kitbagItems: PackageSubItem[]
-}
-
-export type VendorOrderedItem = ProductItem | PackageItem | KitbagItem
-
-export interface VendorOrderedItemCardProps {
-    item: VendorOrderedItem
-    index?: number
+interface VendorOrderedItemCardProps {
+    item: OrderedItem
     showAnimation?: boolean
     className?: string
     disabled?: boolean
     ariaLabel?: string
-    onDeleteAction?: (item: VendorOrderedItem) => void
-    assignBatchNumberAction?: (item: VendorOrderedItem, batchData: BatchAllocation[]) => void
+    onDeleteAction?: (item: OrderedItem) => void
 }
-
-interface BatchInput {
-    batchNumber: string
-    quantity: number
-}
-
-interface BatchAllocationEditorProps {
-    batchAllocations: BatchInput[]
-    itemQuantity: number
-    onChange: (index: number, value: string) => void
-    onRemove: (index: number) => void
-}
-
-const BatchAllocationEditor = memo<BatchAllocationEditorProps>(
-    function BatchAllocationEditor({
-                                       batchAllocations,
-                                       itemQuantity,
-                                       onChange,
-                                       onRemove,
-                                   }) {
-        return (
-            <div
-                className="space-y-2 max-h-64 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-                role="list"
-                aria-label="Batch allocations"
-            >
-                {batchAllocations.map((batch, index) => {
-                    const labelId = `batch-label-${index}`
-                    return (
-                        <div
-                            key={`${batch.batchNumber ?? 'batch'}-${index}`}
-                            className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
-                            role="listitem"
-                        >
-                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-600 flex-shrink-0" id={labelId}>
-                  Batch:
-                </span>
-                                    <Badge variant="outline" className="text-xs font-medium" aria-labelledby={labelId}>
-                                        {batch.batchNumber || '—'}
-                                    </Badge>
-                                </div>
-
-                                <TextInputField
-                                    label=""
-                                    type="number"
-                                    placeholder="Enter quantity"
-                                    value={batch.quantity || ''}
-                                    onChange={(e) => onChange(index, e.target.value)}
-                                    min={1}
-                                    max={itemQuantity}
-                                    className="text-sm"
-                                    aria-label={`Quantity for batch ${batch.batchNumber || index + 1}`}
-                                    inputMode="numeric"
-                                    required
-                                />
-                            </div>
-
-                            {batchAllocations.length > 1 && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => onRemove(index)}
-                                    className="h-8 w-8 flex-shrink-0 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                    aria-label={`Remove batch ${batch.batchNumber || index + 1}`}
-                                >
-                                    <X className="h-4 w-4" aria-hidden="true"/>
-                                </Button>
-                            )}
-                        </div>
-                    )
-                })}
-            </div>
-        )
-    })
 
 const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOrderedItemCard({
                                                                                                   item,
@@ -156,336 +58,307 @@ const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOr
                                                                                                   className = '',
                                                                                                   disabled = false,
                                                                                                   ariaLabel,
-                                                                                                  onDeleteAction,
-                                                                                                  assignBatchNumberAction,
+                                                                                                  onDeleteAction
                                                                                               }) {
-    const [batchExpanded, setBatchExpanded] = useState(false)
-    const createInitialAllocations = useCallback(
-        (batchNumbers?: string[]) => {
-            if (!batchNumbers || batchNumbers.length === 0) return []
-            if (batchNumbers.length === 1) {
-                return [{batchNumber: batchNumbers[0], quantity: item.quantity}]
+    const [activeEditorOIP, setActiveEditorOIP] = useState<number | null>(null)
+    const [batchAllocations, setBatchAllocations] = useState<Record<number, Array<{
+        batchNumberId: number
+        batchNumber: string
+        quantity: number
+    }>>>({})
+
+    const isCollectionType = useMemo(() =>
+            ['collection', 'combo', 'package', 'kitbag'].includes(item.type),
+        [item.type]
+    )
+
+    const itemName = useMemo(() => {
+        if (isCollectionType) {
+            const typeNames: Record<string, string> = {
+                collection: 'Collection Package',
+                combo: 'Combo Package',
+                package: 'Package Bundle',
+                kitbag: 'Kit Bag'
             }
-            return batchNumbers.map((bn) => ({batchNumber: bn, quantity: 0}))
-        },
-        [item.quantity]
-    )
-
-    const [batchAllocations, setBatchAllocations] = useState<BatchInput[]>(
-        () => createInitialAllocations((item as ProductItem).batch_number)
-    )
-
-    useEffect(() => {
-        // keep allocations synced if item.batch_number changes
-        setBatchAllocations((prev) => {
-            const incoming = (item as ProductItem).batch_number
-            if (!incoming || incoming.length === 0) return []
-            // if incoming length equals prev length, keep quantities where possible
-            if (incoming.length === prev.length) {
-                return incoming.map((bn, i) => ({batchNumber: bn, quantity: prev[i]?.quantity ?? 0}))
-            }
-            return createInitialAllocations(incoming)
-        })
-    }, [item, createInitialAllocations])
-
-    const variantText = useMemo(
-        () => [item.variant_name, item.variant_size].filter(Boolean).join(' • '),
-        [item.variant_name, item.variant_size]
-    )
-
-    const {totalAllocated, remainingQuantity, isValidAllocation, hasOverAllocation} = useMemo(() => {
-        const total = batchAllocations.reduce((sum, b) => sum + (Number(b.quantity) || 0), 0)
-        const remaining = item.quantity - total
-        const isValid =
-            total === item.quantity && batchAllocations.every((b) => b.quantity > 0 && (b.batchNumber ?? '').toString().trim().length > 0)
-        const hasOver = total > item.quantity
-        return {
-            totalAllocated: total,
-            remainingQuantity: remaining,
-            isValidAllocation: isValid,
-            hasOverAllocation: hasOver,
+            return typeNames[item.type] || 'Bundle'
         }
-    }, [batchAllocations, item.quantity])
+        return item.item_products?.[0]?.product_name || 'Product'
+    }, [item.item_products, item.type, isCollectionType])
 
-    const toggleBatch = useCallback(() => setBatchExpanded((v) => !v), [])
+    const variantText = useMemo(() => {
+        if (isCollectionType) {
+            const count = item.item_products?.length || 0
+            return `${count} Product${count !== 1 ? 's' : ''} included`
+        }
+        return item.item_products?.[0]?.variant_name || null
+    }, [item.item_products, isCollectionType])
 
-    const handleDeleteClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation()
-            if (!disabled && onDeleteAction) {
-                onDeleteAction(item)
+    const productsWithBatches = useMemo(() => {
+        if (!isCollectionType || !item.item_products) return []
+
+        return item.item_products.map(product => ({
+            ...product,
+            first_batch_number: product.assigned_batch_numbers?.[0]?.batch_number ||
+                product.batch_numbers_list?.[0]?.batch_number || null
+        }))
+    }, [item.item_products, isCollectionType])
+
+    const productBatchNumbers = useMemo(() => {
+        if (item.type !== 'product' || !item.item_products?.[0]) return []
+
+        const product = item.item_products[0]
+        return product.assigned_batch_numbers?.map(batch => ({
+            batch_number: batch.batch_number,
+            quantity: batch.quantity
+        })) || []
+    }, [item.item_products, item.type])
+
+    const handleDeleteClick = useCallback(() => {
+        if (onDeleteAction && !disabled) {
+            onDeleteAction(item)
+        }
+    }, [onDeleteAction, disabled, item])
+
+    const cardIcon = useMemo(() => {
+        if (item.type === 'package') return Box
+        if (item.type === 'kitbag') return ShoppingBag
+        if (['collection', 'combo'].includes(item.type)) return ShoppingBag
+        return Package
+    }, [item.type])
+
+    const handleBatchClick = useCallback((OIP_ID: number, batchList: BatchNumberList[]) => {
+        if (activeEditorOIP === OIP_ID) {
+            setActiveEditorOIP(null)
+        } else {
+            setActiveEditorOIP(OIP_ID)
+            if (!batchAllocations[OIP_ID]) {
+                setBatchAllocations(prev => ({
+                    ...prev,
+                    [OIP_ID]: batchList.map(batch => ({
+                        batchNumberId: batch.batch_number_id,
+                        batchNumber: batch.batch_number,
+                        quantity: 0
+                    }))
+                }))
             }
-        },
-        [disabled, onDeleteAction, item]
-    )
+        }
+    }, [activeEditorOIP, batchAllocations])
 
-    const handleQuantityChange = useCallback(
-        (index: number, value: string) => {
-            const numValue = parseInt(value, 10)
-            const quantity = isNaN(numValue) || numValue < 1 ? 0 : Math.min(numValue, item.quantity)
-            setBatchAllocations((prev) => {
-                const updated = [...prev]
-                updated[index] = {...updated[index], quantity}
-                return updated
-            })
-        },
-        [item.quantity]
-    )
-
-    const handleRemoveBatch = useCallback((index: number) => {
-        setBatchAllocations((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev))
+    const handleAllocationChange = useCallback((OIP_ID: number, index: number, value: string) => {
+        setBatchAllocations(prev => {
+            const allocations = [...(prev[OIP_ID] || [])]
+            allocations[index] = {
+                ...allocations[index],
+                quantity: parseInt(value) || 0
+            }
+            return {
+                ...prev,
+                [OIP_ID]: allocations
+            }
+        })
     }, [])
 
-    const handleAssignBatch = useCallback(() => {
-        if (isValidAllocation && assignBatchNumberAction) {
-            const allocations: BatchAllocation[] = batchAllocations.map((b) => ({
-                batch_number: b.batchNumber,
-                quantity: b.quantity,
-            }))
-            assignBatchNumberAction(item, allocations)
-            setBatchExpanded(false)
-        }
-    }, [isValidAllocation, assignBatchNumberAction, item, batchAllocations])
-
-    const hasPackageItems =
-        item.type === ORDER_TYPE.PACKAGE && 'packageItems' in item && Array.isArray((item as PackageItem).packageItems)
-    const hasKitbagItems =
-        item.type === ORDER_TYPE.KITBAG && 'kitbagItems' in item && Array.isArray((item as KitbagItem).kitbagItems)
-
-    const batchNumbers = (item as ProductItem).batch_number ?? []
+    const handleAllocationRemove = useCallback((OIP_ID: number, index: number) => {
+        setBatchAllocations(prev => {
+            const allocations = [...(prev[OIP_ID] || [])]
+            allocations.splice(index, 1)
+            return {
+                ...prev,
+                [OIP_ID]: allocations
+            }
+        })
+    }, [])
 
     return (
         <article
             id={`order-item-${item.order_item_id}`}
             className={cn(
-                'group relative bg-white rounded-xl border shadow-sm',
-                'p-4 md:p-5 lg:p-6',
-                showAnimation && 'transition-all duration-300 ease-out hover:shadow-lg',
-                item.order_item_assigned_to ? 'border-green-500 shadow-green-100' : 'border-gray-200',
+                'group relative bg-white rounded-lg sm:rounded-xl border overflow-hidden w-full',
+                showAnimation && 'transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/50 hover:-translate-y-0.5',
+                'border-gray-200/80 shadow-sm',
                 disabled && 'opacity-60 pointer-events-none',
                 className
             )}
-            aria-label={ariaLabel || `Order item: ${item.item_name}`}
-
+            aria-label={ariaLabel || `Order item: ${itemName}`}
         >
-            <header className="flex items-start gap-3 mb-4">
-                <div
-                    className={cn(
-                        'flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl',
-                        'bg-gradient-to-br from-purple-100 to-blue-50',
-                        'flex items-center justify-center border border-gray-200',
-                        'transition-all duration-300 group-hover:border-blue-400 group-hover:shadow-md'
-                    )}
-                    aria-hidden="true"
-                >
-                    <Package
-                        className="w-5 h-5 md:w-6 md:h-6 text-blue-600 group-hover:scale-110 transition-transform duration-300"
-                        aria-hidden="true"
-                    />
-                </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 pointer-events-none" />
 
-                <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm md:text-base lg:text-lg leading-tight mb-1 truncate">
-                        {item.item_name}
-                    </h3>
-                    {variantText &&
-                        <p className="text-xs md:text-sm text-gray-600 font-medium truncate">{variantText}</p>}
-                </div>
-
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <div className="flex flex-wrap gap-1.5 justify-end" role="group" aria-label="Item status badges">
-                        <StatusBadge status={item.type}/>
-                        {item.order_item_assigned_to && <StatusBadge status={STATUS_TYPE.ASSIGNED}/>}
-                    </div>
-                    {onDeleteAction && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleDeleteClick}
-                            disabled={disabled}
-                            className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            aria-label={`Delete ${item.item_name}`}
-                        >
-                            <Trash2 className="h-4 w-4" aria-hidden="true"/>
-                        </Button>
-                    )}
-                </div>
-            </header>
-
-            <dl className="grid grid-cols-2 gap-3 mb-4">
-                <DetailItem label="Quantity" value={`${item.quantity}×`}/>
-                <DetailItem label="Unit Price" value={FormatCurrency(item.price)}/>
-            </dl>
-
-            {item.prescription_required && item.prescription_image && (
-                <div className="mb-4">
-                    <DocumentSection title="Prescription" documents={[item.prescription_image]} icon={FileText}/>
-                </div>
-            )}
-
-            {hasPackageItems && (
-                <div className="mb-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Package Items</h4>
-                    <ul className="space-y-2" role="list" aria-label="Package contents">
-                        {(item as PackageItem).packageItems.map((subItem, idx) => (
-                            <li key={`package-${idx}`} className="flex justify-between text-sm text-gray-600 truncate">
-                <span className="truncate">
-                  {subItem.item_name}
-                    {subItem.variant_name ? ` • ${subItem.variant_name}` : ''}
-                </span>
-                                <span>{FormatCurrency(subItem.subtotal)}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {hasKitbagItems && (
-                <div className="mb-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Kitbag Items</h4>
-                    <ul className="space-y-2" role="list" aria-label="Kitbag contents">
-                        {(item as KitbagItem).kitbagItems.map((subItem, idx) => (
-                            <li key={`kitbag-${idx}`} className="flex justify-between text-sm text-gray-600 truncate">
-                <span className="truncate">
-                  {subItem.item_name}
-                    {subItem.variant_name ? ` • ${subItem.variant_name}` : ''}
-                </span>
-                                <span>{FormatCurrency(subItem.subtotal)}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {batchNumbers && batchNumbers.length > 0 && (
-                <section className="mb-4" aria-labelledby={`batch-section-${item.order_item_id}`}>
-                    <h4 id={`batch-section-${item.order_item_id}`} className="text-sm font-semibold text-gray-700 mb-2">
-                        Batch Numbers
-                    </h4>
-
-                    <div className="flex flex-wrap gap-2 mb-2" role="group" aria-label="Batch numbers selection">
-                        {batchNumbers.map((num, index) => {
-                            const expanded = batchExpanded
-                            const badgeId = `batch-${item.order_item_id}-${index}`
-                            return (
-                                <Badge
-                                    key={badgeId}
-                                    variant="secondary"
-                                    onClick={toggleBatch}
-                                    className={cn(
-                                        'text-xs font-medium px-3 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1',
-                                        'hover:bg-gray-200 transition-colors duration-200',
-                                        expanded && 'bg-gray-200 border-gray-400'
-                                    )}
-                                    aria-label={`Batch ${num}`}
-                                    aria-expanded={expanded}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault()
-                                            toggleBatch()
-                                        }
-                                    }}
-                                >
-                                    {num}
-                                </Badge>
-                            )
+            <div className="relative p-3 sm:p-4 md:p-5 lg:p-6">
+                <header className="flex items-start gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-5">
+                    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-200/50">
+                        {React.createElement(cardIcon, {
+                            className: "w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white"
                         })}
                     </div>
 
-                    {batchExpanded && (
-                        <div
-                            className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300"
-                            role="region"
-                            aria-label="Batch allocation editor"
-                        >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                                <div className="flex items-center gap-2">
-                                    <h5 className="text-sm font-semibold text-gray-700">Batch Allocation</h5>
-                                    {isValidAllocation &&
-                                        <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true"/>}
-                                    {hasOverAllocation &&
-                                        <AlertCircle className="h-4 w-4 text-red-600" aria-hidden="true"/>}
-                                </div>
-
-                                <Badge
-                                    className={cn(
-                                        'text-xs font-medium',
-                                        remainingQuantity === 0
-                                            ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                                            : hasOverAllocation
-                                                ? 'bg-red-100 text-red-700 hover:bg-red-100'
-                                                : 'bg-amber-100 text-amber-700 hover:bg-amber-100'
-                                    )}
-                                    role="status"
-                                    aria-live="polite"
-                                >
-                                    {hasOverAllocation ? 'Over: ' : 'Remaining: '}
-                                    {Math.abs(remainingQuantity)}
-                                </Badge>
-                            </div>
-
-                            <BatchAllocationEditor
-                                batchAllocations={batchAllocations}
-                                itemQuantity={item.quantity}
-                                onChange={handleQuantityChange}
-                                onRemove={handleRemoveBatch}
-                            />
-
-                            <div
-                                className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-gray-200">
-                                {!isValidAllocation && totalAllocated > 0 && (
-                                    <div
-                                        className={cn(
-                                            'flex items-start gap-2 p-3 rounded-lg flex-1',
-                                            hasOverAllocation ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'
-                                        )}
-                                        role="alert"
-                                    >
-                                        <AlertCircle
-                                            className={cn('h-4 w-4 flex-shrink-0 mt-0.5', hasOverAllocation ? 'text-red-600' : 'text-amber-600')}
-                                            aria-hidden="true"
-                                        />
-                                        <p className={cn('text-xs leading-relaxed', hasOverAllocation ? 'text-red-700' : 'text-amber-700')}>
-                                            {hasOverAllocation
-                                                ? `Allocation exceeds total by ${totalAllocated - item.quantity} unit${totalAllocated - item.quantity !== 1 ? 's' : ''}`
-                                                : `Please allocate ${remainingQuantity} more unit${remainingQuantity !== 1 ? 's' : ''}`}
-                                        </p>
-                                    </div>
-                                )}
-
-                                <Button
-                                    onClick={handleAssignBatch}
-                                    disabled={!isValidAllocation}
-                                    size="sm"
-                                    className={cn('text-sm font-medium sm:ml-auto whitespace-nowrap', 'transition-all duration-200', isValidAllocation && 'hover:scale-[1.02]')}
-                                    aria-label="Assign batch allocations"
-                                >
-                                    {isValidAllocation && <CheckCircle2 className="h-4 w-4 mr-2" aria-hidden="true"/>}
-                                    Assign Batches
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </section>
-            )}
-
-            <footer className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <span className="text-xs md:text-sm text-gray-600 font-semibold uppercase tracking-wide">Subtotal</span>
-                <span
-                    className="text-base md:text-lg lg:text-xl font-bold text-blue-600">{FormatCurrency(item.subtotal)}</span>
-            </footer>
-
-            {item.order_item_assigned_to && (
-                <div className="mt-3 pt-3 border-t border-gray-100 animate-in fade-in duration-300">
-                    <div className="flex items-center gap-2 text-xs text-gray-600 truncate"
-                         title={item.order_item_assigned_to.vendor_store_name}>
-                        <span className="font-semibold flex-shrink-0">Assigned to:</span>
-                        <span className="truncate font-medium">{item.order_item_assigned_to.vendor_store_name}</span>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg leading-tight mb-1 sm:mb-1.5 break-words">
+                            {itemName}
+                        </h3>
+                        {variantText && (
+                            <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium flex items-center gap-2 break-words">
+                                {variantText}
+                            </p>
+                        )}
                     </div>
-                </div>
-            )}
+
+                    <div className="flex flex-col items-end gap-1.5 sm:gap-2 flex-shrink-0">
+                        <div className="scale-75 sm:scale-90 md:scale-100 origin-top-right">
+                            <StatusBadge status={item.type} />
+                        </div>
+                        {onDeleteAction && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleDeleteClick}
+                                disabled={disabled}
+                                className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors rounded-lg"
+                            >
+                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            </Button>
+                        )}
+                    </div>
+                </header>
+
+                <dl className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-5 p-3 sm:p-4 bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg sm:rounded-xl border border-gray-100">
+                    <DetailItem label="Quantity" value={`${item.quantity}×`} />
+                    <DetailItem label="Unit Price" value={FormatCurrency(item.price)} />
+                </dl>
+
+                {item.prescription_required && item.prescription_image && (
+                    <div className="mb-4 sm:mb-5">
+                        <DocumentSection
+                            title="Prescription Required"
+                            documents={[item.prescription_image]}
+                            icon={FileText}
+                        />
+                    </div>
+                )}
+
+                {isCollectionType && productsWithBatches.length > 0 ? (
+                    <div className="mb-4 sm:mb-5">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+                            <h4 className="text-xs sm:text-sm font-bold text-gray-700 px-2 sm:px-3 py-1 bg-gray-100 rounded-full whitespace-nowrap">
+                                Products ({productsWithBatches.length})
+                            </h4>
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+                        </div>
+
+                        <div className="space-y-2 sm:space-y-3">
+                            {productsWithBatches.map(product => (
+                                <div
+                                    key={product.OIP_ID}
+                                    className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl border border-slate-200 hover:border-blue-300 transition-all duration-200"
+                                >
+                                    <div className="space-y-3">
+                                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs sm:text-sm font-bold text-gray-900 mb-1 break-words">
+                                                    {product.product_name}
+                                                </p>
+
+                                                {product.variant_name && (
+                                                    <p className="text-[10px] sm:text-xs text-gray-600 mb-1.5 sm:mb-2 break-words">
+                                                        {product.variant_name}
+                                                    </p>
+                                                )}
+
+                                                {product.assigned_batch_numbers?.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
+                                                        {product.assigned_batch_numbers.map((batch, idx) => (
+                                                            <Badge
+                                                                key={idx}
+                                                                variant="secondary"
+                                                                className="bg-green-50 text-green-700 border-green-200 font-medium text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1"
+                                                            >
+                                                                {batch.batch_number} ({batch.quantity}×)
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {product.batch_numbers_list?.length > 0 && (
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[10px] sm:text-xs font-semibold text-gray-600">
+                                                        Available Batches
+                                                    </p>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleBatchClick(product.OIP_ID, product.batch_numbers_list)}
+                                                        className="h-6 sm:h-7 text-[10px] sm:text-xs gap-1"
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                        {activeEditorOIP === product.OIP_ID ? 'Hide' : 'Assign'}
+                                                    </Button>
+                                                </div>
+
+                                                {activeEditorOIP !== product.OIP_ID && (
+                                                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                                        {product.batch_numbers_list.map((batch) => (
+                                                            <Badge
+                                                                key={batch.batch_number_id}
+                                                                variant="outline"
+                                                                className="bg-blue-50 text-blue-600 border-blue-200 font-medium text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 cursor-pointer hover:bg-blue-100"
+                                                                onClick={() => handleBatchClick(product.OIP_ID, product.batch_numbers_list)}
+                                                            >
+                                                                {batch.batch_number} (Avail: {batch.quantity})
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {activeEditorOIP === product.OIP_ID && batchAllocations[product.OIP_ID] && (
+                                                    <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <BatchAllocationEditor
+                                                            batchAllocations={batchAllocations[product.OIP_ID]}
+                                                            itemQuantity={product.required_quantity * item.quantity}
+                                                            onChangeAction={(index, value) => handleAllocationChange(product.OIP_ID, index, value)}
+                                                            onRemoveAction={(index) => handleAllocationRemove(product.OIP_ID, index)}
+                                                            OIP_ID={product.OIP_ID}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    item.type === 'product' &&
+                    productBatchNumbers.length > 0 && (
+                        <section className="mb-4 sm:mb-5">
+                            <h4 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Batch Numbers</h4>
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                {productBatchNumbers.map((batch, index: number) => (
+                                    <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1"
+                                    >
+                                        {batch.batch_number} ({batch.quantity}×)
+                                    </Badge>
+                                ))}
+                            </div>
+                        </section>
+                    )
+                )}
+
+                <footer className="flex items-center justify-between pt-3 sm:pt-4 md:pt-5 border-t-2 border-gray-100">
+                    <span className="text-xs sm:text-sm md:text-base text-gray-600 font-bold uppercase tracking-wide">
+                        Subtotal
+                    </span>
+                    <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {FormatCurrency(item.subtotal)}
+                    </span>
+                </footer>
+            </div>
         </article>
     )
 })

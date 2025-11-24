@@ -46,6 +46,7 @@ export default function VendorProductTable() {
                 search,
                 per_page: DEFAULT_PAGE_SIZE,
             })
+            console.log("Vendor product list response:", res)
             setCurrentPage(res.page)
             setTotalPage(res.total_page)
             return res

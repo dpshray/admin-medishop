@@ -157,12 +157,12 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                 const productData = response.data
                 const mappedVariations = productData.variations?.map((variation: any) => ({
                     variant_name: variation.variant_name || "",
-                    variant_price: variation.variant_price || 1,
-                    variant_stock: variation.variant_stock || 1,
-                    variant_unit: variation.variant_unit || "mg",
-                    variant_batch_no: variation.variant_batch_no || "",
-                    variant_expiry_date: variation.variant_expiry_date || "",
-                    variant_manufacturer: variation.variant_manufacturer || "",
+                    variant_price: variation.variant_size_value || 1,
+                    variant_stock: variation.variant_units_in_stock || 1,
+                    variant_unit: variation.variant_size_unit || "mg",
+                    variant_batch_no: variation.batch_number || "",
+                    variant_expiry_date: variation.expiry_date || "",
+                    variant_manufacturer: variation.manufacture || "",
                 })) || []
 
                 setValue("name", productData.name || "")
@@ -173,7 +173,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                 setValue("prescription_required", productData.prescription_required || false)
                 setValue("health_condition", productData.health_conditions?.map((h: any) => h.id) || [])
                 setValue("discount_percent", productData.discount_percent || 0)
-                 setValue("generic_product_name_id",productData.generic_product?.generic_product_id || 0)
+                setValue("generic_product_name_id", productData.generic_product?.generic_product_id || 0)
                 if (mappedVariations.length > 0) replace(mappedVariations)
                 setIsDataLoaded(true)
             }
@@ -249,6 +249,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
 
     const onSubmit = useCallback(async (data: ProductCreate | ProductUpdate) => {
         try {
+            console.log("Submitting form data:", data)
             if (isUpdateMode && productUuid) {
                 const response = await productService.updateProduct(productUuid, data as ProductUpdate)
                 if (response) {
@@ -438,7 +439,10 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                 error={errors.variations?.[index]?.variant_name?.message}
                                                 placeholder="e.g. 500mg Tablet" required autoComplete="off"/>
                                             <TextInputField
-                                                label="Stock Quantity" {...register(`variations.${index}.variant_stock`, {valueAsNumber: true})}
+                                                label="Stock Quantity" {...register(`variations.${index}.variant_stock`, {
+                                                valueAsNumber: true,
+                                                min: {value: 0, message: "Stock quantity must be at least 0"}
+                                            })}
                                                 error={errors.variations?.[index]?.variant_stock?.message}
                                                 placeholder="e.g. 100" type="number" required/>
                                             <SearchSelectField label="Unit" placeholder="Select Unit"
@@ -450,7 +454,10 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                                error={errors.variations?.[index]?.variant_unit?.message}
                                                                required/>
                                             <TextInputField
-                                                label={`Price (${CURRENCY_SYMBOL})`} {...register(`variations.${index}.variant_price`, {valueAsNumber: true})}
+                                                label={`Price (${CURRENCY_SYMBOL})`} {...register(`variations.${index}.variant_price`, {
+                                                valueAsNumber: true,
+                                                min: {value: 1, message: "Price must be at least 1"}
+                                            })}
                                                 error={errors.variations?.[index]?.variant_price?.message}
                                                 placeholder="0.00" type="number" required/>
                                             <TextInputField

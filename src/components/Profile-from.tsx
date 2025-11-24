@@ -11,6 +11,7 @@ import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
 import authService from '@/service/auth.service'
 import { MAX_FILE_SIZE } from "@/config/app-constant"
+import {useRouter} from "next/navigation";
 
 const updateUserSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -37,7 +38,8 @@ interface ProfileFormProps {
     onSuccessAction?: () => void
 }
 
-export default function ProfileForm({ open, onOpenChangeAction, onCloseAction, onSuccessAction }: ProfileFormProps) {
+export default function ProfileForm({ open, onOpenChangeAction, onSuccessAction }: ProfileFormProps) {
+    const router = useRouter()
     const { data: profile } = useQuery<UserProfile>({
         queryKey: ['profile'],
         queryFn: async () => {
@@ -69,9 +71,9 @@ export default function ProfileForm({ open, onOpenChangeAction, onCloseAction, o
     }, [profile, open, reset])
 
     const onSubmit = useCallback(async (data: UpdateUserForm) => {
-        await authService.updateProfile(data)
+        await authService.updateProfile(data).then(() => router.back())
         onSuccessAction?.()
-    }, [onSuccessAction])
+    }, [onSuccessAction, router])
 
     const handleProfileImage = useCallback((files: File[]) => {
         if (files.length > 0) {

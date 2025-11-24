@@ -147,7 +147,7 @@ export default function PackageTable() {
                         </span>
                         {discount && (
                             <span className="text-xs text-muted-foreground line-through">
-                               {FormatCurrency(price)} {price.toFixed(2) || 0.00}
+                              {FormatCurrency(price)}
                             </span>
                         )}
                     </div>

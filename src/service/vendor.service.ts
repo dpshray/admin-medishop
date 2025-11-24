@@ -132,6 +132,21 @@ class VendorService extends HttpServices {
             throw error;
         }
     }
+
+    async updateBatchNumbers(product_uuid: string, data: any) {
+        try {
+            return await this.postRequest({
+                url: `/vendor/update-batch-numbers/${product_uuid}`,
+                data,
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            console.log('Error from updateBatchNumbers', error)
+            throw error;
+        }
+    }
 }
 
 

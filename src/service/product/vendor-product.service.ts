@@ -19,7 +19,7 @@ class VendorProductService extends HttpServices {
         }
     }
 
-    async deleteVendorProduct(id: number) {
+    async deleteVendorProduct(id: string) {
         try {
             return await this.deleteRequest({
                 url: `/admin/vendor-product-prices/${id}`,
@@ -32,10 +32,10 @@ class VendorProductService extends HttpServices {
         }
     }
 
-    async vendorProductDetails(id: number) {
+    async vendorProductDetails(slug: string) {
         try {
             const res = await this.getRequest({
-                url: `/admin/vendor-product-prices-detail/${id}`,
+                url: `/admin/vendor-product-prices-detail/${slug}`,
                 config: {
                     auth: true,
                 },
@@ -46,7 +46,7 @@ class VendorProductService extends HttpServices {
         }
     }
 
-    async acceptAndRejectVendorProduct(id: number, isApproved: boolean) {
+    async acceptAndRejectVendorProduct(id: string, isApproved: boolean) {
         try {
             return await this.patchRequest({
                 url: `/admin/vendor-product-prices/${id}/approve`,

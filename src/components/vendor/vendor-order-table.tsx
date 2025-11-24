@@ -15,26 +15,24 @@ import {useRouter} from "next/navigation"
 
 interface AssignedOrder {
     order_uuid: string
-    payment_method: string
-    payment_status: "PAID" | "UNPAID" | string
-    status: string
-    no_of_ordered_items: number
     order_code: string
-    name: string
-    email: string
+    customer_name: string
+    order_status: string
+    delivery_address: string
     mobile: string
-    address: string
+    email: string
+    order_items_count: number
 }
 
 export default function VendorOrderTable() {
     const queryClient = useQueryClient()
-    const [currentPage, setCurrentPage] = useState<number>(1)
-    const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
-    const [totalPages, setTotalPages] = useState<number>(1)
-    const [totalItems, setTotalItems] = useState<number>(0)
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+    const [totalPages, setTotalPages] = useState(1)
+    const [totalItems, setTotalItems] = useState(0)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [selectedOrder, setSelectedOrder] = useState<AssignedOrder | null>(null)
-    const [isDeleting, setIsDeleting] = useState<boolean>(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [pending, startTransition] = useTransition()
     const router = useRouter()
 
@@ -53,11 +51,11 @@ export default function VendorOrderTable() {
 
     const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
     const handlePageSizeChange = useCallback((size: number) => {
-        setPageSize(size);
+        setPageSize(size)
         setCurrentPage(1)
     }, [])
     const handleModalClose = useCallback(() => {
-        setIsDeleteModalOpen(false);
+        setIsDeleteModalOpen(false)
         setSelectedOrder(null)
     }, [])
 
@@ -65,21 +63,21 @@ export default function VendorOrderTable() {
         if (!selectedOrder) return
         setIsDeleting(true)
         try {
-            // await vendorOrderService.deleteVendorOrder(selectedOrder.order_uuid)
             await queryClient.invalidateQueries({queryKey: ["vendor-orders"]})
             handleModalClose()
-        } catch (error) {
-            console.error("Failed to delete order:", error)
         } finally {
             setIsDeleting(false)
         }
     }, [selectedOrder, queryClient, handleModalClose])
 
-    const handleViewOrder = useCallback((order: AssignedOrder) => {
-        startTransition(() => {
-            router.push(`/vendor/vendor-orders/${order.order_uuid}`)
-        })
-    }, [router, startTransition])
+    const handleViewOrder = useCallback(
+        (order: AssignedOrder) => {
+            startTransition(() => {
+                router.push(`/vendor/vendor-orders/${order.order_uuid}`)
+            })
+        },
+        [router, startTransition]
+    )
 
     const assignedOrderColumns = useMemo<ColumnDef<AssignedOrder>[]>(
         () => [
@@ -110,64 +108,50 @@ export default function VendorOrderTable() {
                 header: "Order Code",
                 cell: ({row}) => (
                     <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4 text-gray-400 flex-shrink-0" aria-hidden="true"/>
+                        <ShoppingCart className="h-4 w-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
                         <span className="font-semibold text-gray-900">{row.original.order_code}</span>
                     </div>
                 ),
             },
             {
-                accessorKey: "name",
+                accessorKey: "customer_name",
                 header: "Customer",
                 cell: ({row}) => (
                     <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-gray-900">{row.original.name}</span>
+                        <span className="font-medium text-gray-900">{row.original.customer_name}</span>
                         <span className="text-sm text-gray-500">{row.original.email}</span>
                     </div>
                 ),
             },
             {
-                accessorKey: "address",
+                accessorKey: "delivery_address",
                 header: "Delivery Details",
                 cell: ({row}) => (
                     <div className="flex flex-col gap-0.5 max-w-[250px]">
-                        <span className="text-sm text-gray-900 line-clamp-2" title={row.original.address}>
-                            {row.original.address}
-                        </span>
+                        <span className="text-sm text-gray-900 line-clamp-2">{row.original.delivery_address}</span>
                         <span className="text-sm text-gray-500 font-medium">{row.original.mobile}</span>
                     </div>
                 ),
             },
             {
-                accessorKey: "payment_method",
-                header: "Payment",
-                cell: ({row}) => (
-                    <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium text-gray-900 capitalize">
-                            {row.original.payment_method?.replace(/_/g, ' ')}
-                        </span>
-                        <StatusBadge status={row.original.payment_status}/>
-                    </div>
-                ),
-            },
-            {
-                accessorKey: "status",
+                accessorKey: "order_status",
                 header: "Order Status",
-                cell: ({row}) => <StatusBadge status={row.original.status}/>,
+                cell: ({row}) => <StatusBadge status={row.original.order_status} />,
             },
             {
-                accessorKey: "no_of_ordered_items",
+                accessorKey: "order_items_count",
                 header: "Items",
                 cell: ({row}) => (
                     <div className="flex items-center gap-1.5">
-                        <Package className="h-4 w-4 text-gray-400" aria-hidden="true"/>
-                        <span className="font-medium text-gray-900">{row.original.no_of_ordered_items}</span>
+                        <Package className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                        <span className="font-medium text-gray-900">{row.original.order_items_count}</span>
                     </div>
                 ),
             },
             {
                 id: "actions",
                 header: "Actions",
-                cell: ({row}) => <RowActions row={row} onViewAction={() => handleViewOrder(row.original)}/>,
+                cell: ({row}) => <RowActions row={row} onViewAction={() => handleViewOrder(row.original)} />,
             },
         ],
         [handleViewOrder]
@@ -221,8 +205,8 @@ export default function VendorOrderTable() {
                 title="Delete Order"
                 description={
                     selectedOrder
-                        ? `Are you sure you want to delete order "${selectedOrder.order_code}" from ${selectedOrder.name}? This action cannot be undone and will permanently remove all order data.`
-                        : "Are you sure you want to delete this order? This action cannot be undone."
+                        ? `Are you sure you want to delete order "${selectedOrder.order_code}" from ${selectedOrder.customer_name}?`
+                        : "Are you sure you want to delete this order?"
                 }
                 confirmLabel={isDeleting ? "Deleting..." : "Delete Order"}
                 onConfirm={confirmDeleteProduct}

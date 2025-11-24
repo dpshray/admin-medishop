@@ -84,7 +84,7 @@ export default function TextInputField({
                     <Input
                         id={id}
                         required={required}
-                        className={baseClassName}
+                        className={cn('baseClassName','bg-white')}
                         aria-invalid={!!error}
                         aria-describedby={error ? `${id}-error` : undefined}
                         {...(props as React.InputHTMLAttributes<HTMLInputElement>)}

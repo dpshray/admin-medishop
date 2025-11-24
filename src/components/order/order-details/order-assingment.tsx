@@ -1,9 +1,10 @@
 'use client'
-import React, { memo } from 'react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { UserCog, Store } from 'lucide-react'
-import { FormatCurrency } from '@/lib/helper'
+import React, {memo} from 'react'
+import {Button} from '@/components/ui/button'
+import {cn} from '@/lib/utils'
+import {Store, UserCog} from 'lucide-react'
+import {FormatCurrency} from '@/lib/helper'
+import {Badge} from "@/components/ui/badge";
 
 export interface VendorAssignedItem {
     item_name: string
@@ -25,7 +26,7 @@ interface AssignmentSummaryProps {
 }
 
 const AssignmentSummary = memo<AssignmentSummaryProps>(
-    ({ assignmentsByVendor, onClear }) => (
+    ({assignmentsByVendor, onClear}) => (
         <section className="space-y-4">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground">Assignment Summary</h2>
@@ -41,7 +42,7 @@ const AssignmentSummary = memo<AssignmentSummaryProps>(
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from(assignmentsByVendor.entries()).map(
-                    ([vendorId, { vendor_name, vendor_store_name, items, assignmentType }]) => {
+                    ([vendorId, {vendor_name, vendor_store_name, items, assignmentType}]) => {
                         const isAdmin = assignmentType === 'admin'
                         const bgColor = isAdmin ? 'from-blue-50 to-indigo-50' : 'from-green-50 to-emerald-50'
                         const borderColor = isAdmin ? 'border-blue-200' : 'border-green-200'
@@ -55,15 +56,18 @@ const AssignmentSummary = memo<AssignmentSummaryProps>(
                             >
                                 <div className="mb-3 flex items-start gap-2">
                                     {isAdmin ? (
-                                        <UserCog className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                        <UserCog className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5"/>
                                     ) : (
-                                        <Store className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                        <Store className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5"/>
                                     )}
                                     <div className="flex-1 min-w-0">
                                         <h3 className={cn('font-bold text-sm mb-1', textColor)}>{vendor_name}</h3>
                                         <p className={cn('text-xs font-medium', lightTextColor)}>{vendor_store_name}</p>
                                         <p className={cn('text-xs font-medium', lightTextColor)}>ID: {vendorId}</p>
                                     </div>
+                                    <Badge className={'flex shrink-0 '} variant={'outline'}>
+                                        {items.length} Items
+                                    </Badge>
                                 </div>
                                 <ul className="space-y-1.5 mb-3">
                                     {items.map((item, idx) => (

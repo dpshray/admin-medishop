@@ -91,7 +91,7 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         retry: 2,
     })
 
-    const {data, isLoading} = useQuery<OrderData>({
+    const {data, isLoading, refetch} = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],
         queryFn: async () => {
             const res = await orderService.getOrderDetails(orderUuid)
@@ -210,21 +210,37 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
     }, [])
 
 
-    const handleAssignToAdmin = useCallback(() => {
-        const newAssignments = new Map(itemAssignments)
-        selectedItems.forEach((itemId) => {
-            newAssignments.set(itemId, {
-                itemId,
-                vendorId: "admin",
-                vendorName: "Admin",
-                storeName: "Self-Fulfillment",
-                assignmentType: "admin",
+    const handleAssignToAdmin = useCallback(async () => {
+        if (selectedCount === 0) return;
+
+        const itemIds = Array.from(selectedItems) as number[];
+
+        try {
+            await orderService.orderAssignToAdmin(orderUuid, itemIds).then((res) => {
+                console.log("Assigned to admin", res)
+                toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to Admin`);
+                refetch();
             })
-        })
-        setItemAssignments(newAssignments)
-        setSelectedItems(new Set())
-        toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to Admin`)
-    }, [selectedCount, selectedItems, itemAssignments])
+
+            const newAssignments = new Map(itemAssignments);
+            itemIds.forEach((itemId) => {
+                newAssignments.set(itemId, {
+                    itemId,
+                    vendorId: "admin",
+                    vendorName: "Admin",
+                    storeName: "Admin",
+                    assignmentType: "admin",
+                });
+            });
+
+            setItemAssignments(newAssignments);
+            setSelectedItems(new Set());
+
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to assign items to admin");
+        }
+    }, [selectedCount, selectedItems, orderUuid, itemAssignments, refetch]);
+
 
     const handleAssignToVendor = useCallback(async () => {
         if (!selectedVendor || selectedCount === 0) return
@@ -232,7 +248,9 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         const itemIds = Array.from(selectedItems) as number[]
 
         try {
-            await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds)
+            await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds).then((res) => {
+                refetch()
+            })
 
             const newAssignments = new Map(itemAssignments)
             itemIds.forEach((itemId) => {
@@ -251,7 +269,7 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         } catch (error: any) {
             toast.error(error?.message || "Failed to assign items to vendor")
         }
-    }, [selectedVendor, selectedCount, selectedItems, orderUuid, itemAssignments])
+    }, [selectedVendor, selectedCount, selectedItems, orderUuid, itemAssignments, refetch])
 
 
     const handleClearAssignments = useCallback(() => {
@@ -370,11 +388,6 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
                                     aria-label="Ordered items"
                                 >
                                     {data.ordered_items.map((item) => {
-                                        const localAssignment = itemAssignments.get(item.order_item_id)
-                                        const isAssigned = !!item.order_item_assigned_to
-                                        const assignment = isAssigned
-                                            ? {assignmentType: "vendor" as const}
-                                            : localAssignment
 
                                         return (
                                             <div key={item.order_item_id} className="relative" role="listitem">
@@ -385,20 +398,6 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
                                                     onCheckAction={handleCheckAction}
                                                     className={cn('')}
                                                 />
-                                                {assignment && (
-                                                    <div
-                                                        className={cn(
-                                                            "absolute top-2 right-2 text-white text-xs px-2 py-1 rounded-md font-semibold shadow-lg z-10",
-                                                            assignment.assignmentType === "admin"
-                                                                ? "bg-blue-600"
-                                                                : "bg-green-600"
-                                                        )}
-                                                        role="status"
-                                                        aria-label={`Assigned to ${assignment.assignmentType === "admin" ? "Admin" : "Vendor"}`}
-                                                    >
-                                                        ✓ {assignment.assignmentType === "admin" ? "Admin" : "Vendor"}
-                                                    </div>
-                                                )}
                                             </div>
                                         )
                                     })}
@@ -498,15 +497,6 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
                         )}
 
                         <Separator/>
-
-                        <Button
-                            variant="outline"
-                            onClick={() => startTransition(() => router.back())}
-                            disabled={isPending}
-                            aria-label="Go back to previous page"
-                        >
-                            {isPending ? "Loading..." : "Back"}
-                        </Button>
                     </footer>
 
                     {unassignedCount === 0 && (

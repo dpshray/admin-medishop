@@ -21,19 +21,20 @@ class BatchService extends HttpServices {
 
     ///vendor/order-items/batch-assign
 
-    async assignBatchToOrderItems(data:any) {
+    async assignBatchToOrderItems(order_uuid:string,data: any) {
         try {
             return await this.postRequest({
-                url: `/vendor/order-items/batch-assign`,
+                url: `/vendor/order-items/batch-assign/${order_uuid}`,
                 data,
                 config: {
                     auth: true,
-                }
-            })
+                },
+            });
         } catch (error) {
-            throw error
+            throw error;
         }
     }
+
 
 }
 

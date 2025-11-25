@@ -109,7 +109,22 @@ class OrderService extends HttpServices {
         }
     }
 
-
+//own order list
+    async getAdminAssignOrderList(params?: ParamsType) {
+        try {
+            const response = await this.getRequest({
+                url: '/admin/admin-assigned-orders',
+                config: {
+                    auth: true,
+                    params
+                }
+            })
+            return response?.data
+        } catch (error) {
+            console.log('error from getAdminAssignOrderList', error)
+            throw error
+        }
+    }
 
 }
 

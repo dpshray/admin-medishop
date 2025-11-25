@@ -14,9 +14,21 @@ import {Switch} from "@/components/ui/switch"
 import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert"
-import {Banknote, FileText, Loader2, MapPin, Package, Plus, Save, Shield, Store, User, XCircle, AlertCircle} from "lucide-react"
+import {
+    AlertCircle,
+    Banknote,
+    FileText,
+    Loader2,
+    MapPin,
+    Package,
+    Plus,
+    Save,
+    Shield,
+    Store,
+    User,
+    XCircle
+} from "lucide-react"
 import {useRouter} from "next/navigation"
-import {IMAGE_ALLOWED_EXTENSIONS} from "@/config/app-constant"
 
 interface VendorFormProps {
     mode: "create" | "edit"
@@ -241,7 +253,8 @@ export default function VendorForm({
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+            <div
+                className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
                 <Alert variant="destructive" className="max-w-md">
                     <AlertCircle className="h-4 w-4"/>
                     <AlertTitle>Error</AlertTitle>
@@ -294,7 +307,8 @@ export default function VendorForm({
                                 <section aria-labelledby="personal-info">
                                     <div className="flex items-center gap-2 mb-4">
                                         <User className="w-5 h-5 text-blue-600" aria-hidden="true"/>
-                                        <h2 id="personal-info" className="text-base sm:text-lg font-semibold">Personal Information</h2>
+                                        <h2 id="personal-info" className="text-base sm:text-lg font-semibold">Personal
+                                            Information</h2>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                         <TextInputField
@@ -328,7 +342,8 @@ export default function VendorForm({
                                 <section aria-labelledby="store-info">
                                     <div className="flex items-center gap-2 mb-4">
                                         <Store className="w-5 h-5 text-blue-600" aria-hidden="true"/>
-                                        <h2 id="store-info" className="text-base sm:text-lg font-semibold">Store Information</h2>
+                                        <h2 id="store-info" className="text-base sm:text-lg font-semibold">Store
+                                            Information</h2>
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                                         <TextInputField
@@ -352,7 +367,8 @@ export default function VendorForm({
                                 <section aria-labelledby="banking-info">
                                     <div className="flex items-center gap-2 mb-4">
                                         <Banknote className="w-5 h-5 text-blue-600" aria-hidden="true"/>
-                                        <h2 id="banking-info" className="text-base sm:text-lg font-semibold">Banking Information</h2>
+                                        <h2 id="banking-info" className="text-base sm:text-lg font-semibold">Banking
+                                            Information</h2>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                         <TextInputField
@@ -382,7 +398,8 @@ export default function VendorForm({
                                 <section aria-labelledby="location-info">
                                     <div className="flex items-center gap-2 mb-4">
                                         <MapPin className="w-5 h-5 text-blue-600" aria-hidden="true"/>
-                                        <h2 id="location-info" className="text-base sm:text-lg font-semibold">Location Information</h2>
+                                        <h2 id="location-info" className="text-base sm:text-lg font-semibold">Location
+                                            Information</h2>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                         <TextInputField
@@ -434,7 +451,8 @@ export default function VendorForm({
                                     <section aria-labelledby="verification-status">
                                         <div className="flex items-center gap-2 mb-4">
                                             <Shield className="w-5 h-5 text-blue-600" aria-hidden="true"/>
-                                            <h2 id="verification-status" className="text-base sm:text-lg font-semibold">Verification Status</h2>
+                                            <h2 id="verification-status"
+                                                className="text-base sm:text-lg font-semibold">Verification Status</h2>
                                         </div>
                                         <div className="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
                                             <div className="flex items-center justify-between">
@@ -461,7 +479,8 @@ export default function VendorForm({
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
                                         <div className="flex items-center gap-2">
                                             <FileText className="w-5 h-5 text-blue-600" aria-hidden="true"/>
-                                            <h2 id="documents" className="text-base sm:text-lg font-semibold">Required Documents</h2>
+                                            <h2 id="documents" className="text-base sm:text-lg font-semibold">Required
+                                                Documents</h2>
                                         </div>
                                         {isEditMode && (
                                             <span className="text-xs sm:text-sm text-slate-500">
@@ -500,8 +519,10 @@ export default function VendorForm({
                                                 />
                                                 {isEditMode && existingFile && (
                                                     <div className="space-y-2">
-                                                        <p className="text-xs font-medium text-slate-600">Current Document:</p>
-                                                        <div className="relative w-full h-32 border-2 border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                                                        <p className="text-xs font-medium text-slate-600">Current
+                                                            Document:</p>
+                                                        <div
+                                                            className="relative w-full h-32 border-2 border-slate-200 rounded-lg overflow-hidden bg-slate-50">
                                                             <Image
                                                                 src={existingFile}
                                                                 alt={`Current ${label}`}

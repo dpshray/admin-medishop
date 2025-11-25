@@ -250,6 +250,7 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         try {
             await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds).then((res) => {
                 refetch()
+                console.log("Assigned to vendor", res)
             })
 
             const newAssignments = new Map(itemAssignments)

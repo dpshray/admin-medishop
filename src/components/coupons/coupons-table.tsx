@@ -116,7 +116,9 @@ export default function PromoCouponsTable() {
             header: "Description",
             size: 250,
             cell: ({ row }) => (
-                <span className="text-gray-700 text-xs sm:text-sm line-clamp-2">{row.original.description}</span>
+               <div className={'max-w-[250px] overflow-hidden whitespace-normal break-words'}>
+                   <span className="text-gray-700 text-xs sm:text-sm line-clamp-2">{row.original.description}</span>
+               </div>
             ),
         },
         {

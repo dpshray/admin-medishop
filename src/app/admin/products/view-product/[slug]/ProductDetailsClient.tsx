@@ -1,7 +1,7 @@
 'use client'
 
-import React, { Suspense, useCallback, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, {Suspense, useCallback, useState} from 'react'
+import {useQuery} from '@tanstack/react-query'
 import {
     Archive,
     ArrowLeft,
@@ -22,19 +22,20 @@ import {
     Users,
     Zap
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import {useRouter} from 'next/navigation'
 import productService from '@/service/product/product.service'
-import { ErrorFallback } from '@/components/Error/error-fallback'
+import {ErrorFallback} from '@/components/Error/error-fallback'
 import AdminProductDetailsSkeleton from '@/app/admin/products/view-product/[slug]/loading'
 import ProductActionButton from '@/components/product/product-action-button'
 import ProductMetricCard from '@/components/product/product-metric-card'
-import { FormatCurrency, StatusBadge } from '@/lib/helper'
-import { toast } from 'sonner'
+import {FormatCurrency, StatusBadge} from '@/lib/helper'
+import {toast} from 'sonner'
 import ActionModal from '@/components/modal/ConfirmModal'
 import Image from 'next/image'
-import { Skeleton } from '@/components/ui/skeleton'
+import {Skeleton} from '@/components/ui/skeleton'
 import ImageGallery from '@/components/product/image-gallery'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
+import ProductVendorTab from "@/components/product/ProductVendorTab"
 
 export interface Brand {
     id: number
@@ -105,13 +106,13 @@ export interface AdminProductDetailsProps {
     slug: string
 }
 
-const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ slug }) => {
+const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({slug}) => {
     const router = useRouter()
     const [openDeleteModal, setOpenDeleteModal] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [copySuccess, setCopySuccess] = useState(false)
 
-    const { data, isPending, isError, refetch } = useQuery({
+    const {data, isPending, isError, refetch} = useQuery({
         queryKey: ['admin-product', slug],
         queryFn: async (): Promise<ProductData> => {
             const response = await productService.getSingleProduct(slug)
@@ -135,7 +136,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
         const shareUrl = `${window.location.origin}/products/${data.slug}`
         if (navigator.share) {
             try {
-                await navigator.share({ title: data.name, url: shareUrl })
+                await navigator.share({title: data.name, url: shareUrl})
             } catch (err) {
                 if (err instanceof Error && err.name !== 'AbortError') {
                     await navigator.clipboard.writeText(shareUrl)
@@ -198,7 +199,26 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
         })
         : 'N/A'
 
-    if (isPending) return <AdminProductDetailsSkeleton />
+    if (isPending) return <AdminProductDetailsSkeleton/>
+
+    const tabs = [
+        {
+            label: "Variations",
+            value: "variations"
+        },
+        {
+            label: "Health Conditions",
+            value: "health"
+        },
+        {
+            label: "Categories & Tags",
+            value: "categories-tags"
+        },
+        {
+            label: "Vendors",
+            value: "vendors"
+        }
+    ]
 
     if (isError || !data) {
         return (
@@ -206,8 +226,8 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                 <ErrorFallback
                     title="Failed to load product"
                     message="Unable to fetch product details. Please check your connection and try again."
-                    primaryAction={{ label: 'Retry', onClick: () => refetch() }}
-                    secondaryAction={{ label: 'Back to Products', onClick: handleBack }}
+                    primaryAction={{label: 'Retry', onClick: () => refetch()}}
+                    secondaryAction={{label: 'Back to Products', onClick: handleBack}}
                 />
             </div>
         )
@@ -221,7 +241,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                     className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4 sm:mb-6 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2 -ml-2"
                     aria-label="Go back to products list"
                 >
-                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true"/>
                     <span>Back to Products</span>
                 </button>
 
@@ -235,7 +255,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                 <span className="font-mono bg-slate-100 px-2 py-1 rounded">ID: {data.uuid}</span>
                                 <span className="hidden sm:inline" aria-hidden="true">•</span>
                                 <time className="flex items-center gap-1">
-                                    <Globe className="h-3 w-3" aria-hidden="true" />
+                                    <Globe className="h-3 w-3" aria-hidden="true"/>
                                     Added {formattedDate}
                                 </time>
                             </div>
@@ -287,48 +307,48 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                         title="Total Revenue"
                         value={FormatCurrency(200)}
                         icon={DollarSign}
-                        trend={{ value: 12.5, isPositive: true }}
+                        trend={{value: 12.5, isPositive: true}}
                         description="This month"
                     />
                     <ProductMetricCard
                         title="Units Sold"
                         value={1284}
                         icon={BarChart3}
-                        trend={{ value: 8.2, isPositive: true }}
+                        trend={{value: 8.2, isPositive: true}}
                         description="This month"
                     />
                     <ProductMetricCard
                         title="Conversion Rate"
                         value="3.2%"
                         icon={Zap}
-                        trend={{ value: 2.1, isPositive: true }}
+                        trend={{value: 2.1, isPositive: true}}
                         description="Last 30 days"
                     />
                     <ProductMetricCard
                         title="Page Views"
                         value="12,450"
                         icon={Eye}
-                        trend={{ value: 15.3, isPositive: true }}
+                        trend={{value: 15.3, isPositive: true}}
                         description="This month"
                     />
                 </div>
 
-                <div className="bg-white rounded-md   overflow-hidden">
+                <div className="bg-white rounded-md overflow-hidden">
                     <div className="p-4 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 rounded-lg bg-blue-50" aria-hidden="true">
-                                        <Package className="h-5 w-5 text-blue-600" />
+                                        <Package className="h-5 w-5 text-blue-600"/>
                                     </div>
                                     <h2 className="text-lg sm:text-xl font-semibold text-slate-900">
                                         Product Details
                                     </h2>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3">
-                                    {data.status && <StatusBadge status={data.status} />}
+                                    {data.status && <StatusBadge status={data.status}/>}
                                     <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-                                        <Globe className="h-4 w-4" aria-hidden="true" />
+                                        <Globe className="h-4 w-4" aria-hidden="true"/>
                                         <span>Live since {formattedDate}</span>
                                     </div>
                                 </div>
@@ -338,7 +358,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                 aria-label="More options"
                             >
-                                <MoreVertical className="h-5 w-5 text-slate-500" aria-hidden="true" />
+                                <MoreVertical className="h-5 w-5 text-slate-500" aria-hidden="true"/>
                             </button>
                         </div>
                     </div>
@@ -355,27 +375,30 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                         priority
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 45vw"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+                                    <div
+                                        className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                        aria-hidden="true"
+                                    />
                                     <div className="absolute top-3 right-3 flex gap-2">
                                         <button
                                             onClick={handlePreview}
                                             className="p-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             aria-label="View full size image"
                                         >
-                                            <Eye className="h-4 w-4 text-slate-700" aria-hidden="true" />
+                                            <Eye className="h-4 w-4 text-slate-700" aria-hidden="true"/>
                                         </button>
                                         <button
                                             onClick={handleShare}
                                             className="p-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             aria-label="Share product"
                                         >
-                                            <Share2 className="h-4 w-4 text-slate-700" aria-hidden="true" />
+                                            <Share2 className="h-4 w-4 text-slate-700" aria-hidden="true"/>
                                         </button>
                                     </div>
                                 </div>
                                 {data.gallery_images.length > 0 && (
-                                    <Suspense fallback={<Skeleton className="h-20 sm:h-24 w-full rounded-lg" />}>
-                                        <ImageGallery images={data.gallery_images} />
+                                    <Suspense fallback={<Skeleton className="h-20 sm:h-24 w-full rounded-lg"/>}>
+                                        <ImageGallery images={data.gallery_images}/>
                                     </Suspense>
                                 )}
                             </div>
@@ -383,7 +406,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                             <div className="space-y-6">
                                 <div>
                                     <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
-                                        <Building2 className="h-4 w-4" aria-hidden="true" />
+                                        <Building2 className="h-4 w-4" aria-hidden="true"/>
                                         <span className="font-medium">{data.brand.name}</span>
                                     </div>
                                     <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 leading-tight">
@@ -400,16 +423,16 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                             aria-label={copySuccess ? 'Slug copied' : 'Copy slug'}
                                         >
                                             {copySuccess ? (
-                                                <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true"/>
                                             ) : (
-                                                <Copy className="h-4 w-4 text-slate-500 group-hover:text-slate-700" aria-hidden="true" />
+                                                <Copy className="h-4 w-4 text-slate-500 group-hover:text-slate-700" aria-hidden="true"/>
                                             )}
                                         </button>
                                     </div>
 
                                     <div
                                         className="prose prose-sm max-w-none text-slate-600 leading-relaxed"
-                                        dangerouslySetInnerHTML={{ __html: data.description }}
+                                        dangerouslySetInnerHTML={{__html: data.description}}
                                     />
                                 </div>
 
@@ -420,7 +443,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 rounded-lg bg-blue-50" aria-hidden="true">
-                                                <Users className="h-4 w-4 text-blue-600" />
+                                                <Users className="h-4 w-4 text-blue-600"/>
                                             </div>
                                             <div>
                                                 <div className="font-semibold text-slate-900 text-lg">
@@ -436,7 +459,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <div className="p-2 rounded-lg bg-amber-50" aria-hidden="true">
-                                                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                                                <Star className="h-4 w-4 text-amber-500 fill-amber-500"/>
                                             </div>
                                             <div>
                                                 <div className="font-semibold text-slate-900 text-lg">
@@ -451,25 +474,16 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                         </div>
 
                         <Tabs defaultValue="variations" className="w-full">
-                            <TabsList className="h-10 p-1 bg-slate-100 rounded-xl w-full sm:w-auto grid grid-cols-3 sm:inline-grid mb-6">
-                                <TabsTrigger
-                                    value="variations"
-                                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm font-medium px-3 sm:px-4"
-                                >
-                                    Pricing & Stock
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="categories"
-                                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm font-medium px-3 sm:px-4"
-                                >
-                                    Categories & Tags
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="health"
-                                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm font-medium px-3 sm:px-4"
-                                >
-                                    Health Conditions
-                                </TabsTrigger>
+                            <TabsList className="h-10 p-1 bg-slate-100 rounded-xl w-full sm:w-auto grid grid-cols-4 sm:inline-grid mb-6">
+                                {tabs.map((tab) => (
+                                    <TabsTrigger
+                                        key={tab.value}
+                                        value={tab.value}
+                                        className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm font-medium px-2 sm:px-4 whitespace-nowrap overflow-hidden text-ellipsis"
+                                    >
+                                        {tab.label}
+                                    </TabsTrigger>
+                                ))}
                             </TabsList>
 
                             <TabsContent value="variations" className="space-y-3">
@@ -480,13 +494,13 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                     >
                                         <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true" />
+                                                <div className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true"/>
                                                 <span className="text-sm text-slate-600">Size:</span>
                                                 <span className="font-semibold text-slate-900">
                                                     {variation.size_value}{variation.size_unit}
                                                 </span>
                                             </div>
-                                            {variation.status && <StatusBadge status={variation.status} />}
+                                            {variation.status && <StatusBadge status={variation.status}/>}
                                             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-lg">
                                                 <span className="text-sm text-green-700 font-medium">
                                                     {variation.units_in_stock} in stock
@@ -513,10 +527,10 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                 ))}
                             </TabsContent>
 
-                            <TabsContent value="categories" className="space-y-6">
+                            <TabsContent value="categories-tags" className="space-y-6">
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                        <Tag className="h-4 w-4 text-blue-600" aria-hidden="true" />
+                                        <Tag className="h-4 w-4 text-blue-600" aria-hidden="true"/>
                                         Categories
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
@@ -561,6 +575,10 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({ sl
                                         ))}
                                     </div>
                                 </div>
+                            </TabsContent>
+
+                            <TabsContent value="vendors">
+                                <ProductVendorTab productUuid={data.uuid}/>
                             </TabsContent>
                         </Tabs>
                     </div>

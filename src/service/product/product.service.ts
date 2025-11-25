@@ -94,6 +94,21 @@ class ProductService extends HttpServices {
         }
     }
 
+    async getVendorListByProduct(product_uuid: string,params?: ParamsType) {
+        try {
+            const res=await this.getRequest({
+                url: `/admin/product/${product_uuid}/vendors`,
+                config: {
+                    auth: true,
+                    params
+                }
+            })
+            return res?.data
+        } catch (error) {
+            throw error
+        }
+    }
+
 
 
 

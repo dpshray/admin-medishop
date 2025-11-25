@@ -9,14 +9,18 @@ import CustomPagination from "../custom-pagination"
 
 export default function ProductVendorTab({ productUuid }: { productUuid?: string }) {
     const [page, setPage] = useState(1)
-    const per_page = 10
+
 
     const { data: vendorRes, isPending: vendorsLoading } = useQuery({
         queryKey: ["product-vendors", productUuid, page],
         enabled: !!productUuid,
         queryFn: async () => {
-            const params = { page, per_page }
-            return await productService.getProductVendorList(productUuid!, params)
+            const params = { page }
+            return await productService.getVendorListByProduct(productUuid!, params).then((res) => {
+                console.log('vendorRes', res)
+                return res
+            })
+
         },
     })
 

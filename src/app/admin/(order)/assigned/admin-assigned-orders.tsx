@@ -10,7 +10,7 @@ import { ParamsType } from "@/types/types"
 import orderService from "@/service/order/order.service"
 import { ColumnDef } from "@tanstack/react-table"
 import { QUERY_STALE_TIME } from "@/config/app-constant"
-import { FormatCurrency } from "@/lib/helper"
+import {FormatCurrency, StatusBadge} from "@/lib/helper"
 import { Checkbox } from "@/components/ui/checkbox"
 import {RowActions} from "@/lib/action-button";
 
@@ -24,8 +24,6 @@ interface AdminAssignedOrder {
     delivery_address: string
     order_items_count: number
     price: number
-    status: string
-    created_at: string
 }
 
 export default function AdminAssignedOrders() {
@@ -117,14 +115,7 @@ export default function AdminAssignedOrders() {
             accessorKey: "order_status",
             header: "Order Status",
             cell: ({ row }) => (
-                <span className={cn(
-                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
-                    row.original.order_status === "completed" && "bg-green-100 text-green-800",
-                    row.original.order_status === "pending" && "bg-yellow-100 text-yellow-800",
-                    row.original.order_status === "cancelled" && "bg-red-100 text-red-800"
-                )}>
-                    {row.original.order_status}
-                </span>
+                <StatusBadge status={row.original.order_status} />
             )
         },
         {
@@ -152,28 +143,7 @@ export default function AdminAssignedOrders() {
                 </span>
             )
         },
-        {
-            accessorKey: "status",
-            header: "Status",
-            cell: ({ row }) => (
-                <span className={cn(
-                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
-                    row.original.status === "active" && "bg-blue-100 text-blue-800",
-                    row.original.status === "inactive" && "bg-gray-100 text-gray-800"
-                )}>
-                    {row.original.status}
-                </span>
-            )
-        },
-        {
-            accessorKey: "created_at",
-            header: "Created At",
-            cell: ({ row }) => (
-                <span className="whitespace-nowrap text-sm">
-                    {new Date(row.original.created_at).toLocaleString()}
-                </span>
-            ),
-        },
+
         {
             accessorKey: "actions",
             header: "Actions",

@@ -4,7 +4,7 @@ import { ShoppingCart } from "lucide-react";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import PageHeader from "@/components/headers/PageHeader";
 import { adminVendorDashboardCards } from "@/data";
-import AdminOrderTable from "@/components/order/admin-order-table";
+import AdminOrderTable from "@/components/order/admin/admin-order-table";
 
 export default function OrderDashboard() {
     return (

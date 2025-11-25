@@ -88,8 +88,7 @@ const DetailCard = ({ icon, label, value, color = 'blue', truncate = false }: De
     )
 }
 
-export default function VendorProductDetails() {
-    const { slug } = useParams<{ slug: string }>()
+export default function VendorProductDetails({slug}: { slug: string}) {
     const queryClient = useQueryClient()
     const [actionDialog, setActionDialog] = useState<ActionDialog>({ open: false, action: null })
     const [selectedVariation, setSelectedVariation] = useState<number>(0)

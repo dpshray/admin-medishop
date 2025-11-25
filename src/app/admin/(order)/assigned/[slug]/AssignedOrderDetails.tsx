@@ -1,14 +1,15 @@
-"use client"
+'use client'
 
-import React, {useCallback, useMemo, useRef, useState} from "react"
-import {CreditCard, Download, Mail, MapPin, Package, Printer, User} from "lucide-react"
-import {Button} from "@/components/ui/button"
-import {Separator} from "@/components/ui/separator"
-import {Avatar, AvatarFallback} from "@/components/ui/avatar"
-import {FormatCurrency, StatusBadge} from "@/lib/helper"
+import { useQuery } from "@tanstack/react-query"
+import orderService from "@/service/order/order.service"
+import React, { useCallback, useMemo, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { CreditCard, Download, Mail, MapPin, Package, User } from "lucide-react"
 import SearchSelectField from "@/components/field/search-select"
+import { FormatCurrency, StatusBadge } from "@/lib/helper"
 import VendorOrderedItemCard from "@/components/vendor/vendor-details/vendor-order-card"
-import {useQuery} from "@tanstack/react-query"
+import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import vendorOrderService from "@/service/order/vendor-order.service";
 
 interface StatusOption {
@@ -17,64 +18,57 @@ interface StatusOption {
 }
 
 const STATUS_OPTIONS: StatusOption[] = [
-    {value: "Processing", label: "Processing"},
-    {value: "Delivered", label: "Delivered"},
-    {value: "Cancelled", label: "Cancelled"},
-    {value: "Pending", label: "Pending"},
+    { value: "Processing", label: "Processing" },
+    { value: "Delivered", label: "Delivered" },
+    { value: "Cancelled", label: "Cancelled" },
+    { value: "Pending", label: "Pending" }
 ]
 
-export default function VendorOrderDetailsPage({slug}: { slug: string }) {
-    const {data: vendorOrder, refetch} = useQuery({
-        queryKey: ["orderDetails", slug],
+export default function AssignedOrderDetailsPage({ slug }: { slug: string }) {
+    const { data: adminOrder, refetch } = useQuery({
+        queryKey: ["assigned-order", slug],
         queryFn: async () => {
-            return await vendorOrderService.getVendorOrderDetail(slug).then((res) => {
-                console.log('Response from getVendorOrderDetail', res)
-                return res
-            })
-        },
+            const res = await orderService.getAssignedAdminOrderDetail(slug)
+            console.log('Response From Assigned Order Service:', res)
+            return res.data
+        }
     })
 
-    const printRef = useRef<HTMLDivElement>(null)
 
-    const [selectedStatus, setSelectedStatus] = useState<string>(vendorOrder?.status || "")
-
-    const handlePrint = useCallback(() => {
-        window.print()
-    }, [])
+    const [selectedStatus, setSelectedStatus] = useState<string>(adminOrder?.status || "")
 
     const handleStatusChange = useCallback((value: string | number | null) => {
         if (value) setSelectedStatus(String(value))
     }, [])
 
     const handleUpdateStatus = useCallback(async () => {
-        if (!vendorOrder || selectedStatus === vendorOrder.status) return
-        const payload = {status: selectedStatus}
+        if (!adminOrder || selectedStatus === adminOrder.status) return
+        const payload = { status: selectedStatus }
         await vendorOrderService.updateVendorOrderStatus(slug, payload)
         refetch()
-    }, [vendorOrder, selectedStatus, slug, refetch])
-
+    }, [adminOrder, selectedStatus, slug, refetch])
 
     const customerInitial = useMemo(
-        () => vendorOrder?.name?.charAt(0)?.toUpperCase() || "U",
-        [vendorOrder?.name]
+        () => adminOrder?.name?.charAt(0)?.toUpperCase() || "U",
+        [adminOrder?.name]
     )
 
     const hasCoordinates = useMemo(
-        () => Boolean(vendorOrder?.latitude && vendorOrder?.longitude),
-        [vendorOrder?.latitude, vendorOrder?.longitude]
+        () => Boolean(adminOrder?.latitude && adminOrder?.longitude),
+        [adminOrder?.latitude, adminOrder?.longitude]
     )
 
     const coordinatesText = useMemo(
-        () => `${vendorOrder?.latitude || ""}, ${vendorOrder?.longitude || ""}`,
-        [vendorOrder?.latitude, vendorOrder?.longitude]
+        () => `${adminOrder?.latitude || ""}, ${adminOrder?.longitude || ""}`,
+        [adminOrder?.latitude, adminOrder?.longitude]
     )
 
     const isStatusUpdateDisabled = useMemo(
-        () => !vendorOrder || selectedStatus === vendorOrder.status,
-        [selectedStatus, vendorOrder]
+        () => !adminOrder || selectedStatus === adminOrder.status,
+        [selectedStatus, adminOrder]
     )
 
-    if (!vendorOrder) return null
+    if (!adminOrder) return null
 
     return (
         <div className="min-h-screen bg-slate-50 print:bg-white">
@@ -89,17 +83,11 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                                 Manage and track order information
                             </p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline" size="sm" disabled className="gap-2 text-xs sm:text-sm h-9">
-                                <Download className="h-4 w-4"/>
-                                <span className="hidden sm:inline">Download</span>
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={handlePrint}
-                                    className="gap-2 text-xs sm:text-sm h-9">
-                                <Printer className="h-4 w-4"/>
-                                <span className="hidden sm:inline">Print</span>
-                            </Button>
-                        </div>
+
+                        <Button variant="outline" size="sm" disabled className="gap-2 text-xs sm:text-sm h-9">
+                            <Download className="h-4 w-4" />
+                            <span className="hidden sm:inline">Download</span>
+                        </Button>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
@@ -121,23 +109,22 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                     </div>
                 </header>
 
-                <main ref={printRef} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <main className="bg-white rounded-lg shadow-sm overflow-hidden">
                     <div className="p-4 md:p-6 lg:p-8 bg-slate-50 border-b border-slate-200">
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                             <div className="flex items-start gap-3">
-                                <div
-                                    className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-primaryColor flex items-center justify-center flex-shrink-0">
-                                    <Package className="w-7 h-7 md:w-8 md:h-8 text-white"/>
+                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-primaryColor flex items-center justify-center flex-shrink-0">
+                                    <Package className="w-7 h-7 md:w-8 md:h-8 text-white" />
                                 </div>
                                 <div className="min-w-0">
                                     <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 break-all">
-                                        {vendorOrder.order_code}
+                                        {adminOrder.order_code}
                                     </h2>
-                                    <p className="text-xs sm:text-sm text-slate-600 mt-1">{vendorOrder.created_at}</p>
+                                    <p className="text-xs sm:text-sm text-slate-600 mt-1">{adminOrder.created_at}</p>
                                 </div>
                             </div>
                             <div className="flex-shrink-0">
-                                <StatusBadge status={vendorOrder.status}/>
+                                <StatusBadge status={adminOrder.status} />
                             </div>
                         </div>
                     </div>
@@ -147,33 +134,39 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                             <section>
                                 <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-5">Order Items</h3>
                                 <div className="space-y-4">
-                                    {vendorOrder.ordered_items.map((item: any) => (
-                                        <VendorOrderedItemCard key={item.order_item_id} item={item} showAnimation
-                                                               orderUuid={slug}
-                                                               onSuccessAction={refetch}
+                                    {adminOrder.ordered_items.map((item: any) => (
+                                        <VendorOrderedItemCard
+                                            key={item.order_item_id}
+                                            item={item}
+                                            showAnimation
+                                            orderUuid={slug}
+                                            onSuccessAction={refetch}
                                         />
                                     ))}
                                 </div>
                             </section>
 
-                            <Separator className="my-6"/>
+                            <Separator className="my-6" />
 
                             <section>
                                 <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-5">Vendor Information</h3>
                                 <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-50">
                                     <Avatar className="w-12 h-12 bg-primaryColor flex-shrink-0">
-                                        <AvatarFallback
-                                            className="text-white font-bold text-lg">{customerInitial}</AvatarFallback>
+                                        <AvatarFallback className="text-white font-bold text-lg">
+                                            {customerInitial}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="min-w-0 flex-1">
-                                        <p className="font-bold text-base md:text-lg text-slate-900 break-words">{vendorOrder.name}</p>
+                                        <p className="font-bold text-base md:text-lg text-slate-900 break-words">
+                                            {adminOrder.name}
+                                        </p>
                                         <div className="flex items-center gap-2 text-sm text-slate-600 mt-1">
-                                            <Mail className="w-4 h-4 flex-shrink-0"/>
+                                            <Mail className="w-4 h-4 flex-shrink-0" />
                                             <a
-                                                href={`mailto:${vendorOrder.email}`}
+                                                href={`mailto:${adminOrder.email}`}
                                                 className="hover:text-primaryColor hover:underline break-all transition-colors"
                                             >
-                                                {vendorOrder.email}
+                                                {adminOrder.email}
                                             </a>
                                         </div>
                                     </div>
@@ -186,26 +179,23 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                                 <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-5">Customer Details</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50">
-                                        <div
-                                            className="w-10 h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
-                                            <User className="w-5 h-5 text-primaryColor"/>
+                                        <div className="w-10 h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
+                                            <User className="w-5 h-5 text-primaryColor" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm text-slate-500 mb-1 font-medium">Customer Name</p>
-                                            <p className="font-bold text-base text-slate-900 break-words">{vendorOrder.name}</p>
+                                            <p className="font-bold text-base text-slate-900 break-words">{adminOrder.name}</p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50">
-                                        <div
-                                            className="w-10 h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
-                                            <MapPin className="w-5 h-5 text-primaryColor"/>
+                                        <div className="w-10 h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
+                                            <MapPin className="w-5 h-5 text-primaryColor" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm text-slate-500 mb-1 font-medium">Delivery Address</p>
-                                            <address
-                                                className="font-bold text-base text-slate-900 not-italic break-words">
-                                                {vendorOrder.address}
+                                            <address className="font-bold text-base text-slate-900 not-italic break-words">
+                                                {adminOrder.address}
                                             </address>
                                             {hasCoordinates && (
                                                 <p className="text-sm text-slate-500 mt-2 font-mono break-all bg-white px-2 py-1 rounded border border-slate-200">
@@ -217,19 +207,18 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                                 </div>
                             </section>
 
-                            <Separator className="my-6"/>
+                            <Separator className="my-6" />
 
                             <section>
                                 <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-5">Payment Details</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-50">
-                                        <div
-                                            className="w-10 h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
-                                            <CreditCard className="w-5 h-5 text-primaryColor"/>
+                                        <div className="w-10 h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
+                                            <CreditCard className="w-5 h-5 text-primaryColor" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm text-slate-500 mb-1 font-medium">Payment Method</p>
-                                            <p className="font-bold text-base text-slate-900">{vendorOrder.payment_method}</p>
+                                            <p className="font-bold text-base text-slate-900">{adminOrder.payment_method}</p>
                                         </div>
                                     </div>
 
@@ -237,7 +226,9 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                                         <dl className="space-y-3">
                                             <div className="flex justify-between items-center">
                                                 <dt className="text-sm text-slate-600 font-medium">Subtotal</dt>
-                                                <dd className="font-bold text-base text-slate-900">{FormatCurrency(vendorOrder.price)}</dd>
+                                                <dd className="font-bold text-base text-slate-900">
+                                                    {FormatCurrency(adminOrder.price)}
+                                                </dd>
                                             </div>
 
                                             <div className="flex justify-between items-center">
@@ -245,14 +236,12 @@ export default function VendorOrderDetailsPage({slug}: { slug: string }) {
                                                 <dd className="font-bold text-base text-slate-900">Rs. 0.00</dd>
                                             </div>
 
-                                            <Separator className="my-2"/>
+                                            <Separator className="my-2" />
 
                                             <div className="flex justify-between items-center pt-2">
-                                                <dt className="text-base md:text-lg font-bold text-slate-900">Total
-                                                    Amount
-                                                </dt>
+                                                <dt className="text-base md:text-lg font-bold text-slate-900">Total Amount</dt>
                                                 <dd className="text-lg md:text-xl lg:text-2xl font-bold text-primaryColor">
-                                                    {FormatCurrency(vendorOrder.price)}
+                                                    {FormatCurrency(adminOrder.price)}
                                                 </dd>
                                             </div>
                                         </dl>

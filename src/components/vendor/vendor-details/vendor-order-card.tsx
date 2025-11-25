@@ -12,8 +12,9 @@ import BatchAllocationEditor from "@/components/vendor/vendor-details/batch-allo
 
 
 export interface AssignedBatchNumber {
-    batch_number_id: number;
+    batch_number: number;
     quantity: number;
+    variant_id: number;
 }
 
 export interface BatchNumber {
@@ -51,6 +52,7 @@ interface VendorOrderedItemCardProps {
     ariaLabel?: string
     onDeleteAction?: (item: OrderItem) => void
     orderUuid: string
+    onSuccessAction?: () => void
 }
 
 const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOrderedItemCard({
@@ -61,9 +63,12 @@ const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOr
                                                                                                   ariaLabel,
                                                                                                   onDeleteAction,
                                                                                                   orderUuid,
+    onSuccessAction,
+
                                                                                               }) {
     const [selectedProduct, setSelectedProduct] = useState<ItemProduct | null>(null)
 
+    console.log(item)
     const getTypeIcon = useMemo(() => {
         switch (item.type) {
             case 'package':
@@ -121,7 +126,11 @@ const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOr
 
     const handleSuccess = useCallback(() => {
         setSelectedProduct(null)
-    }, [])
+        if (onSuccessAction) {
+            onSuccessAction()
+        }
+    }, [onSuccessAction])
+
 
     const isCollection = item.type === 'package' || item.type === 'kitbag'
 
@@ -243,16 +252,12 @@ const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOr
                                                 </p>
                                                 <div className="space-y-1.5">
                                                     {product.assigned_batch_numbers.map((batch, batchIndex) => (
-                                                        <div key={batchIndex}
-                                                             className="flex items-center justify-between p-2.5 rounded-md bg-green-50/50 border border-green-200">
-                                                            <Badge variant="outline"
-                                                                   className="font-mono text-xs bg-white">
-                                                                {batch.batch_number_id}
-                                                            </Badge>
-                                                            <span className="text-xs font-medium text-green-700">
-                                                                Qty: {batch.quantity}
+                                                        <Badge key={batchIndex} variant="secondary">
+                                                            { batch.batch_number }
+                                                            <span className="text-xs font-semibold text-muted-foreground ml-1">
+                                                                ({batch.quantity})
                                                             </span>
-                                                        </div>
+                                                        </Badge>
                                                     ))}
                                                 </div>
                                             </div>
@@ -315,7 +320,7 @@ const VendorOrderedItemCard = memo<VendorOrderedItemCardProps>(function VendorOr
                                     batchNumberId: batch.batch_number_id,
                                     batchNumber: batch.batch_number,
                                     quantity: selectedProduct.assigned_batch_numbers?.find(
-                                        ab => ab.batch_number_id === batch.batch_number_id
+                                        ab => ab.batch_number.toString() === batch.batch_number
                                     )?.quantity || 0
                                 }))}
                                 itemQuantity={selectedProduct.required_quantity}

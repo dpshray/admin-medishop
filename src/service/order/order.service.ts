@@ -126,6 +126,22 @@ class OrderService extends HttpServices {
         }
     }
 
+    //fetch order List admin/orders
+    async getAssignedAdminOrderDetail(order_uuid: string,params?: ParamsType) {
+        try {
+            return await this.getRequest({
+                url: `/admin/user-order/${order_uuid}`,
+                config: {
+                    auth: true,
+                    params
+                }
+            })
+
+        } catch (error) {
+            throw error
+        }
+    }
+
 }
 
 const orderService = new OrderService()

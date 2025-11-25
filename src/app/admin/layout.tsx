@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
                 { label: "Vendor Products", href: "/admin/vendor-product", icon: Package },
                 { label: "Order History", href: "/admin/order-history", icon: FileText },
-                { label: " Assigned Orders", href: "/admin/orders/assigned", icon: Package },
+                { label: " Assigned Orders", href: "/admin/assigned", icon: Package },
             ],
         },
         {

@@ -4,10 +4,11 @@ import React, {memo, useCallback, useMemo, useState} from 'react'
 import {Badge} from '@/components/ui/badge'
 import TextInputField from '@/components/field/text-input'
 import {Button} from '@/components/ui/button'
-import {AlertCircle, CheckCircle2, Loader2, Package, X} from 'lucide-react'
+import {AlertCircle, CheckCircle2, Loader2, Package} from 'lucide-react'
 import {cn} from '@/lib/utils'
 import {Controller, useForm} from 'react-hook-form'
 import batchService from "@/service/order/batch.service"
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 interface BatchAllocation {
     batchNumberId: number
@@ -66,7 +67,7 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
     const onSubmit = async (data: BatchFormValues) => {
         setIsSubmitting(true)
         setError(null)
-
+        console.log("Data submitted:", data);
         const payload = [
             {
                 OIP_ID: Number(OIP_ID),
@@ -81,7 +82,7 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
             reset()
             onSuccess?.()
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to assign batches. Please try again.')
+            setError(err.message || 'Failed to assign batches. Please try again.')
         } finally {
             setIsSubmitting(false)
         }
@@ -89,7 +90,8 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
+            <div
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg shadow-sm">
                         <Package className="h-5 w-5 text-blue-600"/>
@@ -136,21 +138,22 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
             )}
 
             {error && (
-                <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded-lg flex items-start gap-3">
+                <Alert className="p-4 bg-red-50 border-l-4 border-red-400 rounded-lg flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"/>
-                    <div>
-                        <p className="text-sm font-semibold text-red-900">Error</p>
-                        <p className="text-sm text-red-700 mt-1">{error}</p>
-                    </div>
-                </div>
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>
+                        {error}
+                    </AlertDescription>
+
+                </Alert>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div
+                    className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {batchAllocations.map((batch, index) => {
                         const currentQuantity = Number(watchedValues[index]?.quantity) || 0
                         const status = getBatchStatus(currentQuantity)
-                        const labelId = `batch-label-${OIP_ID}-${index}`
 
                         return (
                             <Controller
@@ -160,7 +163,7 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
                                 render={({field}) => (
                                     <div
                                         className={cn(
-                                            'group relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:shadow-md',
+                                            'group relative overflow-hidden rounded-xl  transition-all duration-300 hover:shadow-md',
                                             status === 'valid' && currentQuantity > 0 && 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50',
                                             status === 'invalid' && 'border-red-300 bg-gradient-to-br from-red-50 to-rose-50',
                                             status === 'empty' && 'border-gray-200 bg-white hover:border-gray-300'
@@ -177,7 +180,8 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
                                                         {index + 1}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">
+                                                        <span
+                                                            className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">
                                                             Batch Number
                                                         </span>
                                                         <Badge
@@ -189,42 +193,29 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
                                                     </div>
                                                 </div>
 
-                                                {batchAllocations.length > 1 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        type="button"
-                                                        disabled={isSubmitting}
-                                                        onClick={() => field.onChange(0)}
-                                                        className="h-9 w-9 text-gray-400 hover:text-red-600 hover:bg-red-100 transition-colors rounded-lg"
-                                                        aria-label={`Clear batch ${batch.batchNumber}`}
-                                                    >
-                                                        <X className="h-5 w-5"/>
-                                                    </Button>
-                                                )}
                                             </div>
 
                                             <div>
-                                                <label htmlFor={labelId} className="text-xs font-semibold text-gray-600 block mb-2">
-                                                    Quantity to Allocate
-                                                </label>
                                                 <TextInputField
                                                     type="number"
+                                                    label=" Quantity to Allocate"
                                                     placeholder="Enter quantity"
                                                     min={0}
                                                     max={itemQuantity}
                                                     {...field}
                                                     disabled={isSubmitting}
                                                     className={cn(
-                                                        'text-base font-bold w-full h-12',
+                                                        'text-base font-bold w-full',
                                                         status === 'valid' && currentQuantity > 0 && 'border-green-400 focus:border-green-500 focus:ring-green-200',
                                                         status === 'invalid' && 'border-red-400 focus:border-red-500 focus:ring-red-200'
                                                     )}
                                                     aria-invalid={status === 'invalid'}
                                                 />
                                                 {status === 'invalid' && (
-                                                    <div className="flex items-start gap-2 mt-2 p-2 bg-red-100 rounded-lg">
-                                                        <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5"/>
+                                                    <div
+                                                        className="flex items-start gap-2 mt-2 p-2 bg-red-100 rounded-lg">
+                                                        <AlertCircle
+                                                            className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5"/>
                                                         <p className="text-xs font-medium text-red-700">
                                                             Quantity exceeds required amount ({itemQuantity})
                                                         </p>
@@ -248,11 +239,7 @@ const BatchAllocationEditor = memo<BatchAllocationEditorProps>(function BatchAll
                 <div className="pt-4 border-t">
                     <Button
                         type="submit"
-                        className={cn(
-                            'w-full  text-base font-bold shadow-md transition-all duration-200',
-                            currentAllocationStats.isComplete && 'bg-green-600 hover:bg-green-700',
-                            currentAllocationStats.hasOverAllocation && 'opacity-50 cursor-not-allowed'
-                        )}
+                        className="w-full "
                         disabled={isSubmitting || currentAllocationStats.hasOverAllocation}
                     >
                         {isSubmitting ? (

@@ -1,17 +1,18 @@
 'use client'
 
-import {useQuery, useQueryClient} from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import vendorOrderService from "@/service/order/vendor-order.service"
-import {DEFAULT_PAGE_SIZE} from "@/config/app-constant"
-import {useCallback, useMemo, useState, useTransition} from "react"
-import {ColumnDef} from "@tanstack/react-table"
-import {Checkbox} from "@/components/ui/checkbox"
-import {StatusBadge} from "@/lib/helper"
-import {DataTable} from "@/components/table/ReusableTable"
+import { DEFAULT_PAGE_SIZE } from "@/config/app-constant"
+import { useCallback, useMemo, useState, useTransition } from "react"
+import { ColumnDef } from "@tanstack/react-table"
+import { Checkbox } from "@/components/ui/checkbox"
+import { StatusBadge, FormatCurrency } from "@/lib/helper"
+import { DataTable } from "@/components/table/ReusableTable"
 import ActionModal from "@/components/modal/ConfirmModal"
-import {Package, ShoppingCart} from "lucide-react"
-import {RowActions} from "@/lib/action-button"
-import {useRouter} from "next/navigation"
+import { Package, ShoppingCart, CheckCircle, XCircle } from "lucide-react"
+import { RowActions } from "@/lib/action-button"
+import { useRouter } from "next/navigation"
+import { Badge } from "@/components/ui/badge"
 
 interface AssignedOrder {
     order_uuid: string
@@ -22,6 +23,8 @@ interface AssignedOrder {
     mobile: string
     email: string
     order_items_count: number
+    price: number
+    gift_wrap: boolean
 }
 
 export default function VendorOrderTable() {
@@ -36,10 +39,10 @@ export default function VendorOrderTable() {
     const [pending, startTransition] = useTransition()
     const router = useRouter()
 
-    const {data, isLoading, error} = useQuery({
+    const { data, isLoading, error } = useQuery({
         queryKey: ["vendor-orders", currentPage, pageSize],
         queryFn: async () => {
-            const params = {page: currentPage, limit: pageSize}
+            const params = { page: currentPage, limit: pageSize }
             const res = await vendorOrderService.getVendorOrders(params)
             setTotalItems(res?.total_items || 0)
             setTotalPages(res?.total_page || 1)
@@ -50,10 +53,12 @@ export default function VendorOrderTable() {
     })
 
     const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
+
     const handlePageSizeChange = useCallback((size: number) => {
         setPageSize(size)
         setCurrentPage(1)
     }, [])
+
     const handleModalClose = useCallback(() => {
         setIsDeleteModalOpen(false)
         setSelectedOrder(null)
@@ -63,7 +68,7 @@ export default function VendorOrderTable() {
         if (!selectedOrder) return
         setIsDeleting(true)
         try {
-            await queryClient.invalidateQueries({queryKey: ["vendor-orders"]})
+            await queryClient.invalidateQueries({ queryKey: ["vendor-orders"] })
             handleModalClose()
         } finally {
             setIsDeleting(false)
@@ -76,14 +81,14 @@ export default function VendorOrderTable() {
                 router.push(`/vendor/vendor-orders/${order.order_uuid}`)
             })
         },
-        [router, startTransition]
+        [router]
     )
 
     const assignedOrderColumns = useMemo<ColumnDef<AssignedOrder>[]>(
         () => [
             {
                 id: "select",
-                header: ({table}) => (
+                header: ({ table }) => (
                     <Checkbox
                         checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
                         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
@@ -91,7 +96,7 @@ export default function VendorOrderTable() {
                         className="translate-y-[2px]"
                     />
                 ),
-                cell: ({row}) => (
+                cell: ({ row }) => (
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -106,7 +111,7 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "order_code",
                 header: "Order Code",
-                cell: ({row}) => (
+                cell: ({ row }) => (
                     <div className="flex items-center gap-2">
                         <ShoppingCart className="h-4 w-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
                         <span className="font-semibold text-gray-900">{row.original.order_code}</span>
@@ -116,7 +121,7 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "customer_name",
                 header: "Customer",
-                cell: ({row}) => (
+                cell: ({ row }) => (
                     <div className="flex flex-col gap-0.5">
                         <span className="font-medium text-gray-900">{row.original.customer_name}</span>
                         <span className="text-sm text-gray-500">{row.original.email}</span>
@@ -126,7 +131,7 @@ export default function VendorOrderTable() {
             {
                 accessorKey: "delivery_address",
                 header: "Delivery Details",
-                cell: ({row}) => (
+                cell: ({ row }) => (
                     <div className="flex flex-col gap-0.5 max-w-[250px]">
                         <span className="text-sm text-gray-900 line-clamp-2">{row.original.delivery_address}</span>
                         <span className="text-sm text-gray-500 font-medium">{row.original.mobile}</span>
@@ -134,14 +139,45 @@ export default function VendorOrderTable() {
                 ),
             },
             {
+                accessorKey: "gift_wrap",
+                header: "Gift Wrap",
+                cell: ({ row }) => (
+                    <Badge
+                        variant={row.original.gift_wrap ? "default" : "outline"}
+                        className={row.original.gift_wrap ? "bg-purple-100 text-purple-700 border-purple-200" : ""}
+                    >
+                        {row.original.gift_wrap ? (
+                            <>
+                                <CheckCircle className="h-3 w-3 mr-1" aria-hidden="true" />
+                                Yes
+                            </>
+                        ) : (
+                            <>
+                                <XCircle className="h-3 w-3 mr-1" aria-hidden="true" />
+                                No
+                            </>
+                        )}
+                    </Badge>
+                ),
+            },
+            {
+                accessorKey: "price",
+                header: "Total Price",
+                cell: ({ row }) => (
+                    <span className="text-sm text-gray-900 font-semibold">
+            {FormatCurrency(row.original.price)}
+          </span>
+                ),
+            },
+            {
                 accessorKey: "order_status",
                 header: "Order Status",
-                cell: ({row}) => <StatusBadge status={row.original.order_status} />,
+                cell: ({ row }) => <StatusBadge status={row.original.order_status} />,
             },
             {
                 accessorKey: "order_items_count",
                 header: "Items",
-                cell: ({row}) => (
+                cell: ({ row }) => (
                     <div className="flex items-center gap-1.5">
                         <Package className="h-4 w-4 text-gray-400" aria-hidden="true" />
                         <span className="font-medium text-gray-900">{row.original.order_items_count}</span>
@@ -151,7 +187,7 @@ export default function VendorOrderTable() {
             {
                 id: "actions",
                 header: "Actions",
-                cell: ({row}) => <RowActions row={row} onViewAction={() => handleViewOrder(row.original)} />,
+                cell: ({ row }) => <RowActions row={row} onViewAction={() => handleViewOrder(row.original)} />,
             },
         ],
         [handleViewOrder]
@@ -169,11 +205,13 @@ export default function VendorOrderTable() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-start justify-between">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Vendor Orders</h1>
-                    <p className="text-sm text-gray-500">Manage and track all vendor-specific orders in one place</p>
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">Vendor Orders</h1>
+                    <p className="text-xs sm:text-sm text-gray-500">
+                        Manage and track all vendor-specific orders in one place
+                    </p>
                 </div>
             </div>
 

@@ -82,7 +82,7 @@ class OrderService extends HttpServices {
 
     async cancelOrder(order_uuid: string) {
         try {
-            const response = await this.postRequest({
+            const response = await this.getRequest({
                 url: `/admin/orders/${order_uuid}/cancel-order`,
                 config: {
                     auth: true,
@@ -130,7 +130,7 @@ class OrderService extends HttpServices {
     async getAssignedAdminOrderDetail(order_uuid: string,params?: ParamsType) {
         try {
             return await this.getRequest({
-                url: `/admin/user-order/${order_uuid}`,
+                url: `/admin/fetch-my-assigned-order-detail/${order_uuid}`,
                 config: {
                     auth: true,
                     params

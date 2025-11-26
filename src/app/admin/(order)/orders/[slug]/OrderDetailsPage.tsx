@@ -193,7 +193,7 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
     )
 
     const canCancelOrder = useMemo(
-        () => data?.status !== ORDER_STATUS.CANCELLED && data?.status !== ORDER_STATUS.COMPLETED,
+        () => data?.status !== ORDER_STATUS.CANCELLED && data?.status !== ORDER_STATUS.DELIVERED,
         [data?.status]
     )
 

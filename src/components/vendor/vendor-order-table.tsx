@@ -25,6 +25,7 @@ interface AssignedOrder {
     order_items_count: number
     price: number
     gift_wrap: boolean
+    order_item_status: string
 }
 
 export default function VendorOrderTable() {
@@ -169,6 +170,14 @@ export default function VendorOrderTable() {
           </span>
                 ),
             },
+            {
+                accessorKey: "order_item_status",
+                header: " Vendor Order Status",
+                cell: ({ row }) =>
+                    <StatusBadge status={row.original.order_item_status}/>
+
+            },
+
             {
                 accessorKey: "order_status",
                 header: "Order Status",

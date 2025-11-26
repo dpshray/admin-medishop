@@ -17,7 +17,7 @@ import {RowActions} from "@/lib/action-button"
 import {DEFAULT_PAGE, DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, QUERY_STALE_TIME} from "@/config/app-constant"
 import {ColumnDef} from "@tanstack/react-table";
 import {Badge} from "@/components/ui/badge";
-import {ORDER_STATUS, PAYMENT_STATUS} from "@/types/enum";
+import {ORDER_STATUS, PAYMENT_STATUS, STATUS_TYPE} from "@/types/enum";
 
 
 interface OrderType {
@@ -168,7 +168,7 @@ export default function AdminOrderTable() {
             header: 'Order Assigned',
             cell: ({row}) => (
                 <StatusBadge
-                    status={row.original.is_already_assigned_to_vendor ? ORDER_STATUS.ASSIGNED : ORDER_STATUS.PENDING}/>
+                    status={row.original.is_already_assigned_to_vendor ? STATUS_TYPE.ASSIGNED : STATUS_TYPE.NOTASSIGNED}/>
             ),
             enableSorting: true,
             size: 120,

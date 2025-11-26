@@ -31,6 +31,9 @@ class VendorOrderService extends HttpServices {
         }
     }
 
+
+
+
     async updateVendorOrderStatus(slug: string, data: { status: string }) {
         try {
             return await this.putRequest({

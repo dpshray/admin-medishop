@@ -124,7 +124,11 @@ export default function AssignedOrderDetailsPage({ slug }: { slug: string }) {
                                 </div>
                             </div>
                             <div className="flex-shrink-0">
-                                <StatusBadge status={adminOrder.status} />
+                                {
+                                    adminOrder.order_item_status &&
+                                    <StatusBadge status={adminOrder.order_item_status} />
+                                }
+                                {/*<StatusBadge status={adminOrder.status} />*/}
                             </div>
                         </div>
                     </div>

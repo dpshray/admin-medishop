@@ -1,24 +1,35 @@
 "use client"
 
-import {useCallback, useMemo, useState, useTransition} from "react"
-import {useRouter} from "next/navigation"
-import {toast} from "sonner"
-import {AlertCircle, Check, CheckSquare, Package, Save, Square, Store, UserCog,} from "lucide-react"
-import {Button} from "@/components/ui/button"
-import {Separator} from "@/components/ui/separator"
-import {Alert, AlertDescription} from "@/components/ui/alert"
+import { useCallback, useMemo, useState, useTransition, memo } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import {
+    AlertCircle,
+    Check,
+    CheckSquare,
+    Package,
+    Save,
+    Square,
+    Store,
+    UserCog,
+    X
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import SearchSelectField from "@/components/field/search-select"
 import CustomerInfo from "@/components/order/CustomerInfoCard"
-import {OrderedItem, OrderedItemCard} from "@/components/order/OrderedItemCard"
-import {cn} from "@/lib/utils"
-import {ORDER_STATUS, PAYMENT_STATUS} from "@/types/enum"
+import { OrderedItem, OrderedItemCard } from "@/components/order/OrderedItemCard"
+import { cn } from "@/lib/utils"
+import { ORDER_STATUS, PAYMENT_STATUS } from "@/types/enum"
 import OrderHeader from "@/components/order/order-details/order-header"
-import AssignmentSummary, {VendorAssignment,} from "@/components/order/order-details/order-assingment"
+import AssignmentSummary, { VendorAssignment } from "@/components/order/order-details/order-assingment"
 import OrderSummary from "@/components/order/order-details/order-summary"
 import OrderNotes from "@/components/order/order-details/order-notes"
-import {useQuery} from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import orderService from "@/service/order/order.service"
-import {COPIED_TIMEOUT, QUERY_STALE_TIME} from "@/config/app-constant"
+import { COPIED_TIMEOUT, QUERY_STALE_TIME } from "@/config/app-constant"
+import ActionModal from "@/components/modal/ConfirmModal"
 
 interface OrderData {
     order_id: number
@@ -72,15 +83,85 @@ interface OrderDetailsClientProps {
     orderUuid: string
 }
 
-export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps) {
+const AssignmentSection = memo(({
+                                    title,
+                                    icon: Icon,
+                                    selectedCount,
+                                    onAssign,
+                                    disabled,
+                                    children,
+                                    colorScheme
+                                }: {
+    title: string
+    icon: any
+    selectedCount: number
+    onAssign: () => void
+    disabled: boolean
+    children?: React.ReactNode
+    colorScheme: "blue" | "green"
+}) => {
+    const colors = {
+        blue: {
+            icon: "text-blue-600",
+            bg: "bg-blue-50/50",
+            button: "bg-blue-600 hover:bg-blue-700"
+        },
+        green: {
+            icon: "text-green-600",
+            bg: "bg-green-50/50",
+            button: "bg-green-600 hover:bg-green-700"
+        }
+    }
+
+    const scheme = colors[colorScheme]
+
+    return (
+        <section className="space-y-3" aria-labelledby={`${colorScheme}-assignment-heading`}>
+            <h3 id={`${colorScheme}-assignment-heading`} className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", scheme.icon)} aria-hidden="true" />
+                {title}
+            </h3>
+
+            <div className={cn("p-3 sm:p-4 border rounded-lg space-y-3", scheme.bg)}>
+                {children}
+
+                <div className="flex justify-between items-center gap-2 flex-wrap">
+                    <p className="text-xs sm:text-sm text-muted-foreground" aria-live="polite">
+                        {selectedCount > 0
+                            ? `${selectedCount} item${selectedCount > 1 ? "s" : ""} selected`
+                            : "Select items to assign"}
+                    </p>
+
+                    <Button
+                        size="sm"
+                        className={cn("text-white text-xs sm:text-sm", scheme.button)}
+                        disabled={disabled}
+                        onClick={onAssign}
+                        aria-label={`Assign ${selectedCount} selected item${selectedCount > 1 ? "s" : ""}`}
+                    >
+                        <Check className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+                        <span className="ml-1">Assign</span>
+                        {selectedCount > 0 && <span className="ml-1">({selectedCount})</span>}
+                    </Button>
+                </div>
+            </div>
+        </section>
+    )
+})
+
+AssignmentSection.displayName = "AssignmentSection"
+
+export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProps) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
     const [copied, setCopied] = useState(false)
     const [selectedVendor, setSelectedVendor] = useState<VendorOption | null>(null)
     const [selectedItems, setSelectedItems] = useState<Set<string | number>>(new Set())
     const [itemAssignments, setItemAssignments] = useState<Map<string | number, ItemAssignment>>(new Map())
+    const [showCancelDialog, setShowCancelDialog] = useState(false)
+    const [isCancelling, setIsCancelling] = useState(false)
 
-    const {data: vendorsData} = useQuery({
+    const { data: vendorsData } = useQuery({
         queryKey: ["assignable-vendors", orderUuid],
         queryFn: async () => {
             const res = await orderService.getAssignableVendorOrders(orderUuid)
@@ -91,11 +172,10 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         retry: 2,
     })
 
-    const {data, isLoading, refetch} = useQuery<OrderData>({
+    const { data, isLoading, refetch } = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],
         queryFn: async () => {
             const res = await orderService.getOrderDetails(orderUuid)
-            console.log("Order Details", res)
             return res
         },
         enabled: !!orderUuid,
@@ -112,9 +192,8 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         [vendorsData]
     )
 
-
     const canCancelOrder = useMemo(
-        () => data?.status !== ORDER_STATUS.CANCELLED && data?.status !== ORDER_STATUS.COMPLETED,
+        () => data?.status !== ORDER_STATUS.CANCELLED && data?.status !== ORDER_STATUS.DELIVERED,
         [data?.status]
     )
 
@@ -197,6 +276,20 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         [vendorOptions]
     )
 
+    const handleCancelOrder = async () => {
+        setIsCancelling(true)
+        try {
+            await orderService.cancelOrder(orderUuid)
+            toast.success("Order cancelled successfully")
+            setShowCancelDialog(false)
+            refetch()
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to cancel order")
+        } finally {
+            setIsCancelling(false)
+        }
+    }
+
     const handleCheckAction = useCallback((checked: boolean, item: OrderedItem) => {
         setSelectedItems((prev) => {
             const newSet = new Set(prev)
@@ -209,20 +302,17 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         })
     }, [])
 
-
     const handleAssignToAdmin = useCallback(async () => {
-        if (selectedCount === 0) return;
+        if (selectedCount === 0) return
 
-        const itemIds = Array.from(selectedItems) as number[];
+        const itemIds = Array.from(selectedItems) as number[]
 
         try {
-            await orderService.orderAssignToAdmin(orderUuid, itemIds).then((res) => {
-                console.log("Assigned to admin", res)
-                toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to Admin`);
-                refetch();
-            })
+            await orderService.orderAssignToAdmin(orderUuid, itemIds)
+            toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to Admin`)
+            refetch()
 
-            const newAssignments = new Map(itemAssignments);
+            const newAssignments = new Map(itemAssignments)
             itemIds.forEach((itemId) => {
                 newAssignments.set(itemId, {
                     itemId,
@@ -230,17 +320,15 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
                     vendorName: "Admin",
                     storeName: "Admin",
                     assignmentType: "admin",
-                });
-            });
+                })
+            })
 
-            setItemAssignments(newAssignments);
-            setSelectedItems(new Set());
-
+            setItemAssignments(newAssignments)
+            setSelectedItems(new Set())
         } catch (error: any) {
-            toast.error(error?.message || "Failed to assign items to admin");
+            toast.error(error?.message || "Failed to assign items to admin")
         }
-    }, [selectedCount, selectedItems, orderUuid, itemAssignments, refetch]);
-
+    }, [selectedCount, selectedItems, orderUuid, itemAssignments, refetch])
 
     const handleAssignToVendor = useCallback(async () => {
         if (!selectedVendor || selectedCount === 0) return
@@ -248,10 +336,9 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
         const itemIds = Array.from(selectedItems) as number[]
 
         try {
-            await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds).then((res) => {
-                refetch()
-                console.log("Assigned to vendor", res)
-            })
+            await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds)
+            toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to vendor`)
+            refetch()
 
             const newAssignments = new Map(itemAssignments)
             itemIds.forEach((itemId) => {
@@ -266,12 +353,10 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
             setItemAssignments(newAssignments)
             setSelectedItems(new Set())
             setSelectedVendor(null)
-            toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to vendor`)
         } catch (error: any) {
             toast.error(error?.message || "Failed to assign items to vendor")
         }
     }, [selectedVendor, selectedCount, selectedItems, orderUuid, itemAssignments, refetch])
-
 
     const handleClearAssignments = useCallback(() => {
         setItemAssignments(new Map())
@@ -280,11 +365,10 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
 
     if (isLoading) {
         return (
-            <div
-                className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
                 <div className="text-center">
-                    <Package className="h-12 w-12 mx-auto animate-pulse text-primary mb-4"/>
-                    <p className="text-muted-foreground">Loading order details...</p>
+                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto animate-pulse text-primary mb-4" />
+                    <p className="text-sm sm:text-base text-muted-foreground">Loading order details...</p>
                 </div>
             </div>
         )
@@ -292,11 +376,10 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
 
     if (!data) {
         return (
-            <div
-                className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
                 <div className="text-center">
-                    <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4"/>
-                    <p className="text-muted-foreground">Order not found</p>
+                    <AlertCircle className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-destructive mb-4" />
+                    <p className="text-sm sm:text-base text-muted-foreground">Order not found</p>
                 </div>
             </div>
         )
@@ -306,158 +389,136 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
     const assignedCount = itemCount - unassignedCount
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 print:bg-white">
-            <div className="p-4 sm:p-6 lg:p-8">
-                <div
-                    className="border hover:border-primary/30 hover:shadow-xl rounded-lg bg-white transition-all duration-300">
-                    <OrderHeader
-                        orderCode={data.order_code}
-                        copied={copied}
-                        onCopy={handleCopyOrderCode}
-                        onPrint={() => window.print()}
-                    />
+        <>
+            <div className={cn('print:bg-white')}>
+                <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+                    <div className={cn(' hover:rounded-lg rounded-lg transition-all duration-300', data.status === ORDER_STATUS.CANCELLED && "border border-red-200 bg-red-50/50")}>
+                        <OrderHeader
+                            orderCode={data.order_code}
+                            copied={copied}
+                            onCopy={handleCopyOrderCode}
+                            onPrint={() => window.print()}
+                        />
 
-                    <main className="p-4 sm:p-6 lg:p-8 space-y-6">
-                        <CustomerInfo data={data as any}/>
-                        <Separator/>
+                        <main className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
+                            <CustomerInfo data={data as any} />
+                            <Separator />
 
-                        <div className="grid gap-6 lg:grid-cols-2">
-                            <OrderSummary data={data}/>
-                            {showDescriptionSection && (
-                                <OrderNotes
-                                    description={data.description}
-                                    giftWrap={data.gift_wrap}
-                                    giftWrapRemarks={data.gift_wrap_remarks}
-                                />
-                            )}
-                        </div>
-
-                        <Separator/>
-
-                        <section className="space-y-4">
-                            <div className="flex justify-between items-center flex-wrap gap-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <h2 className="text-lg font-bold flex items-center gap-2">
-                                        <Package className="h-5 w-5 text-primary" aria-hidden="true"/>
-                                        <span>Ordered Items</span>
-                                    </h2>
-                                    <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full"
-                                          aria-label={`${itemCount} ${itemCount === 1 ? "item" : "items"}`}>
-                                        {itemCount} {itemCount === 1 ? "item" : "items"}
-                                    </span>
-                                    {assignedCount > 0 && (
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full"
-                                              aria-label={`${assignedCount} assigned`}>
-                                            {assignedCount} pre-assigned
-                                        </span>
-                                    )}
-                                    {selectedCount > 0 && (
-                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
-                                              aria-label={`${selectedCount} selected`}>
-                                            {selectedCount} selected
-                                        </span>
-                                    )}
-                                </div>
-
-                                {unassignedCount > 0 && (
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={handleSelectAll}
-                                        className="text-xs"
-                                        aria-label={allSelected ? "Deselect all items" : "Select all items"}
-                                    >
-                                        {allSelected ? (
-                                            <>
-                                                <Square className="h-3.5 w-3.5" aria-hidden="true"/> Deselect All
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckSquare className="h-3.5 w-3.5" aria-hidden="true"/> Select All
-                                            </>
-                                        )}
-                                    </Button>
+                            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+                                <OrderSummary data={data} />
+                                {showDescriptionSection && (
+                                    <OrderNotes
+                                        description={data.description}
+                                        giftWrap={data.gift_wrap}
+                                        giftWrapRemarks={data.gift_wrap_remarks}
+                                    />
                                 )}
                             </div>
 
-                            {itemCount > 0 ? (
-                                <div
-                                    className={cn(
-                                        useGridLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"
-                                    )}
-                                    role="list"
-                                    aria-label="Ordered items"
-                                >
-                                    {data.ordered_items.map((item) => {
+                            <Separator />
 
-                                        return (
+                            <section className="space-y-3 sm:space-y-4">
+                                <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-3">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+                                            <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary" aria-hidden="true" />
+                                            <span>Ordered Items</span>
+                                        </h2>
+                                        <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full" aria-label={`${itemCount} ${itemCount === 1 ? "item" : "items"}`}>
+                      {itemCount} {itemCount === 1 ? "item" : "items"}
+                    </span>
+                                        {assignedCount > 0 && (
+                                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full" aria-label={`${assignedCount} assigned`}>
+                        {assignedCount} pre-assigned
+                      </span>
+                                        )}
+                                        {selectedCount > 0 && (
+                                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full" aria-label={`${selectedCount} selected`}>
+                        {selectedCount} selected
+                      </span>
+                                        )}
+                                    </div>
+
+                                    {unassignedCount > 0 && (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleSelectAll}
+                                            className="text-xs w-full sm:w-auto"
+                                            aria-label={allSelected ? "Deselect all items" : "Select all items"}
+                                        >
+                                            {allSelected ? (
+                                                <>
+                                                    <Square className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
+                                                    <span className="ml-1">Deselect All</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
+                                                    <span className="ml-1">Select All</span>
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {itemCount > 0 ? (
+                                    <div
+                                        className={cn(
+                                            useGridLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" : "space-y-3 sm:space-y-4"
+                                        )}
+                                        role="list"
+                                        aria-label="Ordered items"
+                                    >
+                                        {data.ordered_items.map((item) => (
                                             <div key={item.order_item_id} className="relative" role="listitem">
                                                 <OrderedItemCard
                                                     item={item}
                                                     showAnimation
                                                     checked={selectedItems.has(item.order_item_id)}
                                                     onCheckAction={handleCheckAction}
-                                                    className={cn('')}
                                                 />
                                             </div>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 bg-muted/30 border border-dashed rounded-xl">
-                                    <Package className="h-12 w-12 mx-auto opacity-60 mb-2" aria-hidden="true"/>
-                                    <p className="font-medium">No items in this order</p>
-                                </div>
-                            )}
-                        </section>
-
-                        {assignmentsByVendor.size > 0 && (
-                            <>
-                                <Separator/>
-                                <AssignmentSummary
-                                    assignmentsByVendor={assignmentsByVendor}
-                                    onClear={handleClearAssignments}
-                                />
-                            </>
-                        )}
-                    </main>
-
-
-                    <footer className="border-t bg-muted/30 p-6 space-y-6 print:hidden">
-                        <div className="space-y-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <section className="space-y-4" aria-labelledby="admin-assignment-heading">
-                                <h3 id="admin-assignment-heading"
-                                    className="font-semibold text-base flex items-center gap-2">
-                                    <UserCog className="h-5 w-5 text-blue-600" aria-hidden="true"/>
-                                    Assign to Admin
-                                </h3>
-
-                                <div className="flex justify-between items-center p-4 bg-blue-50/50 border rounded-lg">
-                                    <p className="text-sm" aria-live="polite">
-                                        {selectedCount > 0 ? `${selectedCount} item${selectedCount > 1 ? "s" : ""} selected` : "Select items to assign"}
-                                    </p>
-
-                                    <Button
-                                        size="sm"
-                                        className="bg-blue-600 text-white hover:bg-blue-700"
-                                        disabled={selectedCount === 0}
-                                        onClick={handleAssignToAdmin}
-                                        aria-label={`Assign ${selectedCount} selected item${selectedCount > 1 ? "s" : ""} to admin`}
-                                    >
-                                        <Check className="h-4 w-4"
-                                               aria-hidden="true"/> Assign {selectedCount > 0 && `(${selectedCount})`}
-                                    </Button>
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 sm:py-12 bg-muted/30 border border-dashed rounded-xl">
+                                        <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto opacity-60 mb-2" aria-hidden="true" />
+                                        <p className="font-medium text-sm sm:text-base">No items in this order</p>
+                                    </div>
+                                )}
                             </section>
 
-                            <section className="space-y-4" aria-labelledby="vendor-assignment-heading">
-                                <h3 id="vendor-assignment-heading"
-                                    className="font-semibold text-base flex items-center gap-2">
-                                    <Store className="h-5 w-5 text-green-600" aria-hidden="true"/>
-                                    Assign to Vendor
-                                </h3>
+                            {assignmentsByVendor.size > 0 && (
+                                <>
+                                    <Separator />
+                                    <AssignmentSummary
+                                        assignmentsByVendor={assignmentsByVendor}
+                                        onClear={handleClearAssignments}
+                                    />
+                                </>
+                            )}
+                        </main>
 
-                                <div className="p-4 bg-green-50/50 border rounded-lg space-y-4">
+                        <footer className="border-t bg-muted/30 p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 print:hidden">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                                <AssignmentSection
+                                    title="Assign to Admin"
+                                    icon={UserCog}
+                                    selectedCount={selectedCount}
+                                    onAssign={handleAssignToAdmin}
+                                    disabled={selectedCount === 0}
+                                    colorScheme="blue"
+                                />
+
+                                <AssignmentSection
+                                    title="Assign to Vendor"
+                                    icon={Store}
+                                    selectedCount={selectedCount}
+                                    onAssign={handleAssignToVendor}
+                                    disabled={!selectedVendor || selectedCount === 0}
+                                    colorScheme="green"
+                                >
                                     <SearchSelectField
                                         label="Select Vendor"
                                         placeholder="Choose vendor"
@@ -465,55 +526,58 @@ export default function OrderDetailsClient({orderUuid}: OrderDetailsClientProps)
                                         value={selectedVendor?.value ?? ""}
                                         onChange={handleVendorChange}
                                     />
+                                </AssignmentSection>
+                            </div>
 
-                                    <div className="flex justify-between items-center">
-                                        <p className="text-sm" aria-live="polite">
-                                            {selectedCount > 0 && selectedVendor
-                                                ? `${selectedCount} item${selectedCount > 1 ? "s" : ""} selected`
-                                                : "Select items and vendor"}
-                                        </p>
+                            <div className="space-y-3">
+                                {!canCancelOrder && (
+                                    <Alert className="border border-amber-200 bg-amber-50/50" role="alert">
+                                        <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" aria-hidden="true" />
+                                        <AlertDescription className="text-xs sm:text-sm text-amber-800">
+                                            This order cannot be cancelled (Status: {data.status})
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
 
-                                        <Button
-                                            size="sm"
-                                            className="bg-green-600 text-white hover:bg-green-700"
-                                            disabled={!selectedVendor || selectedCount === 0}
-                                            onClick={handleAssignToVendor}
-                                            aria-label={`Assign ${selectedCount} selected item${selectedCount > 1 ? "s" : ""} to vendor`}
-                                        >
-                                            <Save className="h-4 w-4"
-                                                  aria-hidden="true"/> Assign {selectedCount > 0 && `(${selectedCount})`}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
+                                {canCancelOrder && (
+                                    <Button
+                                        variant="destructive"
+                                        onClick={() => setShowCancelDialog(true)}
+                                        className="w-full sm:w-auto"
+                                        aria-label="Cancel order"
+                                    >
+                                        <X className="h-4 w-4 mr-2" aria-hidden="true" />
+                                        Cancel Order
+                                    </Button>
+                                )}
+                            </div>
 
-                        {!canCancelOrder && (
-                            <Alert className="border border-amber-200 bg-amber-50/50" role="alert">
-                                <AlertCircle className="h-5 w-5 text-amber-600" aria-hidden="true"/>
-                                <AlertDescription className="text-sm text-amber-800">
-                                    This order cannot be cancelled (Status: {data.status})
-                                </AlertDescription>
-                            </Alert>
-                        )}
+                            <Separator />
 
-                        <Separator/>
-                    </footer>
-
-                    {unassignedCount === 0 && (
-                        <footer className="border-t bg-muted/30 p-6 print:hidden">
                             <Button
                                 variant="outline"
                                 onClick={() => startTransition(() => router.back())}
                                 disabled={isPending}
+                                className="w-full sm:w-auto"
                                 aria-label="Go back to previous page"
                             >
                                 {isPending ? "Loading..." : "Back"}
                             </Button>
                         </footer>
-                    )}
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <ActionModal
+                open={showCancelDialog}
+                setOpen={setShowCancelDialog}
+                title="Cancel Order"
+                description={`Are you sure you want to cancel order ${data.order_code}? This action cannot be undone and will permanently cancel this order.`}
+                confirmLabel="Yes, Cancel Order"
+                loading={isCancelling}
+                confirmVariant="destructive"
+                onConfirm={handleCancelOrder}
+            />
+        </>
     )
 }

@@ -1,9 +1,9 @@
 'use client'
-import HealthConditionTable from "@/components/healthCondition/health-conditon-table";
 import PageHeader from "@/components/headers/PageHeader";
 import {HeartPlus} from "lucide-react";
 import {adminVendorDashboardCards} from "@/data";
 import {DashboardCard} from "@/components/dashboard/dashboard-card";
+import PrescriptionTable from "@/components/prescription/prescription-table";
 
 
 export default function Prescriptions() {
@@ -24,7 +24,7 @@ export default function Prescriptions() {
             </div>
 
             <div className="mt-6 my-2">
-                <HealthConditionTable/>
+                <PrescriptionTable/>
             </div>
         </div>
     )

@@ -1,25 +1,33 @@
 'use client'
 
 import {useMutation, useQuery} from "@tanstack/react-query"
-import healthConditionService from "@/service/healthCondition.service"
+import prescriptionService from "@/service/prescription.service"
 import {useCallback, useMemo, useState} from "react"
 import {ColumnDef} from "@tanstack/react-table"
 import {DataTable} from "@/components/table/ReusableTable"
 import {Checkbox} from "@/components/ui/checkbox"
 import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
 import {NoDataFound} from "@/lib/helper"
-import {Badge} from "@/components/ui/badge"
 import {RowActions} from "@/lib/action-button"
 import ActionModal from "@/components/modal/ConfirmModal"
 import {toast} from "sonner"
-import HealthConditionForm from "@/components/healthCondition/healt-condition-modal-from"
+import { Phone, User } from "lucide-react"
+import { format } from "date-fns"
+import Link from "next/link"
 
-interface HealthCondition {
-    id: string
+interface User {
+    id: number
     name: string
-    slug: string
+    email: string
+    mobile_number: string
+}
+
+interface Prescriptions {
+    id: number
     description?: string
-    image?: string
+    prescription_image?: string
+    created_at?: string
+    user?: User
 }
 
 export default function PrescriptionTable() {
@@ -27,55 +35,48 @@ export default function PrescriptionTable() {
     const [pageSize] = useState(10)
     const [searchQuery, setSearchQuery] = useState("")
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-    const [selectedHealthCondition, setSelectedHealthCondition] = useState<HealthCondition | null>(null)
-    const [createModalOpen, setCreateModalOpen] = useState(false)
-    const [editModalOpen, setEditModalOpen] = useState(false)
+    const [selectedPrescription, setSelectedPrescription] = useState<Prescriptions | null>(null)
 
     const {data, isLoading, refetch} = useQuery({
-        queryKey: ["health-condition", currentPage, pageSize, searchQuery],
+        queryKey: ["prescriptions", currentPage, pageSize, searchQuery],
         queryFn: async () => {
             const params = {
                 page: currentPage,
                 per_page: pageSize,
                 search: searchQuery,
             }
-            return await healthConditionService.getHealthConditionList(params)
+            return await prescriptionService.getAllPrescriptions(params)
         }
     })
 
     const tableData = useMemo(() => data?.items ?? [], [data])
 
-    const handleEditHealthCondition = useCallback((healthCondition: HealthCondition) => {
-        setSelectedHealthCondition(healthCondition)
-        setEditModalOpen(true)
-    }, [])
-
     const deleteMutation = useMutation({
-        mutationFn: (slug: string) => healthConditionService.deleteHealthCondition(slug),
+        mutationFn: (id: number) => prescriptionService.deletePrescription(id),
         onSuccess: () => {
-            toast.success("Health condition deleted successfully")
+            toast.success("Prescription deleted successfully")
             setDeleteModalOpen(false)
-            setSelectedHealthCondition(null)
+            setSelectedPrescription(null)
             refetch()
         },
         onError: (error) => {
-            console.error("Error deleting health condition:", error)
-            toast.error("Failed to delete health condition")
+            console.error("Error deleting prescription:", error)
+            toast.error("Failed to delete prescription")
         }
     })
 
-    const handleDeleteHealthCondition = useCallback((healthCondition: HealthCondition) => {
-        setSelectedHealthCondition(healthCondition)
+    const handleDeletePrescription = useCallback((prescription: Prescriptions) => {
+        setSelectedPrescription(prescription)
         setDeleteModalOpen(true)
     }, [])
 
     const handleConfirmDelete = useCallback(() => {
-        if (selectedHealthCondition) {
-            deleteMutation.mutate(selectedHealthCondition.slug)
+        if (selectedPrescription) {
+            deleteMutation.mutate(selectedPrescription.id)
         }
-    }, [selectedHealthCondition, deleteMutation])
+    }, [selectedPrescription, deleteMutation])
 
-    const columns: ColumnDef<HealthCondition>[] = useMemo(() => [
+    const columns: ColumnDef<Prescriptions>[] = useMemo(() => [
         {
             id: "select",
             header: ({table}) => (
@@ -102,27 +103,16 @@ export default function PrescriptionTable() {
             accessorKey: "image",
             header: "Image",
             cell: ({row}) => (
-                <GlobalTableHoverImage
-                    src={row.original.image}
-                    alt={row.original.name}
-                    fallbackSrc="/placeholder.png"
-                />
+                <Link href={row.original.prescription_image || ""} target="_blank" rel="noopener noreferrer">
+                    <GlobalTableHoverImage
+                        src={row.original.prescription_image || ""}
+                        alt={`Prescription of ${row.original.user?.name}`}
+                        fallbackSrc="/placeholder.png"
+                    />
+                </Link>
             ),
             size: 80,
             enableSorting: false,
-        },
-        {
-            accessorKey: "name",
-            header: "Name",
-            cell: ({row}) => (
-                <div className="flex flex-col gap-1">
-                    <span className="font-medium text-gray-900">{row.original.name}</span>
-                    <Badge variant="outline" className="w-fit text-xs">
-                        {row.original.slug}
-                    </Badge>
-                </div>
-            ),
-            size: 200,
         },
         {
             accessorKey: "description",
@@ -137,20 +127,64 @@ export default function PrescriptionTable() {
             size: 400,
         },
         {
+            accessorKey: "user.name",
+            header: "User Details",
+            cell: ({ row }) => {
+                const user = row.original.user;
+                return (
+                    <div className="max-w-md space-y-1">
+                        <p className="text-sm font-medium text-gray-900">
+                            <User className="inline-block mr-1 mb-1 text-blue-600" size={14} />
+                            {user?.name || "No name available"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                            <Phone className="inline-block mr-1 mb-1 text-red-600" size={12} />
+                            {user?.mobile_number || "No phone number"}
+                        </p>
+                    </div>
+                );
+            },
+            size: 400,
+        },
+        {
+            accessorKey: "user.email",
+            header: "User Email",
+            cell: ({row}) => (
+                <div className="max-w-md">
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                        {row.original.user?.email || "No user email available"}
+                    </p>
+                </div>
+            ),
+            size: 400,
+        },
+        {
+            accessorKey: "created_at",
+            header: "Created At",
+            cell: ({row}) => {
+                const date = row.original.created_at
+                return (
+                    <p className="text-sm text-gray-600">
+                        {date ? format(new Date(date), "MMM dd, yyyy • hh:mm a") : "No date"}
+                    </p>
+                )
+            },
+            size: 200,
+        },
+        {
             accessorKey: "actions",
             header: "Actions",
             cell: ({row}) => (
                 <RowActions
                     row={row}
-                    onEditAction={() => handleEditHealthCondition(row.original)}
-                    onDeleteAction={() => handleDeleteHealthCondition(row.original)}
+                    onDeleteAction={() => handleDeletePrescription(row.original)}
                 />
             ),
             size: 100,
             enableSorting: false,
             enableHiding: false,
         },
-    ], [handleEditHealthCondition, handleDeleteHealthCondition])
+    ], [handleDeletePrescription])
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page)
@@ -161,19 +195,15 @@ export default function PrescriptionTable() {
         setCurrentPage(1)
     }, [])
 
-    const handleFormSuccess = useCallback(async () => {
-        await refetch()
-    }, [refetch])
-
     return (
         <div className="space-y-6 w-full">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                        Health Conditions
+                        Prescriptions
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Manage health conditions and their information
+                        Manage priscriptions and their information
                     </p>
                 </div>
             </div>
@@ -191,46 +221,25 @@ export default function PrescriptionTable() {
                 loading={isLoading}
                 noDataText={
                     <NoDataFound
-                        title="No Health Conditions Found"
-                        description="Start by adding your first health condition"
+                        title="No Priscriptions Found"
+                        description="Start by adding your first prescription"
                     />
                 }
-                searchPlaceholder="Search health conditions..."
+                searchPlaceholder="Search prescriptions by name or email..."
                 enableSearch={true}
                 onSearchAction={handleSearch}
                 enableColumnVisibility={true}
                 enableRowSelection={true}
                 enableSorting={true}
-                actionLabel="Add Health Condition"
-                onAddAction={() => setCreateModalOpen(true)}
+                actionLabel="Add Prescription"
             />
 
             <ActionModal
                 open={deleteModalOpen}
                 setOpen={setDeleteModalOpen}
-                title="Delete Health Condition"
-                description={`Are you sure you want to delete "${selectedHealthCondition?.name}"? This action cannot be undone.`}
+                title="Delete Prescription"
+                description={`Are you sure you want to delete "${selectedPrescription?.id}"? This action cannot be undone.`}
                 onConfirm={handleConfirmDelete}
-            />
-
-            <HealthConditionForm
-                mode="create"
-                open={createModalOpen}
-                onCloseAction={setCreateModalOpen}
-                onSubmitAction={handleFormSuccess}
-            />
-
-            <HealthConditionForm
-                mode="update"
-                open={editModalOpen}
-                slug={selectedHealthCondition?.slug}
-                onCloseAction={(isOpen) => {
-                    setEditModalOpen(isOpen)
-                    if (!isOpen) {
-                        setSelectedHealthCondition(null)
-                    }
-                }}
-                onSubmitAction={handleFormSuccess}
             />
         </div>
     )

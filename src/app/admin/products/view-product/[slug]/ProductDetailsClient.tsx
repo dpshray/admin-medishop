@@ -1,6 +1,6 @@
 'use client'
 
-import React, {Suspense, useCallback, useState} from 'react'
+import React, {Suspense, useCallback, useState, useEffect} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import {
     Archive,
@@ -22,7 +22,7 @@ import {
     Users,
     Zap
 } from 'lucide-react'
-import {useRouter} from 'next/navigation'
+import {useRouter, useSearchParams} from 'next/navigation'
 import productService from '@/service/product/product.service'
 import {ErrorFallback} from '@/components/Error/error-fallback'
 import AdminProductDetailsSkeleton from '@/app/admin/products/view-product/[slug]/loading'
@@ -36,28 +36,29 @@ import {Skeleton} from '@/components/ui/skeleton'
 import ImageGallery from '@/components/product/image-gallery'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
 import ProductVendorTab from "@/components/product/ProductVendorTab"
+import {QUERY_STALE_TIME} from "@/config/app-constant";
 
-export interface Brand {
+interface Brand {
     id: number
     name: string
 }
 
-export interface GenericProduct {
+interface GenericProduct {
     generic_product_name: string
     generic_product_id: number
 }
 
-export interface Category {
+interface Category {
     id: number
     name: string
 }
 
-export interface ProductTag {
+interface ProductTag {
     id: number
     name: string
 }
 
-export interface ProductVariation {
+interface ProductVariation {
     variation_id: number
     name: string
     size_value: number
@@ -71,17 +72,17 @@ export interface ProductVariation {
     stock_quantity?: number
 }
 
-export interface HealthCondition {
+interface HealthCondition {
     id: number
     name: string
 }
 
-export interface ProductImage {
+interface ProductImage {
     id: number
     url: string
 }
 
-export interface ProductData {
+interface ProductData {
     name: string
     uuid: string
     slug: string
@@ -102,15 +103,33 @@ export interface ProductData {
     rating?: number
 }
 
-export interface AdminProductDetailsProps {
+interface AdminProductDetailsProps {
     slug: string
 }
 
-const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({slug}) => {
+const VALID_TABS = ['variations', 'health', 'categories-tags', 'vendors'] as const
+type ValidTab = typeof VALID_TABS[number]
+
+const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> = React.memo(({slug}) => {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [openDeleteModal, setOpenDeleteModal] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [copySuccess, setCopySuccess] = useState(false)
+
+    const tabFromUrl = searchParams.get('tab')
+    const initialTab = (tabFromUrl && VALID_TABS.includes(tabFromUrl as ValidTab))
+        ? tabFromUrl as ValidTab
+        : 'variations'
+
+    const [activeTab, setActiveTab] = useState<ValidTab>(initialTab)
+
+    useEffect(() => {
+        const tabParam = searchParams.get('tab')
+        if (tabParam && VALID_TABS.includes(tabParam as ValidTab)) {
+            setActiveTab(tabParam as ValidTab)
+        }
+    }, [searchParams])
 
     const {data, isPending, isError, refetch} = useQuery({
         queryKey: ['admin-product', slug],
@@ -119,11 +138,23 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({slu
             if (!response?.data) throw new Error('Product not found')
             return response.data
         },
-        staleTime: 300000,
-        gcTime: 600000,
+        staleTime: QUERY_STALE_TIME,
         retry: 2,
-        refetchOnWindowFocus: false
+        refetchOnWindowFocus: true
     })
+
+    const updateUrlWithTab = useCallback((tab: string) => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('tab', tab)
+        router.push(`?${params.toString()}`, {scroll: false})
+    }, [router, searchParams])
+
+    const handleTabChange = useCallback((value: string) => {
+        if (VALID_TABS.includes(value as ValidTab)) {
+            setActiveTab(value as ValidTab)
+            updateUrlWithTab(value)
+        }
+    }, [updateUrlWithTab])
 
     const handlePreview = useCallback(() => {
         if (!data) return
@@ -202,22 +233,10 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({slu
     if (isPending) return <AdminProductDetailsSkeleton/>
 
     const tabs = [
-        {
-            label: "Variations",
-            value: "variations"
-        },
-        {
-            label: "Health Conditions",
-            value: "health"
-        },
-        {
-            label: "Categories & Tags",
-            value: "categories-tags"
-        },
-        {
-            label: "Vendors",
-            value: "vendors"
-        }
+        {label: "Variations", value: "variations"},
+        {label: "Health Conditions", value: "health"},
+        {label: "Categories & Tags", value: "categories-tags"},
+        {label: "Vendors", value: "vendors"}
     ]
 
     if (isError || !data) {
@@ -473,7 +492,7 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({slu
                             </div>
                         </div>
 
-                        <Tabs defaultValue="variations" className="w-full">
+                        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                             <TabsList className="h-10 p-1 bg-slate-100 rounded-xl w-full sm:w-auto grid grid-cols-4 sm:inline-grid mb-6">
                                 {tabs.map((tab) => (
                                     <TabsTrigger
@@ -596,5 +615,6 @@ const AdminProductDetails: React.FC<AdminProductDetailsProps> = React.memo(({slu
     )
 })
 
-AdminProductDetails.displayName = 'AdminProductDetails'
-export default AdminProductDetails
+AdminProductDetailsContent.displayName = 'AdminProductDetailsContent'
+
+export default AdminProductDetailsContent

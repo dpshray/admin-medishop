@@ -363,7 +363,7 @@ export function DataTable<TData, TValue>({
             </div>
 
             <div className=" relative  w-full overflow-hidden rounded-lg sm:rounded-xl   ring-1 ring-border min-w-0">
-                <div className={cn("overflow-x-auto  mx-auto max-w-[calc(100vw-295px)] [&>div]:rounded-sm [&>div]:border", tableClassName)}>
+                <div className={cn("overflow-x-auto  mx-auto  w-full md:max-w-[calc(100vw-295px)] [&>div]:rounded-sm [&>div]:border", tableClassName)}>
                     <Table className="min-w-full">
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (

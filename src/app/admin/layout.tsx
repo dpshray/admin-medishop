@@ -98,8 +98,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             currentHref="/admin"
             notifications={notifications}
             dropdownGroups={dropdownGroups}
+
         >
-            {children}
+           <main className={'flex-grow'}>
+               {children}
+           </main>
         </ReusableSidebar>
     )
 }

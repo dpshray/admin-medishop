@@ -108,11 +108,6 @@ class ProductService extends HttpServices {
             throw error
         }
     }
-
-
-
-
-
 }
 
 const productService = new ProductService();

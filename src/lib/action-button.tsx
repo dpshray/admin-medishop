@@ -64,7 +64,7 @@ const RowActions = <TData, >({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-lg bg-transparent transition-all duration-200 hover:scale-105 hover:text-white active:scale-95"
+                                className=" cursor-pointer h-8 w-8 rounded-lg bg-transparent transition-all duration-200 hover:scale-105 hover:text-white active:scale-95"
                                 style={{backgroundColor: "transparent"}}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = "#4a358e"

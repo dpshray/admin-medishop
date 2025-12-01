@@ -3,7 +3,7 @@
 import {useCallback, useMemo, useState} from "react"
 import {useMutation, useQuery} from "@tanstack/react-query"
 import {DataTable} from "@/components/table/ReusableTable"
-import tagService from "@/service/tag.service"
+import tagService from "@/service/(tags)/tag.service"
 import {ColumnDef} from "@tanstack/react-table"
 import {Checkbox} from "@/components/ui/checkbox"
 import {NoDataFound,} from "@/lib/helper"

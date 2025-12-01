@@ -1,16 +1,17 @@
 "use client"
 
-import React, {memo, useCallback, useMemo, useRef, useState} from "react"
-import {CreditCard, Download, Gift, Mail, MapPin, Package, Printer, User} from "lucide-react"
-import {Button} from "@/components/ui/button"
-import {Separator} from "@/components/ui/separator"
-import {Avatar, AvatarFallback} from "@/components/ui/avatar"
-import {FormatCurrency, StatusBadge} from "@/lib/helper"
+import React, { memo, useCallback, useMemo, useRef, useState, useEffect } from "react"
+import { CreditCard, Download, Gift, Mail, MapPin, Package, Printer, User } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { FormatCurrency, StatusBadge } from "@/lib/helper"
 import SearchSelectField from "@/components/field/search-select"
 import VendorOrderedItemCard from "@/components/vendor/vendor-details/vendor-order-card"
-import {useQuery} from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import vendorOrderService from "@/service/order/vendor-order.service"
-import {toast} from "sonner"
+import { toast } from "sonner"
+import { ORDER_STATUS } from "@/types/enum"
 
 interface StatusOption {
     value: string
@@ -18,9 +19,8 @@ interface StatusOption {
 }
 
 const STATUS_OPTIONS: StatusOption[] = [
-    {value: "Processing", label: "Processing"},
-    {value: "Delivered", label: "Delivered"},
-
+    { value: ORDER_STATUS.PROCESSING, label: "Processing" },
+    { value: ORDER_STATUS.DELIVERED, label: "Delivered" },
 ]
 
 interface VendorOrderDetailsProps {
@@ -32,11 +32,13 @@ const InfoCard = memo<{
     label: string
     value: string | React.ReactNode
     className?: string
-}>(({icon: Icon, label, value, className = ""}) => (
+}>(({ icon: Icon, label, value, className = "" }) => (
     <div className={`flex items-start gap-3 p-3 sm:p-4 rounded-lg bg-slate-50 ${className}`}>
         <div
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primaryColor" aria-hidden="true"/>
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primaryColor/10 flex items-center justify-center flex-shrink-0"
+            aria-hidden="true"
+        >
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primaryColor" />
         </div>
         <div className="min-w-0 flex-1">
             <p className="text-xs sm:text-sm text-slate-500 mb-1 font-medium">{label}</p>
@@ -52,7 +54,7 @@ const InfoCard = memo<{
 InfoCard.displayName = 'InfoCard'
 
 const PriceRow = memo<{ label: string; amount: string; isTotal?: boolean }>(
-    ({label, amount, isTotal = false}) => (
+    ({ label, amount, isTotal = false }) => (
         <div className="flex justify-between items-center">
             <dt className={isTotal ? "text-sm sm:text-base md:text-lg font-bold text-slate-900" : "text-xs sm:text-sm text-slate-600 font-medium"}>
                 {label}
@@ -66,23 +68,22 @@ const PriceRow = memo<{ label: string; amount: string; isTotal?: boolean }>(
 
 PriceRow.displayName = 'PriceRow'
 
-export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetailsProps) {
-    const {data: vendorOrder, refetch, isLoading} = useQuery({
-        queryKey: ["orderDetails", slug],
-        queryFn: async () => {
-            return await vendorOrderService.getVendorOrderDetail(slug).then((res) => {
-                console.log('vendorOrder', res)
-                return res
-            })
-        },
-        enabled: !!slug,
-    })
-
-    const printRef = useRef<HTMLDivElement>(null)
+export default function VendorAssignedOrderDetailsPage({ slug }: VendorOrderDetailsProps) {
     const [selectedStatus, setSelectedStatus] = useState<string>("")
     const [isUpdating, setIsUpdating] = useState(false)
+    const printRef = useRef<HTMLDivElement>(null)
 
-    useMemo(() => {
+    const { data: vendorOrder, refetch, isLoading } = useQuery({
+        queryKey: ["orderDetails", slug],
+        queryFn: async () => {
+            const res = await vendorOrderService.getVendorOrderDetail(slug)
+            return res
+        },
+        enabled: !!slug,
+        staleTime: 30000,
+    })
+
+    useEffect(() => {
         if (vendorOrder?.status) {
             setSelectedStatus(vendorOrder.status)
         }
@@ -97,20 +98,20 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
     }, [])
 
     const handleUpdateStatus = useCallback(async () => {
-        if (!vendorOrder || selectedStatus === vendorOrder.status) return
+        if (!vendorOrder || selectedStatus === vendorOrder.status || isUpdating) return
 
         setIsUpdating(true)
         try {
-            const payload = {status: selectedStatus}
-            await vendorOrderService.updateVendorOrderStatus(slug, payload)
-            toast.success("Order status updated successfully")
-            refetch()
+            const payload = { status: selectedStatus }
+            const res = await vendorOrderService.updateVendorOrderStatus(slug, payload)
+            toast.success(res.message || "Order status updated successfully")
+            await refetch()
         } catch (error: any) {
             toast.error(error?.message || "Failed to update order status")
         } finally {
             setIsUpdating(false)
         }
-    }, [vendorOrder, selectedStatus, slug, refetch])
+    }, [vendorOrder, selectedStatus, slug, refetch, isUpdating])
 
     const customerInitial = useMemo(
         () => vendorOrder?.name?.charAt(0)?.toUpperCase() || "U",
@@ -136,7 +137,7 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
                 <div className="text-center">
-                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto animate-pulse text-primaryColor mb-4"/>
+                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto animate-pulse text-primaryColor mb-4" aria-hidden="true" />
                     <p className="text-sm sm:text-base text-slate-600">Loading order details...</p>
                 </div>
             </div>
@@ -147,7 +148,7 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
                 <div className="text-center">
-                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-slate-400 mb-4"/>
+                    <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-slate-400 mb-4" aria-hidden="true" />
                     <p className="text-sm sm:text-base text-slate-600">Order not found</p>
                 </div>
             </div>
@@ -175,7 +176,7 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                 className="gap-2 text-xs sm:text-sm h-8 sm:h-9"
                                 aria-label="Download order details"
                             >
-                                <Download className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true"/>
+                                <Download className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
                                 <span className="hidden sm:inline">Download</span>
                             </Button>
                             <Button
@@ -185,7 +186,7 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                 className="gap-2 text-xs sm:text-sm h-8 sm:h-9"
                                 aria-label="Print order details"
                             >
-                                <Printer className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true"/>
+                                <Printer className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
                                 <span className="hidden sm:inline">Print</span>
                             </Button>
                         </div>
@@ -216,33 +217,32 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                             <div className="flex items-start gap-2 sm:gap-3">
                                 <div
-                                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-primaryColor flex items-center justify-center flex-shrink-0">
-                                    <Package className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white"
-                                             aria-hidden="true"/>
+                                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-primaryColor flex items-center justify-center flex-shrink-0"
+                                    aria-hidden="true"
+                                >
+                                    <Package className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
                                 </div>
                                 <div className="min-w-0">
                                     <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 break-all">
                                         {vendorOrder.order_code}
                                     </h2>
-                                    <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                                    <time className="text-xs sm:text-sm text-slate-600 mt-1 block">
                                         {vendorOrder.created_at}
-                                    </p>
+                                    </time>
                                 </div>
                             </div>
                             <div className="flex-shrink-0">
-                                <StatusBadge status={vendorOrder.status} />
-                                {/*{*/}
-                                {/*    vendorOrder.order_item_status &&*/}
-                                {/*    <StatusBadge status={vendorOrder.order_item_status}/>*/}
-                                {/*}*/}
+                                {vendorOrder.order_item_status && (
+                                    <StatusBadge status={vendorOrder.order_item_status} />
+                                )}
                             </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-slate-200">
                         <div className="lg:col-span-2 p-3 sm:p-4 md:p-6 lg:p-8 bg-white space-y-4 sm:space-y-6">
-                            <section>
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
+                            <section aria-labelledby="order-items-heading">
+                                <h3 id="order-items-heading" className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
                                     Order Items
                                 </h3>
                                 <div className="space-y-3 sm:space-y-4">
@@ -258,10 +258,10 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                 </div>
                             </section>
 
-                            <Separator className="my-4 sm:my-6"/>
+                            <Separator className="my-4 sm:my-6" />
 
-                            <section>
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
+                            <section aria-labelledby="vendor-info-heading">
+                                <h3 id="vendor-info-heading" className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
                                     Vendor Information
                                 </h3>
                                 <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-slate-50">
@@ -275,7 +275,7 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                             {vendorOrder.name}
                                         </p>
                                         <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 mt-1">
-                                            <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" aria-hidden="true"/>
+                                            <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" aria-hidden="true" />
                                             <a
                                                 href={`mailto:${vendorOrder.email}`}
                                                 className="hover:text-primaryColor hover:underline break-all transition-colors"
@@ -290,20 +290,19 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                         </div>
 
                         <aside className="p-3 sm:p-4 md:p-6 lg:p-8 bg-white space-y-4 sm:space-y-6">
-                            <section>
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
+                            <section aria-labelledby="customer-details-heading">
+                                <h3 id="customer-details-heading" className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
                                     Customer Details
                                 </h3>
                                 <div className="space-y-3 sm:space-y-4">
-                                    <InfoCard icon={User} label="Customer Name" value={vendorOrder.name}/>
+                                    <InfoCard icon={User} label="Customer Name" value={vendorOrder.name} />
 
                                     <InfoCard
                                         icon={MapPin}
                                         label="Delivery Address"
                                         value={
                                             <>
-                                                <address
-                                                    className="font-bold text-sm sm:text-base text-slate-900 not-italic break-words">
+                                                <address className="font-bold text-sm sm:text-base text-slate-900 not-italic break-words">
                                                     {vendorOrder.address}
                                                 </address>
                                                 {hasCoordinates && (
@@ -322,11 +321,10 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                             value={
                                                 <>
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span
-                                                            className="text-xs sm:text-sm text-slate-500 font-medium">Charge:</span>
+                                                        <span className="text-xs sm:text-sm text-slate-500 font-medium">Charge:</span>
                                                         <span className="font-bold text-sm sm:text-base text-slate-900">
-                              {vendorOrder.gift_wrap_charge}
-                            </span>
+                                                            {vendorOrder.gift_wrap_charge}
+                                                        </span>
                                                     </div>
                                                     <p className="text-xs sm:text-sm text-slate-600 break-words">
                                                         {vendorOrder.gift_wrap_remarks}
@@ -338,10 +336,10 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                 </div>
                             </section>
 
-                            <Separator className="my-4 sm:my-6"/>
+                            <Separator className="my-4 sm:my-6" />
 
-                            <section>
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
+                            <section aria-labelledby="payment-details-heading">
+                                <h3 id="payment-details-heading" className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
                                     Payment Details
                                 </h3>
                                 <div className="space-y-3 sm:space-y-4">
@@ -352,13 +350,16 @@ export default function VendorAssignedOrderDetailsPage({slug}: VendorOrderDetail
                                     />
 
                                     <div className="bg-slate-50 rounded-lg p-3 sm:p-4 md:p-6 border border-slate-200">
-                                        <dl className="space-y-2 sm:space-y-3" role="list">
-                                            <PriceRow label="Subtotal" amount={FormatCurrency(vendorOrder.price)}/>
-                                            <PriceRow label="Tax" amount="Rs. 0.00"/>
-                                            <Separator className="my-2"/>
+                                        <dl className="space-y-2 sm:space-y-3">
+                                            <PriceRow label="Subtotal" amount={FormatCurrency(vendorOrder.price)} />
+                                            <PriceRow label="Tax" amount="Rs. 0.00" />
+                                            <Separator className="my-2" />
                                             <div className="pt-2">
-                                                <PriceRow label="Total Amount"
-                                                          amount={FormatCurrency(vendorOrder.price)} isTotal/>
+                                                <PriceRow
+                                                    label="Total Amount"
+                                                    amount={FormatCurrency(vendorOrder.price)}
+                                                    isTotal
+                                                />
                                             </div>
                                         </dl>
                                     </div>

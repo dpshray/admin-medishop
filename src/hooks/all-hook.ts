@@ -1,8 +1,8 @@
 import {useQuery} from "@tanstack/react-query"
-import tagService from "@/service/tag.service"
+import tagService from "@/service/(tags)/tag.service"
 
 import {PaginatedResponse, ParamsType} from "@/types/types"
-import categoriesService from "@/service/categories.service";
+import categoriesService from "@/service/(category)/categories.service";
 import brandService from "@/service/brand.service";
 import productService from "@/service/product/product.service";
 import genericNameService from "@/service/generic-name.service";

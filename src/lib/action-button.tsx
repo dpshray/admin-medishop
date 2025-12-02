@@ -2,7 +2,7 @@
 
 import {useCallback, useState} from "react"
 import {cn} from "@/lib/utils"
-import {Edit, Eye, EyeOff, Loader2, LucideIcon, Trash2} from "lucide-react"
+import {Edit, Eye, EyeOff, Icon, Loader2, LucideIcon, Trash2} from "lucide-react"
 import {Row} from "@tanstack/react-table"
 import {Switch} from "@/components/ui/switch"
 import {Label} from "@/components/ui/label"
@@ -19,6 +19,9 @@ interface RowActionsProps<TData> {
     editLabel?: string
     deleteLabel?: string
     viewLabel?: string
+    otherLabel?: string
+    onOtherAction?: (row: Row<TData>) => void
+    otherIcon?: LucideIcon
 }
 
 const RowActions = <TData, >({
@@ -26,14 +29,18 @@ const RowActions = <TData, >({
                                  onEditAction,
                                  onDeleteAction,
                                  onViewAction,
+                                 onOtherAction,
+                                 otherLabel = "Other",
                                  className,
                                  editLabel = "Edit",
                                  deleteLabel = "Delete",
                                  viewLabel = "View",
+                                 otherIcon: Icon = Trash2
                              }: RowActionsProps<TData>) => {
     const handleEdit = useCallback(() => onEditAction?.(row), [onEditAction, row])
     const handleDelete = useCallback(() => onDeleteAction?.(row), [onDeleteAction, row])
     const handleView = useCallback(() => onViewAction?.(row), [onViewAction, row])
+    const handleOtherAction = useCallback(() => onOtherAction?.(row), [onOtherAction, row])
 
     const commonClassName = 'w-fit justify-start rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 h-auto cursor-pointer'
     return (
@@ -102,6 +109,25 @@ const RowActions = <TData, >({
                         </TooltipContent>
                     </Tooltip>
                 )}
+                {
+                    onOtherAction &&
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-slate-100 hover:text-slate-700 active:scale-95 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                                onClick={handleOtherAction}
+                                aria-label="Other"
+                            >
+                                <Icon className="h-4 w-4" aria-hidden="true"/>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={5} className="border-slate-700 bg-slate-900 text-white">
+                            <p className="text-xs font-medium">{otherLabel}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                }
             </div>
         </TooltipProvider>
     )

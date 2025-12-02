@@ -10,7 +10,7 @@ import {QUERY_STALE_TIME} from "@/config/app-constant"
 import {ColumnDef} from "@tanstack/react-table"
 import {Checkbox} from "@/components/ui/checkbox"
 import {RowActions} from "@/lib/action-button"
-import serviceProvider from "@/service/service-provider.service"
+import serviceProvider from "@/service/serivce-provider/service-provider.service"
 
 interface ServiceProvider {
     name: string

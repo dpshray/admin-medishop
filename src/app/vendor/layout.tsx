@@ -13,6 +13,7 @@ export default function VendorLayout({children}: { children: React.ReactNode }) 
             label: "Main",
             items: [
                 {label: "Dashboard", href: "/vendor", icon: Home},
+                {label: "Services", href: "/vendor/vendor-service", icon: Package},
             ],
         },
         {

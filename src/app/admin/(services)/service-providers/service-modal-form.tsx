@@ -15,7 +15,7 @@ import MultiSelectField from "@/components/field/multi-select-input"
 import {useQuery} from "@tanstack/react-query"
 import serviceCategoriesService from "@/service/(category)/service-categories.service"
 import servicesTagService from "@/service/(tags)/services-tag.service"
-import serviceProvider from "@/service/service-provider.service"
+import serviceProvider from "@/service/serivce-provider/service-provider.service"
 import {ParamsType} from "@/types/types"
 import {QUERY_STALE_TIME} from "@/config/app-constant";
 

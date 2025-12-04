@@ -10,9 +10,9 @@ export default function ServiceProviderPage() {
     return (
         <div className="min-h-screen mainContainer">
             <PageHeader
-                title="Service Tags"
+                title="Service Provided"
                 icon={Layers}
-                description="Manage and organize all service tags"
+                description="Manage and organize all service Provided "
             />
             <div className="my-4">
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

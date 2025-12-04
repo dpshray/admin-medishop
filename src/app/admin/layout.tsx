@@ -65,6 +65,7 @@ export default function AdminLayout({children}: AdminLayoutProps) {
                 {label: "Service Categories", href: "/admin/service-categories", icon: Layers},
                 {label: "Service Providers", href: "/admin/service-providers", icon: FileText},
                 {label: "Service Tags", href: "/admin/service-tags", icon: Tag},
+                {label: "Booked Services", href: "/admin/booked-services", icon: Package},
             ],
         },
         {

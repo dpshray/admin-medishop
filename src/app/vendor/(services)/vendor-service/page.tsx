@@ -3,7 +3,7 @@ import PageHeader from "@/components/headers/PageHeader";
 import {Building2} from "lucide-react";
 import {adminVendorDashboardCards} from "@/data";
 import {DashboardCard} from "@/components/dashboard/dashboard-card";
-import VendorServiceTable from "@/app/vendor/vendor-service/vendor-service-table";
+import VendorServiceTable from "@/app/vendor/(services)/vendor-service/vendor-service-table";
 
 export default function VendorServicePage() {
 

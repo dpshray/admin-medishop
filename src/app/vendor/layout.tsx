@@ -13,7 +13,6 @@ export default function VendorLayout({children}: { children: React.ReactNode }) 
             label: "Main",
             items: [
                 {label: "Dashboard", href: "/vendor", icon: Home},
-                {label: "Services", href: "/vendor/vendor-service", icon: Package},
             ],
         },
         {
@@ -23,9 +22,17 @@ export default function VendorLayout({children}: { children: React.ReactNode }) 
             ],
         },
         {
+            label:"Services",
+            items: [
+                {label: "Services", href: "/vendor/vendor-service", icon: Package},
+                {label: "Service Requests", href: "/vendor/service-request", icon: Package},
+            ],
+        },
+        {
             label: "Orders",
             items: [
                 {label: "Orders", href: "/vendor/vendor-orders", icon: ShoppingCart},
+                {label: "Service Orders", href: "/vendor/vendor-service-orders", icon: ShoppingCart},
 
             ],
         },

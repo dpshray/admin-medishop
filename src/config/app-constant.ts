@@ -1,5 +1,5 @@
 //Query Constant
-const QUERY_STALE_TIME = 30000;
+const QUERY_STALE_TIME = 3000;
 const QUERY_REFETCH_INTERVAL = 5000;
 
 

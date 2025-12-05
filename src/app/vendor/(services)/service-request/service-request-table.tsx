@@ -1,7 +1,7 @@
 "use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useCallback, useMemo, useState, useTransition } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { useCallback, useMemo, useState, useTransition, memo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/table/ReusableTable"
 import { FormatCurrency, NoDataFound, StatusBadge } from "@/lib/helper"
@@ -24,9 +24,10 @@ interface VendorServicesResponse {
     total_items: number
 }
 
-export default function ServiceRequestTable() {
-    const [currentPage, setCurrentPage] = useState(1)
+const EMPTY_ITEMS: VendorServiceResponse[] = []
 
+function ServiceRequestTable() {
+    const [currentPage, setCurrentPage] = useState(1)
     const [searchTerm, setSearchTerm] = useState("")
     const [isPending, startTransition] = useTransition()
 
@@ -39,6 +40,7 @@ export default function ServiceRequestTable() {
             }),
         staleTime: QUERY_STALE_TIME,
         refetchOnWindowFocus: false,
+        gcTime: 5 * 60 * 1000,
     })
 
     const handlePageChange = useCallback((page: number) => {
@@ -113,6 +115,10 @@ export default function ServiceRequestTable() {
             </div>
         )
 
+    const items = data?.items ?? EMPTY_ITEMS
+    const totalItems = data?.total_items ?? 0
+    const totalPages = data?.total_page ?? 1
+
     return (
         <main className="w-full space-y-4 md:space-y-6">
             <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
@@ -124,7 +130,7 @@ export default function ServiceRequestTable() {
 
             <div className="w-full overflow-x-auto">
                 <DataTable
-                    data={data?.items ?? []}
+                    data={items}
                     columns={columns}
                     loading={isLoading || isPending}
                     onSearchAction={handleSearch}
@@ -133,12 +139,12 @@ export default function ServiceRequestTable() {
                     enableSearch
                     enableColumnVisibility
                     searchPlaceholder="Search by name or slug..."
-                    totalCount={data?.total_items ?? 0}
+                    totalCount={totalItems}
                     pagination={{
                         page: currentPage,
-                        totalPages: data?.total_page ?? 1,
+                        totalPages: totalPages,
                         onPageChange: handlePageChange,
-                        dataCount: data?.total_items ?? 0,
+                        dataCount: totalItems,
                     }}
                     noDataText={
                         <NoDataFound
@@ -153,3 +159,5 @@ export default function ServiceRequestTable() {
         </main>
     )
 }
+
+export default memo(ServiceRequestTable)

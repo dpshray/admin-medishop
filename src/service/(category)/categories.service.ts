@@ -40,7 +40,7 @@ class CategoriesService extends HttpServices {
         try {
             return await this.postRequest({
                 url: `/admin/category/${id}`,
-                data:{
+                data: {
                     ...data,
                     _method: "PUT",
                 },
@@ -63,6 +63,19 @@ class CategoriesService extends HttpServices {
                 }
             })
 
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getCategoryBySlug(slug: string) {
+        try {
+            return await this.getRequest({
+                url: `/admin/category/${slug}`,
+                config: {
+                    auth: true,
+                }
+            })
         } catch (error) {
             throw error;
         }

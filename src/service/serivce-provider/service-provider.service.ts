@@ -76,6 +76,38 @@ class ServiceProviderService extends HttpServices {
             throw error
         }
     }
+
+    //fetch all service providers by vendor
+    async getAllRequestedServiceByVendor(params?: any) {
+        try {
+            const response = await this.getRequest({
+                url: '/admin/fetch-all-service-vendor',
+                config: {
+                    auth: true,
+                    params
+                }
+            })
+            return response?.data
+        }
+        catch (error) {
+            throw error
+        }
+    }
+
+
+    async acceptOrRejectServiceRequest(slug: string, uuid: string) {
+        try {
+            return await this.patchRequest({
+                ///admin/service/313/vendor/41412
+                url: `/admin/service/${slug}/vendor/${uuid}`,
+                config: {
+                    auth: true,
+                }
+            })
+        }catch (error) {
+            throw error
+        }
+    }
 }
 
 const serviceProvider = new ServiceProviderService();

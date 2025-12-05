@@ -54,7 +54,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             label: "Orders",
             items: [
                 { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-                { label: "Vendor Products", href: "/admin/vendor-product", icon: Package },
+                { label: " Products Request", href: "/admin/vendor-product", icon: Package },
+                { label: "Booked Services Order", href: "/admin/booked-services", icon: Package },
                 { label: "Order History", href: "/admin/order-history", icon: FileText },
                 { label: "Assigned Orders", href: "/admin/assigned", icon: Package },
             ],
@@ -65,8 +66,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 { label: "Service Categories", href: "/admin/service-categories", icon: Layers },
                 { label: "Service Providers", href: "/admin/service-providers", icon: FileText },
                 { label: "Service Tags", href: "/admin/service-tags", icon: Tag },
-                { label: "Booked Services", href: "/admin/booked-services", icon: Package },
-                {label: "Vendor Service Request", href: "/admin/vendor-service-request", icon: FileText}
+                { label: "Vendor Service Request", href: "/admin/vendor-service-request", icon: FileText }
             ],
         },
         {

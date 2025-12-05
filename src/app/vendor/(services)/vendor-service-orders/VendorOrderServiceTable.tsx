@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useCallback, useMemo, useState, useTransition } from "react"
+import { useCallback, useMemo, useState, useTransition, memo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/table/ReusableTable"
 import { NoDataFound, StatusBadge } from "@/lib/helper"
@@ -28,7 +28,9 @@ interface VendorServicesResponse {
     total_items: number
 }
 
-export default function VendorOrderServiceTable() {
+const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString()
+
+function VendorOrderServiceTable() {
     const [currentPage, setCurrentPage] = useState(1)
     const [searchTerm, setSearchTerm] = useState("")
     const [isPending, startTransition] = useTransition()
@@ -96,16 +98,12 @@ export default function VendorOrderServiceTable() {
             {
                 header: "User",
                 accessorKey: "user_name",
-                cell: ({ row }) => (
-                    <span className="truncate font-medium">{row.original.user_name}</span>
-                ),
+                cell: ({ row }) => <span className="truncate font-medium">{row.original.user_name}</span>,
             },
             {
                 header: "Service",
                 accessorKey: "service_name",
-                cell: ({ row }) => (
-                    <span className="truncate text-sm">{row.original.service_name}</span>
-                ),
+                cell: ({ row }) => <span className="truncate text-sm">{row.original.service_name}</span>,
             },
             {
                 header: "Status",
@@ -117,7 +115,7 @@ export default function VendorOrderServiceTable() {
                 accessorKey: "appointment_at",
                 cell: ({ row }) => (
                     <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {new Date(row.original.appointment_at).toLocaleDateString()}
+                        {formatDate(row.original.appointment_at)}
                     </span>
                 ),
             },
@@ -125,8 +123,12 @@ export default function VendorOrderServiceTable() {
                 id: "actions",
                 header: "Actions",
                 cell: ({ row }) => (
-                    <Button variant="outline" size="sm" className="transition-all hover:scale-105 cursor-pointer"
-                        onClick={() => openStatusModal(row.original)}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="transition-all hover:scale-105 cursor-pointer bg-transparent"
+                        onClick={() => openStatusModal(row.original)}
+                    >
                         Update Status
                         <Edit className="ml-2 h-4 w-4" />
                     </Button>
@@ -134,7 +136,7 @@ export default function VendorOrderServiceTable() {
                 size: 120,
             },
         ],
-        [modalOpen, selectedBooking, closeStatusModal, handleStatusSuccess]
+        [openStatusModal],
     )
 
     if (error) {
@@ -190,3 +192,5 @@ export default function VendorOrderServiceTable() {
         </div>
     )
 }
+
+export default memo(VendorOrderServiceTable)

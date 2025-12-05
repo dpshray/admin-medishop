@@ -21,6 +21,8 @@ import {useQuery} from "@tanstack/react-query"
 import {FormatCurrency, FormatDate} from "@/lib/helper"
 import {Badge} from "@/components/ui/badge"
 import {toast} from "sonner"
+import VendorServiceRequestModalSkeleton
+    from "@/app/vendor/(services)/vendor-service/VendorServiceRequestModalSkeleton";
 
 const vendorServiceApplySchema = z.object({
     is_available: z.boolean(),
@@ -87,14 +89,16 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
     const isEditMode = Boolean(initialData?.service_id)
     const isAvailable = watch("is_available")
 
-    const {data: adminData} = useQuery<VendorService>({
+    const {data: adminData, isLoading} = useQuery<VendorService>({
         queryKey: ["vendorServiceDetails", slug],
         queryFn: async () => {
             const res = await vendorServiceProviderService.getVendorServiceProviderBySlug(slug)
+            console.log('Response from getVendorServiceProviderBySlug',res)
             return res.data
         },
         enabled: open && !!slug,
     })
+
 
     const handleFormSubmit = useCallback(
         async (data: VendorServiceApplyFormValues) => {
@@ -109,7 +113,9 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
                 if (onSubmitAction) await onSubmitAction()
                 reset()
                 onCloseAction(false)
-            } catch (error) {}
+            } catch (error:any) {
+                toast.error(error?.message)
+            }
         },
         [onSubmitAction, reset, onCloseAction, adminData],
     )
@@ -131,7 +137,8 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
         }
     }, [open, initialData, adminData, reset])
 
-    const isLoading = loading || isSubmitting
+    if (isLoading)return <VendorServiceRequestModalSkeleton/>
+
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -146,14 +153,16 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
                     </DialogTitle>
                     {serviceName && (
                         <DialogDescription className="text-sm">
-                            Configure pricing and availability for <span className="font-medium text-foreground">{serviceName}</span>
+                            Configure pricing and availability for <span
+                            className="font-medium text-foreground">{serviceName}</span>
                         </DialogDescription>
                     )}
                 </DialogHeader>
 
                 {adminData && (
                     <div className="space-y-4 p-3 sm:p-4 bg-muted/50 rounded-lg border border-border">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-border">
+                        <div
+                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-border">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <Badge variant="secondary" className="text-xs font-mono">#{adminData.service_id}</Badge>
                                 <h3 className="text-base sm:text-lg font-semibold">{adminData.service_name}</h3>
@@ -170,16 +179,19 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
                             <div>
                                 <p className="text-xs text-muted-foreground">Approval Status</p>
                                 {adminData.is_approved_by_admin ? (
-                                    <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">Approved</Badge>
+                                    <Badge variant="default"
+                                           className="bg-green-600 hover:bg-green-700 text-xs">Approved</Badge>
                                 ) : (
-                                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 text-xs">Pending</Badge>
+                                    <Badge variant="secondary"
+                                           className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 text-xs">Pending</Badge>
                                 )}
                             </div>
 
                             <div>
                                 <p className="text-xs text-muted-foreground">Service Status</p>
                                 {adminData.vendor_service_status ? (
-                                    <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">Active</Badge>
+                                    <Badge variant="default"
+                                           className="bg-green-600 hover:bg-green-700 text-xs">Active</Badge>
                                 ) : (
                                     <Badge variant="destructive" className="text-xs">Inactive</Badge>
                                 )}
@@ -234,16 +246,20 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
                     <input type="hidden" {...register("service_id", {valueAsNumber: true})} />
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border">
+                        <div
+                            className="flex items-center justify-between p-4 bg-secondary rounded-lg border border-border">
                             <div className="space-y-1 flex-1 pr-4">
-                                <Label htmlFor="is_available" className="text-sm font-medium cursor-pointer">Service Availability</Label>
-                                <p className="text-xs text-muted-foreground">Make this service available to customers</p>
+                                <Label htmlFor="is_available" className="text-sm font-medium cursor-pointer">Service
+                                    Availability</Label>
+                                <p className="text-xs text-muted-foreground">Make this service available to
+                                    customers</p>
                             </div>
                             <Controller
                                 name="is_available"
                                 control={control}
                                 render={({field}) => (
-                                    <Switch id="is_available" checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
+                                    <Switch id="is_available" checked={field.value} onCheckedChange={field.onChange}
+                                            disabled={isLoading}/>
                                 )}
                             />
                         </div>
@@ -262,17 +278,21 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
                         />
 
                         {!isAvailable && (
-                            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                                <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
-                                <p className="text-xs text-amber-800 dark:text-amber-200">This service will be hidden from customers when availability is disabled.</p>
+                            <div
+                                className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5"/>
+                                <p className="text-xs text-amber-800 dark:text-amber-200">This service will be hidden
+                                    from customers when availability is disabled.</p>
                             </div>
                         )}
                     </div>
 
-                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-border">
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="w-full sm:w-auto">Cancel</Button>
-                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto" aria-busy={isLoading}>
-                            {isLoading ? "Submitting..." : isEditMode ? "Update Application" : "Submit Application"}
+                    <DialogFooter
+                        className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-border">
+                        <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}
+                                className="w-full sm:w-auto">Cancel</Button>
+                        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto" aria-busy={isSubmitting}>
+                            {isSubmitting ? "Submitting..." : isEditMode ? "Update Application" : "Submit Application"}
                         </Button>
                     </DialogFooter>
                 </form>

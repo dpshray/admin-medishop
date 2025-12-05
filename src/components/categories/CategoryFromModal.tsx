@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect} from "react"
+import {useCallback, useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import {z} from "zod"
@@ -8,10 +8,12 @@ import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} fro
 import {Button} from "@/components/ui/button"
 import TextInputField from "@/components/field/text-input"
 import FileInputField from "@/components/field/file-input"
-import Image from "next/image"
 import {cn} from "@/lib/utils"
+import categoriesService from "@/service/(category)/categories.service"
+import {toast} from "sonner"
+import {Loader2} from "lucide-react"
 
-const createCategorySchema = z.object({
+const categorySchema = z.object({
     name: z.string().min(1, "Category name is required").max(100, "Name must be less than 100 characters"),
     discount_percent: z.preprocess(
         (val) => {
@@ -32,41 +34,25 @@ const createCategorySchema = z.object({
     image: z.instanceof(File).optional(),
 })
 
-const updateCategorySchema = z.object({
-    name: z.string().min(1, "Category name is required").max(100, "Name must be less than 100 characters").optional(),
-    discount_percent: z.preprocess(
-        (val) => {
-            if (val === "" || val === null || val === undefined) return undefined
-            const num = Number(val)
-            return isNaN(num) ? undefined : num
-        },
-        z.number().min(0, "Discount must be 0 or greater").max(100, "Discount cannot exceed 100%").optional()
-    ),
-    menu_order: z.preprocess(
-        (val) => {
-            if (val === "" || val === null || val === undefined) return null
-            const num = Number(val)
-            return isNaN(num) ? null : num
-        },
-        z.number().min(0, "Menu order must be 0 or greater").nullable().optional()
-    ),
-    image: z.instanceof(File).optional(),
-})
+type CategoryFormValues = z.infer<typeof categorySchema>
 
-export type CategoryFormValues = z.infer<typeof createCategorySchema> | z.infer<typeof updateCategorySchema>
+interface InitialData {
+    id: number
+    slug: string
+    name: string
+    menu_order: number
+    image: string
+    discount_percent: number
+}
 
 interface CategoryFormModalProps {
     open: boolean
     onCloseAction: () => void
-    onSubmitAction: (category: CategoryFormValues) => Promise<void> | void
+    onSubmitAction?: () => Promise<void>
     slug?: string
     isLoading?: boolean
-    initialData?: {
-        name: string
-        image?: string
-        discount_percent?: number
-        menu_order?: number | null
-    }
+    initialData?: InitialData
+    mode: "create" | "edit"
 }
 
 export function CategoryFormModal({
@@ -75,65 +61,119 @@ export function CategoryFormModal({
                                       onSubmitAction,
                                       slug,
                                       isLoading = false,
-                                      initialData
+                                      initialData,
+                                      mode = "create"
                                   }: CategoryFormModalProps) {
-    const isEditMode = Boolean(slug || initialData)
+    const isEditMode = mode === "edit"
+    const [isFetchingData, setIsFetchingData] = useState(false)
+    const [fetchedData, setFetchedData] = useState<InitialData | null>(null)
+    const [selectedImage, setSelectedImage] = useState<File | undefined>(undefined)
 
     const {
         register,
         handleSubmit,
-        setValue,
         reset,
         formState: {errors, isSubmitting}
     } = useForm<CategoryFormValues>({
-        resolver: zodResolver(isEditMode ? updateCategorySchema : createCategorySchema) as any,
+        resolver: zodResolver(categorySchema) as any,
         defaultValues: {
             name: "",
             discount_percent: undefined,
-            menu_order: undefined,
+            menu_order: null,
             image: undefined
         }
     })
 
-    const disabled = isLoading || isSubmitting
+    const disabled = isLoading || isSubmitting || isFetchingData
+
+    const fetchCategoryData = useCallback(async () => {
+        if (!slug || !open || !isEditMode) return
+
+        setIsFetchingData(true)
+        try {
+            const res = await categoriesService.getCategoryBySlug(slug)
+            if (res?.data) {
+                setFetchedData(res.data)
+            }
+        } catch (error) {
+            toast.error("Failed to load category data")
+        } finally {
+            setIsFetchingData(false)
+        }
+    }, [slug, open, isEditMode])
 
     useEffect(() => {
-        if (open && initialData) {
+        if (open && isEditMode && slug && !initialData) {
+            fetchCategoryData()
+        }
+    }, [open, isEditMode, slug, initialData, fetchCategoryData])
+
+    useEffect(() => {
+        const dataToUse = initialData || fetchedData
+
+        if (open && dataToUse) {
             reset({
-                name: initialData.name,
-                discount_percent: initialData.discount_percent ?? undefined,
-                menu_order: initialData.menu_order ?? null,
+                name: dataToUse.name,
+                discount_percent: dataToUse.discount_percent ?? undefined,
+                menu_order: dataToUse.menu_order ?? null,
                 image: undefined
             })
-        } else if (open && !initialData) {
+            setSelectedImage(undefined)
+        } else if (open && !dataToUse && !isEditMode) {
             reset({
                 name: "",
                 discount_percent: undefined,
                 menu_order: null,
                 image: undefined
             })
+            setSelectedImage(undefined)
         }
-    }, [open, initialData, reset])
+    }, [open, initialData, fetchedData, isEditMode, reset])
 
-    const handleDialogChange = (isOpen: boolean) => {
+    const handleDialogChange = useCallback((isOpen: boolean) => {
         if (!isOpen && !disabled) {
             onCloseAction()
+            setFetchedData(null)
+            setSelectedImage(undefined)
         }
-    }
+    }, [disabled, onCloseAction])
 
-    const handleFormSubmit = async (data: CategoryFormValues) => {
-        const cleanedData = {
-            ...data,
-            discount_percent: data.discount_percent || undefined,
-            menu_order: data.menu_order || null
+    const handleFormSubmit = useCallback(async (data: CategoryFormValues) => {
+        try {
+            const formDataToSubmit = {
+                ...data,
+                image: selectedImage
+            }
+
+            if (mode === "create") {
+                const res = await categoriesService.createCategory(formDataToSubmit)
+                toast.success(res?.message || "Category created successfully")
+            } else {
+                const dataToUse = initialData || fetchedData
+                if (!dataToUse?.id) {
+                    toast.error("Category ID is required for update")
+                    return
+                }
+                const res = await categoriesService.updateCategory(dataToUse.id, formDataToSubmit)
+                toast.success(res?.message || "Category updated successfully")
+            }
+
+            if (onSubmitAction) {
+                await onSubmitAction()
+            }
+
+            onCloseAction()
+            setFetchedData(null)
+            setSelectedImage(undefined)
+        } catch (error: any) {
+            const errorMessage = error?.message || `Failed to ${mode} category`
+            toast.error(errorMessage)
         }
-        console.log("Cleaned Data:", cleanedData);
-        await onSubmitAction(cleanedData)
-    }
+    }, [mode, onSubmitAction, onCloseAction, selectedImage, initialData, fetchedData])
 
-    const handleFileChange = (files: File[]) => {
-        setValue("image", files[0] || undefined, {shouldValidate: true})
-    }
+    const handleFileChange = useCallback((files: File[]) => {
+        setSelectedImage(files[0] || undefined)
+    }, [])
 
     return (
         <Dialog open={open} onOpenChange={handleDialogChange}>
@@ -142,89 +182,96 @@ export function CategoryFormModal({
                     <DialogTitle className="text-lg sm:text-xl font-semibold">
                         {isEditMode ? "Edit Category" : "Create New Category"}
                     </DialogTitle>
-                    <DialogDescription className="text-sm">
+                    <DialogDescription className="text-sm text-muted-foreground">
                         {isEditMode ? "Update category details below." : "Fill in the details to create a new category."}
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-                    <TextInputField
-                        {...register("name")}
-                        label="Category Name"
-                        placeholder="Enter category name"
-                        error={errors.name?.message}
-                        disabled={disabled}
-                        required
-                    />
-
-                    <TextInputField
-                        {...register("discount_percent")}
-                        type="number"
-                        label="Discount Percent (Optional)"
-                        placeholder="Enter discount percentage"
-                        error={errors.discount_percent?.message}
-                        disabled={disabled}
-                        min={0}
-                        max={100}
-                        step="0.01"
-                    />
-
-                    <TextInputField
-                        {...register("menu_order")}
-                        label="Menu Order (Optional)"
-                        type="number"
-                        placeholder="Enter display order"
-                        error={errors.menu_order?.message}
-                        disabled={disabled}
-                        min={0}
-                        step={1}
-                        helperText="Order in which the category appears in the menu"
-                    />
-
-                    <FileInputField
-                        label="Category Image (Optional)"
-                        accept="image/*"
-                        disabled={disabled}
-                        onFileChange={handleFileChange}
-                        error={errors.image?.message as string}
-                        showPreviews
-                        maxFileSize={5000}
-                    />
-
-                    {initialData?.image && isEditMode && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Current Image</label>
-                            <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
-                                <Image
-                                    width={128}
-                                    height={128}
-                                    src={initialData.image}
-                                    alt="Current category"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onCloseAction}
-                            disabled={disabled}
-                            className="w-full sm:w-auto"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={disabled}
-                            className={cn("w-full sm:w-auto bg-primaryColor hover:bg-primaryColor/80")}
-                        >
-                            {disabled ? "Saving..." : isEditMode ? "Update Category" : "Create Category"}
-                        </Button>
+                {isFetchingData ? (
+                    <div className="flex items-center justify-center py-8" role="status" aria-live="polite">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden="true"/>
+                        <span className="sr-only">Loading category data...</span>
                     </div>
-                </form>
+                ) : (
+                    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+                        <TextInputField
+                            {...register("name")}
+                            label="Category Name"
+                            placeholder="Enter category name"
+                            error={errors.name?.message}
+                            disabled={disabled}
+                            required
+                            aria-required="true"
+                        />
+
+                        <TextInputField
+                            {...register("discount_percent")}
+                            type="number"
+                            label="Discount Percent"
+                            placeholder="Enter discount percentage (0-100)"
+                            error={errors.discount_percent?.message}
+                            disabled={disabled}
+                            min={0}
+                            max={100}
+                            step="0.01"
+                            aria-label="Discount percentage"
+                        />
+
+                        <TextInputField
+                            {...register("menu_order")}
+                            label="Menu Order"
+                            type="number"
+                            placeholder="Enter display order"
+                            error={errors.menu_order?.message}
+                            disabled={disabled}
+                            min={0}
+                            step={1}
+                            helperText="Order in which the category appears in the menu"
+                            aria-label="Menu display order"
+                        />
+
+                        <FileInputField
+                            label="Category Image"
+                            accept="image/*"
+                            disabled={disabled}
+                            onFileChange={handleFileChange}
+                            error={errors.image?.message as string}
+                            showPreviews
+                            maxFileSize={5242880}
+                            aria-label="Upload category image"
+                            existingImageUrl={(initialData || fetchedData)?.image}
+                        />
+
+                        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onCloseAction}
+                                disabled={disabled}
+                                className="w-full sm:w-auto"
+                                aria-label="Cancel"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={disabled}
+                                className={cn(
+                                    "w-full sm:w-auto bg-primaryColor hover:bg-primaryColor/90 transition-colors",
+                                    disabled && "opacity-50 cursor-not-allowed"
+                                )}
+                                aria-label={isEditMode ? "Update category" : "Create category"}
+                            >
+                                {disabled ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true"/>
+                                        Saving...
+                                    </>
+                                ) : isEditMode ? "Update Category" : "Create Category"}
+                            </Button>
+                        </div>
+                    </form>
+                )}
             </DialogContent>
         </Dialog>
     )

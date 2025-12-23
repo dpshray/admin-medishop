@@ -4,20 +4,22 @@ import type React from "react"
 import type { NavGroup } from "@/components/sidebar/app-sidebar"
 import type { DropdownGroup } from "@/components/sidebar/user-dropdown"
 import {
+    BarChart3,
+    Bell,
+    ClipboardCheck,
+    ClipboardList,
+    FileText,
     Home,
-    Users,
-    Package,
+    ImageIcon,
     Layers,
+    MessageSquare,
+    Package,
+    ShoppingCart,
     Tag,
     TicketPercent,
-    Warehouse,
-    ImageIcon,
-    ShoppingCart,
-    FileText,
-    BarChart3,
-    ClipboardList,
-    ClipboardCheck,
     UserPen,
+    Users,
+    Warehouse,
 } from "lucide-react"
 import ReusableSidebar from "@/components/sidebar/resuable-sidebar"
 import { notifications } from "@/data"
@@ -54,7 +56,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             label: "Orders",
             items: [
                 { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-                { label: " Products Request", href: "/admin/vendor-product", icon: Package },
+                { label: "Products Request", href: "/admin/vendor-product", icon: Package },
                 { label: "Booked Services Order", href: "/admin/booked-services", icon: Package },
                 { label: "Order History", href: "/admin/order-history", icon: FileText },
                 { label: "Assigned Orders", href: "/admin/assigned", icon: Package },
@@ -66,7 +68,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 { label: "Service Categories", href: "/admin/service-categories", icon: Layers },
                 { label: "Service Providers", href: "/admin/service-providers", icon: FileText },
                 { label: "Service Tags", href: "/admin/service-tags", icon: Tag },
-                { label: "Vendor Service Request", href: "/admin/vendor-service-request", icon: FileText }
+                { label: "Vendor Service Request", href: "/admin/vendor-service-request", icon: FileText },
             ],
         },
         {
@@ -74,7 +76,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             items: [
                 { label: "Health Conditions", href: "/admin/health-condition", icon: FileText },
                 { label: "Prescriptions", href: "/admin/prescriptions", icon: ClipboardList },
-                { label: "Prescription History", href: "/admin/prescription-history", icon: FileText },
             ],
         },
         {
@@ -87,6 +88,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {
             label: "Settings",
             items: [
+                { label: "Notification", href: "/admin/notification", icon: Bell },
+                { label: "Grievance", href: "/admin/grievance", icon: MessageSquare },
                 { label: "Profile", href: "/admin/profile", icon: UserPen },
             ],
         },
@@ -94,9 +97,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const dropdownGroups: DropdownGroup[] = [
         {
-            items: [
-                { label: "Profile", href: "/admin/profile", icon: UserPen },
-            ],
+            items: [{ label: "Profile", href: "/admin/profile", icon: UserPen }],
         },
     ]
 
@@ -109,7 +110,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             notifications={notifications}
             dropdownGroups={dropdownGroups}
         >
-            <main className="flex-grow">{children}</main>
+            <main className="grow">{children}</main>
         </ReusableSidebar>
     )
 }

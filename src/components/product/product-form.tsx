@@ -500,7 +500,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                         value={field.value ? new Date(field.value) : undefined}
                                                         onChangeAction={handleExpiryDateChange(index)}
                                                         error={errors.variations?.[index]?.variant_expiry_date?.message}
-                                                        required
                                                         minDate={new Date()}
                                                         dateFormat="PPP"
                                                         clearable

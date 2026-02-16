@@ -96,8 +96,8 @@ const AppSidebar = memo(function AppSidebar({
                         src={logo}
                         alt={`${title} logo`}
                         width={32}
-                        height={32}
-                        className="h-12 w-12 shrink-0 object-cover"
+                        height={64}
+                        className="h-12 w-16 shrink-0 object-cover"
                         priority
                     />
 

@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
         domains: [
             "192.168.100.18",
             "192.168.100.23",
+            "192.168.1.68",
             "images.pexels.com",
             "api.medishop.dworklabs.com",
             "images.unsplash.com",
@@ -37,6 +38,10 @@ const nextConfig: NextConfig = {
             {
                 protocol: "http",
                 hostname: "192.168.100.18",
+            },
+            {
+                protocol: "http",
+                hostname: "192.168.1.68",
             },
             {
                 protocol: "https",

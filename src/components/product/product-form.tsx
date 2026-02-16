@@ -28,6 +28,12 @@ interface ProductManageFormProps {
     onSuccessAction?: () => void
 }
 
+const generateBatchNumber = () => {
+    const year = new Date().getFullYear()
+    const random = Math.floor(Math.random() * 900000) + 100000 
+    return `BTH-${year}-${random}`
+}
+
 const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: ProductManageFormProps) => {
     const {categories} = useCategories()
     const {tags} = useTags()
@@ -85,7 +91,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             variant_price: 1,
             variant_stock: 1,
             variant_unit: productUnits[0]?.value ?? "mg",
-            variant_batch_no: "",
+            variant_batch_no: generateBatchNumber(),
             variant_expiry_date: "",
             variant_manufacturer: "",
         }
@@ -229,7 +235,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             variant_price: 1,
             variant_stock: 1,
             variant_unit: productUnits[0]?.value ?? "mg",
-            variant_batch_no: "",
+            variant_batch_no: generateBatchNumber(),
             variant_expiry_date: "",
             variant_manufacturer: "",
         })
@@ -245,6 +251,10 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
 
     const handleExpiryDateChange = useCallback((index: number) => (date: Date | undefined) => {
         setValue(`variations.${index}.variant_expiry_date`, date ? date.toISOString().split('T')[0] : "", {shouldValidate: true})
+    }, [setValue])
+
+    const handleRegenerateBatchNumber = useCallback((index: number) => () => {
+        setValue(`variations.${index}.variant_batch_no`, generateBatchNumber(), {shouldValidate: true})
     }, [setValue])
 
     const onSubmit = useCallback(async (data: ProductCreate | ProductUpdate) => {
@@ -415,6 +425,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                         <div className="space-y-4 sm:space-y-5">
                             {fields.map((field, index) => {
                                 const currentSizeUnit = watch(`variations.${index}.variant_unit`)
+                                const currentBatchNo = watch(`variations.${index}.variant_batch_no`)
                                 return (
                                     <div key={field.id}
                                          className="rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50/50 to-white p-4 transition-all hover:border-slate-300 sm:p-6">
@@ -460,10 +471,25 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                             })}
                                                 error={errors.variations?.[index]?.variant_price?.message}
                                                 placeholder="0.00" type="number" required/>
-                                            <TextInputField
-                                                label="Batch Number " {...register(`variations.${index}.variant_batch_no`)}
-                                                error={errors.variations?.[index]?.variant_batch_no?.message}
-                                                placeholder="e.g. BTH-2024-001" required/>
+                                            <div className="relative">
+                                                <TextInputField
+                                                    label="Batch Number" {...register(`variations.${index}.variant_batch_no`)}
+                                                    error={errors.variations?.[index]?.variant_batch_no?.message}
+                                                    placeholder="e.g. BTH-2024-001" 
+                                                    required
+                                                    value={currentBatchNo}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleRegenerateBatchNumber(index)}
+                                                    className="cursor-pointer absolute right-2 top-6.5 h-7 px-2 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                                    title="Generate new batch number"
+                                                >
+                                                    Regenerate
+                                                </Button>
+                                            </div>
                                             <Controller
                                                 name={`variations.${index}.variant_expiry_date`}
                                                 control={control}
@@ -474,7 +500,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                         value={field.value ? new Date(field.value) : undefined}
                                                         onChangeAction={handleExpiryDateChange(index)}
                                                         error={errors.variations?.[index]?.variant_expiry_date?.message}
-                                                        required
                                                         minDate={new Date()}
                                                         dateFormat="PPP"
                                                         clearable

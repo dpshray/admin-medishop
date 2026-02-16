@@ -11,7 +11,7 @@ interface OrderData {
     price: number;
 }
 
-const OrderSummary = memo(({data}: { data: OrderData }) => (
+const   OrderSummary = memo(({data}: { data: OrderData }) => (
     <section className="space-y-3 sm:space-y-4">
         <h2 className="text-base sm:text-lg lg:text-xl font-bold text-foreground flex items-center gap-2">
             <Package className="h-4 w-4 text-primary" aria-hidden="true"/>

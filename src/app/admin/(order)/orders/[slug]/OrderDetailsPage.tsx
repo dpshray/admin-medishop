@@ -1,14 +1,12 @@
 "use client"
 
-import { useCallback, useMemo, useState, useTransition, memo } from "react"
+import { useCallback, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
     AlertCircle,
-    Check,
     CheckSquare,
     Package,
-    Save,
     Square,
     Store,
     UserCog,
@@ -30,6 +28,9 @@ import { useQuery } from "@tanstack/react-query"
 import orderService from "@/service/order/order.service"
 import { COPIED_TIMEOUT, QUERY_STALE_TIME } from "@/config/app-constant"
 import ActionModal from "@/components/modal/ConfirmModal"
+import AssignmentSection from "@/components/order/order-details/AssignmentSection"
+import NcmAssignmentSection from "@/components/order/order-details/NcmAssignmentSection"
+import { useGetNcmBranch } from "@/hooks/useOrder"
 
 interface OrderData {
     order_id: number
@@ -42,6 +43,7 @@ interface OrderData {
     latitude: string
     longitude: string
     description: string
+    delivery_charge: number
     price: number
     gift_wrap?: boolean
     gift_wrap_remarks?: string
@@ -53,6 +55,19 @@ interface OrderData {
     order_assigned_to?: {
         vendor_uuid: string
         store_name: string
+    } | null
+    ncm_order?: {
+        ncm_order_id: string
+        delivery_type: string
+        fbranch: string
+        tbranch: string
+        package: string
+        cod_charge: string
+        delivery_charge: string
+        created_at: string
+        weight: string
+        instruction?: string
+        delivery_status: string
     } | null
 }
 
@@ -83,74 +98,6 @@ interface OrderDetailsClientProps {
     orderUuid: string
 }
 
-const AssignmentSection = memo(({
-                                    title,
-                                    icon: Icon,
-                                    selectedCount,
-                                    onAssign,
-                                    disabled,
-                                    children,
-                                    colorScheme
-                                }: {
-    title: string
-    icon: any
-    selectedCount: number
-    onAssign: () => void
-    disabled: boolean
-    children?: React.ReactNode
-    colorScheme: "blue" | "green"
-}) => {
-    const colors = {
-        blue: {
-            icon: "text-blue-600",
-            bg: "bg-blue-50/50",
-            button: "bg-blue-600 hover:bg-blue-700"
-        },
-        green: {
-            icon: "text-green-600",
-            bg: "bg-green-50/50",
-            button: "bg-green-600 hover:bg-green-700"
-        }
-    }
-
-    const scheme = colors[colorScheme]
-
-    return (
-        <section className="space-y-3" aria-labelledby={`${colorScheme}-assignment-heading`}>
-            <h3 id={`${colorScheme}-assignment-heading`} className="font-semibold text-sm sm:text-base flex items-center gap-2">
-                <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", scheme.icon)} aria-hidden="true" />
-                {title}
-            </h3>
-
-            <div className={cn("p-3 sm:p-4 border rounded-lg space-y-3", scheme.bg)}>
-                {children}
-
-                <div className="flex justify-between items-center gap-2 flex-wrap">
-                    <p className="text-xs sm:text-sm text-muted-foreground" aria-live="polite">
-                        {selectedCount > 0
-                            ? `${selectedCount} item${selectedCount > 1 ? "s" : ""} selected`
-                            : "Select items to assign"}
-                    </p>
-
-                    <Button
-                        size="sm"
-                        className={cn("text-white text-xs sm:text-sm", scheme.button)}
-                        disabled={disabled}
-                        onClick={onAssign}
-                        aria-label={`Assign ${selectedCount} selected item${selectedCount > 1 ? "s" : ""}`}
-                    >
-                        <Check className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
-                        <span className="ml-1">Assign</span>
-                        {selectedCount > 0 && <span className="ml-1">({selectedCount})</span>}
-                    </Button>
-                </div>
-            </div>
-        </section>
-    )
-})
-
-AssignmentSection.displayName = "AssignmentSection"
-
 export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProps) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
@@ -171,6 +118,9 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
         staleTime: QUERY_STALE_TIME,
         retry: 2,
     })
+    
+    const { data: branchesData } = useGetNcmBranch()
+    console.log("Branches data:", branchesData)
 
     const { data, isLoading, refetch } = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],
@@ -190,6 +140,15 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
                 label: `${v.store_name} (${v.vendor_location})`,
             })) || [],
         [vendorsData]
+    )
+
+    const branchOptions = useMemo(
+        () =>
+            branchesData?.data?.map((b: any) => ({
+                value: b.pk,
+                label: b.name,
+            })) || [],
+        [branchesData]
     )
 
     const canCancelOrder = useMemo(
@@ -304,14 +263,11 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
 
     const handleAssignToAdmin = useCallback(async () => {
         if (selectedCount === 0) return
-
         const itemIds = Array.from(selectedItems) as number[]
-
         try {
             await orderService.orderAssignToAdmin(orderUuid, itemIds)
             toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to Admin`)
             refetch()
-
             const newAssignments = new Map(itemAssignments)
             itemIds.forEach((itemId) => {
                 newAssignments.set(itemId, {
@@ -322,7 +278,6 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
                     assignmentType: "admin",
                 })
             })
-
             setItemAssignments(newAssignments)
             setSelectedItems(new Set())
         } catch (error: any) {
@@ -332,14 +287,11 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
 
     const handleAssignToVendor = useCallback(async () => {
         if (!selectedVendor || selectedCount === 0) return
-
         const itemIds = Array.from(selectedItems) as number[]
-
         try {
             await orderService.orderAssignToVendor(orderUuid, selectedVendor.value, itemIds)
             toast.success(`${selectedCount} item${selectedCount > 1 ? "s" : ""} assigned to vendor`)
             refetch()
-
             const newAssignments = new Map(itemAssignments)
             itemIds.forEach((itemId) => {
                 newAssignments.set(itemId, {
@@ -392,7 +344,7 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
         <>
             <div className={cn('print:bg-white')}>
                 <div className="p-3 sm:p-4 md:p-6 lg:p-8">
-                    <div className={cn(' hover:rounded-lg rounded-lg transition-all duration-300', data.status === ORDER_STATUS.CANCELLED && "border border-red-200 bg-red-50/50")}>
+                    <div className={cn('hover:rounded-lg rounded-lg transition-all duration-300', data.status === ORDER_STATUS.CANCELLED && "border border-red-200 bg-red-50/50")}>
                         <OrderHeader
                             orderCode={data.order_code}
                             copied={copied}
@@ -425,17 +377,17 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
                                             <span>Ordered Items</span>
                                         </h2>
                                         <span className="text-xs bg-muted/50 px-2 py-0.5 rounded-full" aria-label={`${itemCount} ${itemCount === 1 ? "item" : "items"}`}>
-                      {itemCount} {itemCount === 1 ? "item" : "items"}
-                    </span>
+                                            {itemCount} {itemCount === 1 ? "item" : "items"}
+                                        </span>
                                         {assignedCount > 0 && (
                                             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full" aria-label={`${assignedCount} assigned`}>
-                        {assignedCount} pre-assigned
-                      </span>
+                                                {assignedCount} pre-assigned
+                                            </span>
                                         )}
                                         {selectedCount > 0 && (
                                             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full" aria-label={`${selectedCount} selected`}>
-                        {selectedCount} selected
-                      </span>
+                                                {selectedCount} selected
+                                            </span>
                                         )}
                                     </div>
 
@@ -501,6 +453,7 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
                         </main>
 
                         <footer className="border-t bg-muted/30 p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 print:hidden">
+                            {/* ── Item assignments: Admin & Vendor ── */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                                 <AssignmentSection
                                     title="Assign to Admin"
@@ -529,6 +482,19 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
                                 </AssignmentSection>
                             </div>
 
+                            <Separator />
+
+                            {/* ── NCM Courier Assignment ── */}
+                            <NcmAssignmentSection
+                                ncmOrder={data.ncm_order}
+                                orderUuid={orderUuid}
+                                onSuccess={refetch}
+                                branchOptions={branchOptions}
+                            />
+
+                            <Separator />
+
+                            {/* ── Cancel Order ── */}
                             <div className="space-y-3">
                                 {!canCancelOrder && (
                                     <Alert className="border border-amber-200 bg-amber-50/50" role="alert">

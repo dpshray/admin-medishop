@@ -60,11 +60,11 @@ interface ProductTag {
 
 interface ProductVariation {
     variation_id: number
-    name: string
-    size_value: number
-    size_unit: string
-    admin_price: number
-    units_in_stock: number
+    variant_name: string
+    variant_size_value: number
+    variant_size_unit: string
+    variant_admin_price: number
+    variant_units_in_stock: number
     batch_number: number
     manufacture: string
     expiry_date: string
@@ -516,13 +516,13 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> = React.mem
                                                 <div className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true"/>
                                                 <span className="text-sm text-slate-600">Size:</span>
                                                 <span className="font-semibold text-slate-900">
-                                                    {variation.size_value}{variation.size_unit}
+                                                    {variation.variant_size_value}{variation.variant_size_unit}
                                                 </span>
                                             </div>
                                             {variation.status && <StatusBadge status={variation.status}/>}
                                             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-lg">
                                                 <span className="text-sm text-green-700 font-medium">
-                                                    {variation.units_in_stock} in stock
+                                                    {variation.variant_units_in_stock} in stock
                                                 </span>
                                             </div>
                                         </div>
@@ -538,7 +538,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> = React.mem
                                             <div className="text-left sm:text-right">
                                                 <div className="text-xs text-slate-500 mb-1">Price</div>
                                                 <div className="text-lg font-bold text-blue-600">
-                                                    {FormatCurrency(variation.admin_price)}
+                                                    {FormatCurrency(variation.variant_admin_price)}
                                                 </div>
                                             </div>
                                         </div>

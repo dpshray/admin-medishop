@@ -12,6 +12,8 @@ import { useQuery } from "@tanstack/react-query"
 import vendorOrderService from "@/service/order/vendor-order.service"
 import { toast } from "sonner"
 import { ORDER_STATUS } from "@/types/enum"
+import { useGetNcmBranch } from "@/hooks/useOrder"
+import NcmAssignmentSection from "@/components/order/order-details/NcmAssignmentSection"
 
 interface StatusOption {
     value: string
@@ -82,6 +84,17 @@ export default function VendorAssignedOrderDetailsPage({ slug }: VendorOrderDeta
         enabled: !!slug,
         staleTime: 30000,
     })
+
+    const { data: branchesData } = useGetNcmBranch()
+
+    const branchOptions = useMemo(
+        () =>
+            branchesData?.data?.map((b: any) => ({
+                value: b.pk,
+                label: b.name,
+            })) || [],
+        [branchesData]
+    )
 
     useEffect(() => {
         if (vendorOrder?.status) {
@@ -287,6 +300,21 @@ export default function VendorAssignedOrderDetailsPage({ slug }: VendorOrderDeta
                                     </div>
                                 </div>
                             </section>
+
+                            <Separator className="my-4 sm:my-6" />
+
+                                <section aria-labelledby="ncm-assignment-heading" className="print:hidden">
+                                    <h3 id="ncm-assignment-heading" className="text-base sm:text-lg md:text-xl font-bold text-slate-900 mb-4 sm:mb-5">
+                                        NCM Courier Assignment
+                                    </h3>
+                                    <NcmAssignmentSection
+                                        ncmOrder={vendorOrder.ncm_order}
+                                        orderUuid={slug}
+                                        onSuccess={refetch}
+                                        branchOptions={branchOptions}
+                                        userRole="vendor"
+                                    />
+                                </section>
                         </div>
 
                         <aside className="p-3 sm:p-4 md:p-6 lg:p-8 bg-white space-y-4 sm:space-y-6">
@@ -351,12 +379,13 @@ export default function VendorAssignedOrderDetailsPage({ slug }: VendorOrderDeta
 
                                     <div className="bg-slate-50 rounded-lg p-3 sm:p-4 md:p-6 border border-slate-200">
                                         <dl className="space-y-2 sm:space-y-3">
-                                            <PriceRow label="Subtotal" amount={FormatCurrency(vendorOrder.price)} />
+                                            <PriceRow label="Subtotal" amount={FormatCurrency(vendorOrder.price - vendorOrder.delivery_charge)} />
                                             <PriceRow label="Tax" amount="Rs. 0.00" />
+                                            <PriceRow label="Delivery Charge" amount={FormatCurrency(vendorOrder.delivery_charge)} />
                                             <Separator className="my-2" />
                                             <div className="pt-2">
                                                 <PriceRow
-                                                    label="Total Amount"
+                                                    label="Total Amount (incl. delivery charge)"
                                                     amount={FormatCurrency(vendorOrder.price)}
                                                     isTotal
                                                 />

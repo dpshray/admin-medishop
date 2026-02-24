@@ -9,6 +9,7 @@ interface OrderData {
     status: string;
     payment_status: string;
     price: number;
+    delivery_charge: number;
 }
 
 const   OrderSummary = memo(({data}: { data: OrderData }) => (
@@ -28,6 +29,11 @@ const   OrderSummary = memo(({data}: { data: OrderData }) => (
                     <dt>Payment Method</dt>
                     <dd className="capitalize font-semibold">{data.payment_method}</dd>
                 </div>
+                <div className="flex justify-between text-sm items-center">
+                    <dt>Delivery Charge</dt>
+                    <dd className="capitalize font-semibold">{FormatCurrency(data.delivery_charge)}</dd>
+                </div>
+
                 <div className="flex justify-between text-sm items-center">
                     <dt>Order Status</dt>
                     <dd><StatusBadge status={data.status}/></dd>

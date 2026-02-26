@@ -142,6 +142,60 @@ class OrderService extends HttpServices {
         }
     }
 
+    async assignNcm(order_uuid: string, data: string) {
+        try {
+            return await this.postRequest({
+                url: `/admin/ncm/assign-to-ncm/${order_uuid}`,
+                data,
+                config: {
+                    auth: true,
+                },
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async assignVendorNcm(order_uuid: string, data: string) {
+        try {
+            return await this.postRequest({
+                url: `/vendor/ncm/assign-to-ncm/${order_uuid}`,
+                data,
+                config: {
+                    auth: true,
+                },
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getNcmBranch() {
+        try {
+            return await this.getRequest({
+                url: "/ncm/get-ncmbranch",
+                config: {
+                    auth: true
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async getNcmAssignedOrders (orderId: number) {
+        try {
+            return await this.getRequest({
+                url: `/admin/ncm/view-NCMOrder/${orderId}`,
+                config: {
+                    auth: true
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
 }
 
 const orderService = new OrderService()

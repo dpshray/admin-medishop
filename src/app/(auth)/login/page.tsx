@@ -13,6 +13,7 @@ import TextInputField from "@/components/field/text-input"
 import PasswordInputField from "@/components/field/password-input"
 import { loginSchema } from "@/lib/schema/schema"
 import authService from "@/service/auth.service"
+import { toast } from "sonner"
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
@@ -37,10 +38,13 @@ export default function LoginPage() {
             if (token && role) {
                 localStorage.setItem("_at", token)
                 localStorage.setItem("_role", role)
+                toast.success("Logged in successfully")
                 router.push(`/${role}`)
+            } else {
+                toast.error("Invalid response from server. Please try again.")
             }
-        } catch {
-
+        } catch (error: any) {
+            toast.error(error?.message || "Login failed. Please check your credentials.")
         }
     }, [router])
 

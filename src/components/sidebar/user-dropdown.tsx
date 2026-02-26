@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {Loader2, LogOut, type LucideIcon} from 'lucide-react'
 import {cn} from '@/lib/utils'
+import { toast } from 'sonner'
 
 export interface UserType {
     name: string
@@ -98,12 +99,16 @@ const UserDropdown = memo(({
     const logoutMutation = useMutation({
         mutationFn: async () => await authService.logout(),
         onSuccess: () => {
+            toast.success("Logged out successfully")
             if (onLogoutAction) {
                 onLogoutAction()
             } else {
                 localStorage.clear()
                 window.location.href = '/login'
             }
+        },
+        onError: (error: any) => {
+            toast.error(error?.message || "Logout failed. Please try again.")
         },
     })
 

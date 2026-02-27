@@ -161,19 +161,21 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             console.log("Product Data:", response?.data)
             if (response?.data) {
                 const productData = response.data
+                console.log("Fetched product data:", productData)
                 const mappedVariations = productData.variations?.map((variation: any) => ({
+                    variant_id: variation.variant_id,
                     variant_name: variation.variant_name || "",
                     variant_price: variation.variant_size_value || 1,
                     variant_stock: variation.variant_units_in_stock || 1,
                     variant_unit: variation.variant_size_unit || "mg",
-                    variant_batch_no: variation.batch_number || "",
+                    variant_batch_no: String(variation.batch_number || ""),
                     variant_expiry_date: variation.expiry_date || "",
                     variant_manufacturer: variation.manufacture || "",
                 })) || []
 
                 setValue("name", productData.name || "")
                 setValue("brand_id", productData.brand?.id || 0)
-                setValue("description", productData.description || "")
+                setValue("description", stripHtml(productData.description || ""))
                 setValue("categories", productData.categories?.map((cat: any) => cat.id) || [])
                 setValue("tags", productData.tags?.map((tag: any) => tag.id) || [])
                 setValue("prescription_required", productData.prescription_required || false)
@@ -196,6 +198,11 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             fetchProductData()
         }
     }, [fetchProductData, isUpdateMode, productUuid, brands.length, productUnits.length])
+
+    const stripHtml = (html: string): string => {
+        const doc = new DOMParser().parseFromString(html, "text/html")
+        return doc.body.textContent || ""
+    }
 
     const handleBrandChange = useCallback((brandId: string | number) => {
         setValue("brand_id", typeof brandId === "string" ? parseInt(brandId, 10) : brandId, {shouldValidate: true})

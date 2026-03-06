@@ -21,6 +21,8 @@ import {useQuery} from "@tanstack/react-query"
 import healthConditionService from "@/service/healthCondition.service"
 import {Switch} from "@/components/ui/switch"
 import {cn} from "@/lib/utils"
+import { RichTextEditor } from "../field/rich-text-editor"
+import { Label } from "../ui/label"
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
@@ -93,7 +95,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             variant_unit: productUnits[0]?.value ?? "mg",
             variant_batch_no: generateBatchNumber(),
             variant_expiry_date: "",
-            variant_manufacturer: "",
         }
 
         if (isUpdateMode) {
@@ -170,7 +171,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                     variant_unit: variation.variant_size_unit || "mg",
                     variant_batch_no: String(variation.batch_number || ""),
                     variant_expiry_date: variation.expiry_date || "",
-                    variant_manufacturer: variation.manufacture || "",
                 })) || []
 
                 setValue("name", productData.name || "")
@@ -244,7 +244,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             variant_unit: productUnits[0]?.value ?? "mg",
             variant_batch_no: generateBatchNumber(),
             variant_expiry_date: "",
-            variant_manufacturer: "",
         })
     }, [append, productUnits])
 
@@ -333,10 +332,27 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                error={errors.generic_product_name_id?.message}
                                                required={!isUpdateMode}/>
                         </div>
-                        <TextInputField {...register("description")} textarea label="Description"
-                                        placeholder="Enter detailed product description"
-                                        error={errors.description?.message} className="min-h-[100px] sm:min-h-[120px]"
-                                        required={!isUpdateMode}/>
+                        <div className="mt-4 sm:mt-0">
+                            <Label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                                Description {!isUpdateMode && <span className="text-red-500">*</span>}
+                            </Label>
+                            <Controller
+                                name="description"
+                                control={control}
+                                render={({ field }) => (
+                                <RichTextEditor
+                                    content={field.value as string}
+                                    onChange={field.onChange}
+                                    placeholder="Enter detailed product description"
+                                    minHeight="160px"
+                                    className={errors.description?.message ? "border-red-500" : ""}
+                                />
+                                )}
+                            />
+                            {errors.description?.message && (
+                                <p className="mt-1 text-xs text-red-500">{errors.description.message}</p>
+                            )}
+                            </div>
                         <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-6 sm:gap-6 md:grid-cols-2">
                             <TextInputField {...register("discount_percent")} label="Discount Percentage" type="number"
                                             placeholder="Enter discount percentage"
@@ -510,14 +526,15 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                         minDate={new Date()}
                                                         dateFormat="PPP"
                                                         clearable
+                                                        required
                                                     />
                                                 )}
                                             />
-                                            <TextInputField
+                                            {/* <TextInputField
                                                 label="Manufacturer" {...register(`variations.${index}.variant_manufacturer`)}
                                                 error={errors.variations?.[index]?.variant_manufacturer?.message}
-                                                placeholder="e.g. ABC Pharma" required/>
-                                        </div>
+                                                placeholder="e.g. ABC Pharma" required/> */}
+                                        </div>  
                                     </div>
                                 )
                             })}

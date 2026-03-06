@@ -8,9 +8,9 @@ const VariationSchema = z.object({
     variant_price: z.number(),
     variant_stock: z.number(),
     variant_unit: z.string(),
-    variant_expiry_date: z.string(),
-    variant_batch_no: z.string(),
-    variant_manufacturer: z.string(),
+    variant_expiry_date: z.string().min(1, "Expiry date is required"),
+    variant_batch_no: z.string().min(1, "Batch number is required"),
+    // variant_manufacturer: z.string(),
 });
 
 export const createProductSchema = z.object({

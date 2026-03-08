@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 const VariationSchema = z.object({
+  variant_id: z.number().optional(),
   variant_name: z.string(),
   variant_price: z.number(),
   variant_stock: z.number(),

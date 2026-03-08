@@ -110,35 +110,16 @@ export function NotificationModal({
                         required
                     />
 
-                    <div>
-                        <Label
-                            htmlFor="body"
-                            className={cn(
-                                "mb-2 block text-sm font-medium leading-none",
-                                errors.body?.message && "text-destructive"
-                            )}
-                        >
-                            Description
-                            <span className="ml-1 text-destructive">*</span>
-                        </Label>
-                        <Controller
-                            name="body"
-                            control={control}
-                            render={({field}) => (
-                                <RichTextEditor
-                                    content={field.value}
-                                    onChange={field.onChange}
-                                    placeholder="Write your notification description..."
-                                    className={cn(errors.body?.message && "border-destructive")}
-                                />
-                            )}
-                        />
-                        {errors.body?.message && (
-                            <p className="mt-1.5 text-xs text-destructive" role="alert">
-                                {errors.body.message}
-                            </p>
-                        )}
-                    </div>
+                    <TextInputField
+                        {...register("body")}
+                        label="Description"
+                        placeholder="Write your notification description..."
+                        error={errors.body?.message}
+                        disabled={isSubmitting}
+                        textarea
+                        required
+                        className="min-h-[120px]"
+                    />
 
                     <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <Controller
@@ -167,7 +148,7 @@ export function NotificationModal({
                         </div>
                     </div>
 
-                    <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogFooter className="gap-2">
                         <Button
                             type="button"
                             variant="outline"

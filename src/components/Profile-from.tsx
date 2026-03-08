@@ -12,6 +12,7 @@ import FileInputField from "@/components/field/file-input"
 import authService from '@/service/auth.service'
 import { MAX_FILE_SIZE } from "@/config/app-constant"
 import {useRouter} from "next/navigation";
+import { toast } from 'sonner'
 
 const updateUserSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -71,9 +72,16 @@ export default function ProfileForm({ open, onOpenChangeAction, onSuccessAction 
     }, [profile, open, reset])
 
     const onSubmit = useCallback(async (data: UpdateUserForm) => {
-        await authService.updateProfile(data).then(() => router.back())
-        onSuccessAction?.()
-    }, [onSuccessAction, router])
+        try {
+            const res = await authService.updateProfile(data)
+            toast.success(res?.message || "Profile updated successfully")
+            onSuccessAction?.()
+            onOpenChangeAction(false)
+            reset()
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to update profile")
+        }
+    }, [onSuccessAction, onOpenChangeAction, reset])
 
     const handleProfileImage = useCallback((files: File[]) => {
         if (files.length > 0) {

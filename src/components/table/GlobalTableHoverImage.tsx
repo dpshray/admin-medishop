@@ -58,7 +58,11 @@ export default function GlobalTableHoverImage({
                     className={cn(
                         "flex items-center gap-2 cursor-pointer group transition-opacity hover:opacity-80",
                         className
+                        
                     )}
+                    onClick={() => {
+                        if (src) window.open(src, "_blank", "noopener,noreferrer")
+                    }}
                 >
                     <div
                         className={cn(

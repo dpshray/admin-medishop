@@ -21,6 +21,8 @@ import {useQuery} from "@tanstack/react-query"
 import healthConditionService from "@/service/healthCondition.service"
 import {Switch} from "@/components/ui/switch"
 import {cn} from "@/lib/utils"
+import { RichTextEditor } from "../field/rich-text-editor"
+import { Label } from "../ui/label"
 
 interface ProductManageFormProps {
     mode?: "create" | "edit"
@@ -93,7 +95,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             variant_unit: productUnits[0]?.value ?? "mg",
             variant_batch_no: generateBatchNumber(),
             variant_expiry_date: "",
-            variant_manufacturer: "",
         }
 
         if (isUpdateMode) {
@@ -161,19 +162,20 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             console.log("Product Data:", response?.data)
             if (response?.data) {
                 const productData = response.data
+                console.log("Fetched product data:", productData)
                 const mappedVariations = productData.variations?.map((variation: any) => ({
+                    variant_id: variation.variant_id,
                     variant_name: variation.variant_name || "",
                     variant_price: variation.variant_size_value || 1,
                     variant_stock: variation.variant_units_in_stock || 1,
                     variant_unit: variation.variant_size_unit || "mg",
-                    variant_batch_no: variation.batch_number || "",
+                    variant_batch_no: String(variation.batch_number || ""),
                     variant_expiry_date: variation.expiry_date || "",
-                    variant_manufacturer: variation.manufacture || "",
                 })) || []
 
                 setValue("name", productData.name || "")
                 setValue("brand_id", productData.brand?.id || 0)
-                setValue("description", productData.description || "")
+                setValue("description", stripHtml(productData.description || ""))
                 setValue("categories", productData.categories?.map((cat: any) => cat.id) || [])
                 setValue("tags", productData.tags?.map((tag: any) => tag.id) || [])
                 setValue("prescription_required", productData.prescription_required || false)
@@ -196,6 +198,11 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             fetchProductData()
         }
     }, [fetchProductData, isUpdateMode, productUuid, brands.length, productUnits.length])
+
+    const stripHtml = (html: string): string => {
+        const doc = new DOMParser().parseFromString(html, "text/html")
+        return doc.body.textContent || ""
+    }
 
     const handleBrandChange = useCallback((brandId: string | number) => {
         setValue("brand_id", typeof brandId === "string" ? parseInt(brandId, 10) : brandId, {shouldValidate: true})
@@ -237,7 +244,6 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
             variant_unit: productUnits[0]?.value ?? "mg",
             variant_batch_no: generateBatchNumber(),
             variant_expiry_date: "",
-            variant_manufacturer: "",
         })
     }, [append, productUnits])
 
@@ -326,10 +332,27 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                error={errors.generic_product_name_id?.message}
                                                required={!isUpdateMode}/>
                         </div>
-                        <TextInputField {...register("description")} textarea label="Description"
-                                        placeholder="Enter detailed product description"
-                                        error={errors.description?.message} className="min-h-[100px] sm:min-h-[120px]"
-                                        required={!isUpdateMode}/>
+                        <div className="mt-4 sm:mt-0">
+                            <Label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                                Description {!isUpdateMode && <span className="text-red-500">*</span>}
+                            </Label>
+                            <Controller
+                                name="description"
+                                control={control}
+                                render={({ field }) => (
+                                <RichTextEditor
+                                    content={field.value as string}
+                                    onChange={field.onChange}
+                                    placeholder="Enter detailed product description"
+                                    minHeight="160px"
+                                    className={errors.description?.message ? "border-red-500" : ""}
+                                />
+                                )}
+                            />
+                            {errors.description?.message && (
+                                <p className="mt-1 text-xs text-red-500">{errors.description.message}</p>
+                            )}
+                            </div>
                         <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-6 sm:gap-6 md:grid-cols-2">
                             <TextInputField {...register("discount_percent")} label="Discount Percentage" type="number"
                                             placeholder="Enter discount percentage"
@@ -503,14 +526,15 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                                         minDate={new Date()}
                                                         dateFormat="PPP"
                                                         clearable
+                                                        required
                                                     />
                                                 )}
                                             />
-                                            <TextInputField
+                                            {/* <TextInputField
                                                 label="Manufacturer" {...register(`variations.${index}.variant_manufacturer`)}
                                                 error={errors.variations?.[index]?.variant_manufacturer?.message}
-                                                placeholder="e.g. ABC Pharma" required/>
-                                        </div>
+                                                placeholder="e.g. ABC Pharma" required/> */}
+                                        </div>  
                                     </div>
                                 )
                             })}

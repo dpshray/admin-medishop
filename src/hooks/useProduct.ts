@@ -1,8 +1,9 @@
 "use client"
 
-import {useQuery} from "@tanstack/react-query"
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import productService from "@/service/product/product.service"
 import {PaginatedResponse, ParamsType} from "@/types/types"
+import { toast } from "sonner"
 
 interface UseProductsOptions {
     enabled?: boolean
@@ -31,4 +32,22 @@ export function useProducts(params: ParamsType = {}, options?: UseProductsOption
         isLoading,
         isError,
     }
+}
+
+export const useDeleteProductImage = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({productUuid, imageUuid}: { productUuid: string; imageUuid: string }) => {
+            await productService.deleteProductImage(productUuid, imageUuid)
+        },
+        onSuccess: () => {
+            toast.success("Product image deleted successfully")
+            queryClient.invalidateQueries({queryKey: ["products"]});
+        },
+
+        onError: () => {
+            toast.error("Failed to delete product image")
+        }
+    })
 }

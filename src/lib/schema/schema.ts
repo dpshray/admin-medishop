@@ -55,7 +55,7 @@ export const VendorProductSchema = z.object({
             product_variation_id: z.number(),
             units_in_stock: z.number().min(0, "Size value must be non-negative"),
             price: z.number().min(0, "Price must be non-negative"),
-            variant_manufacturer: z.string().min(1, "Manufacturer is required"),
+            // variant_manufacturer: z.string().min(1, "Manufacturer is required"),
             variant_batch_no: z.string().min(1, "Batch number is required"),
             variant_expiry_date: z.string().min(1, "Expiry date is required"),
         })

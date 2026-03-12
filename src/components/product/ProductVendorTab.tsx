@@ -29,7 +29,6 @@ interface Variation {
     price: string
     units_in_stock: number
     batch_number: string
-    manufacture: string
     expiry_date: string
 }
 
@@ -106,13 +105,6 @@ const VariationCard = memo<{ variation: Variation }>(({variation}) => (
                 label="Expiry Date"
                 value={FormatDate(variation.expiry_date)}
             />
-            <div className="pt-3 border-t border-slate-100">
-                <InfoItem
-                    icon={Factory}
-                    label="Manufacturer"
-                    value={variation.manufacture}
-                />
-            </div>
         </div>
     </div>
 ))

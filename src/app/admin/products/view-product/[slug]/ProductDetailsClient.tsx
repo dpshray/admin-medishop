@@ -59,14 +59,16 @@ interface ProductTag {
 }
 
 interface ProductVariation {
-    variation_id: number
-    variant_name: string
+    variant_id: number
     variant_size_value: number
     variant_size_unit: string
     variant_admin_price: number
     variant_units_in_stock: number
+    variant_form_type: string
+    variant_package_type: string
+    variant_package_size: string
+    variant_strength: string
     batch_number: number
-    manufacture: string
     expiry_date: string
     status?: string
     stock_quantity?: number
@@ -508,17 +510,21 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> = React.mem
                             <TabsContent value="variations" className="space-y-3">
                                 {data.variations.map((variation) => (
                                     <article
-                                        key={variation.variation_id}
-                                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 hover:to-slate-50 rounded-xl transition-all duration-200 border border-slate-200/60 gap-4"
+                                        key={variation.variant_id}
+                                        className="flex flex-col justify-between p-4 bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 hover:to-slate-50 rounded-xl transition-all duration-200 border border-slate-200/60 gap-4"
                                     >
-                                        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true"/>
-                                                <span className="text-sm text-slate-600">Size:</span>
-                                                <span className="font-semibold text-slate-900">
-                                                    {variation.variant_size_value}{variation.variant_size_unit}
-                                                </span>
-                                            </div>
+                                        {/* Row 1: Form info + status + stock */}
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" aria-hidden="true"/>
+                                            <span className="font-semibold text-slate-900">
+                                                {variation.variant_form_type}
+                                            </span>
+                                            <span className="text-slate-400">·</span>
+                                            <span className="text-sm text-slate-600">{variation.variant_package_type}</span>
+                                            <span className="text-slate-400">·</span>
+                                            <span className="text-sm text-slate-600">
+                                                {variation.variant_size_value}{variation.variant_size_unit}
+                                            </span>
                                             {variation.status && <StatusBadge status={variation.status}/>}
                                             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-lg">
                                                 <span className="text-sm text-green-700 font-medium">
@@ -526,16 +532,28 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> = React.mem
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4 sm:gap-6">
-                                            {variation.stock_quantity !== undefined && (
-                                                <div className="text-left sm:text-right">
-                                                    <div className="text-xs text-slate-500 mb-1">Total Stock</div>
-                                                    <div className="font-semibold text-slate-900">
-                                                        {variation.stock_quantity}
-                                                    </div>
+
+                                        {/* Row 2: Package size, strength, batch, expiry + price */}
+                                        <div className="flex items-center justify-between flex-wrap gap-4">
+                                            <div className="flex items-center gap-4 flex-wrap text-sm">
+                                                <div>
+                                                    <span className="text-slate-500">Package Size: </span>
+                                                    <span className="font-medium text-slate-800">{variation.variant_package_size}</span>
                                                 </div>
-                                            )}
-                                            <div className="text-left sm:text-right">
+                                                <div>
+                                                    <span className="text-slate-500">Strength: </span>
+                                                    <span className="font-medium text-slate-800">{variation.variant_strength}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500">Batch: </span>
+                                                    <span className="font-medium text-slate-800">{variation.batch_number}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500">Expiry: </span>
+                                                    <span className="font-medium text-slate-800">{variation.expiry_date}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
                                                 <div className="text-xs text-slate-500 mb-1">Price</div>
                                                 <div className="text-lg font-bold text-blue-600">
                                                     {FormatCurrency(variation.variant_admin_price)}

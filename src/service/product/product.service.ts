@@ -108,6 +108,19 @@ class ProductService extends HttpServices {
             throw error
         }
     }
+
+     async deleteProductImage(product_uuid: string, image_uuid: string) {
+        try {
+            return await this.deleteRequest({
+                url: `/admin/product/${product_uuid}/media/${image_uuid}`,
+                config: {
+                    auth: true,
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
 }
 
 const productService = new ProductService();

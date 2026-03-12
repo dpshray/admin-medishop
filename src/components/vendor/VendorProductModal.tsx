@@ -139,7 +139,6 @@ const VendorProductModal = ({trigger, open: controlledOpen, onOpenChange}: Vendo
             product_variation_id: variation.id,
             units_in_stock: 0,
             price: 0,
-            variant_manufacturer: "",
             variant_batch_no: "",
             variant_expiry_date: "",
         })
@@ -293,6 +292,7 @@ const VendorProductModal = ({trigger, open: controlledOpen, onOpenChange}: Vendo
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                     {availableVariations.map((variation) => {
+                                                        console.log("Checking variation:", variation.name, "ID:", variation.id, "Added Variations:", Array.from(addedVariations))
                                                         const isSelected = addedVariations.has(variation.id)
                                                         return (
                                                             <Button
@@ -413,13 +413,6 @@ const VendorProductModal = ({trigger, open: controlledOpen, onOpenChange}: Vendo
                                                                         min="0"
                                                                         step="0.01"
                                                                         placeholder="0.00"
-                                                                    />
-                                                                    <TextInputField
-                                                                        label="Manufacturer"
-                                                                        {...register(`variations.${index}.variant_manufacturer`)}
-                                                                        error={errors.variations?.[index]?.variant_manufacturer?.message}
-                                                                        icon={Factory}
-                                                                        placeholder="Enter manufacturer"
                                                                     />
                                                                     <TextInputField
                                                                         label="Batch Number"

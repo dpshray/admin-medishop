@@ -28,10 +28,13 @@ import {FormatCurrency} from "@/lib/helper";
 
 type Variation = {
     id: number;
-    name: string;
     size_value: number;
     size_unit: string;
     platform_price: number;
+    form_type: string;
+    package_type: string;
+    package_size: string;
+    strength: string;
 };
 
 type Product = {
@@ -203,15 +206,15 @@ export default function AdminProductTable() {
                                 {row.original.variations.slice(0, 2).map((variation) => (
                                     <span
                                         key={variation.id}
-                                        className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded"
+                                        className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded whitespace-nowrap"
                                     >
-                    {variation.name}
-                  </span>
+                                        {variation.strength}
+                                    </span>
                                 ))}
                                 {row.original.variations.length > 2 && (
                                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                    +{row.original.variations.length - 2} more
-                  </span>
+                                        +{row.original.variations.length - 2} more
+                                    </span>
                                 )}
                             </div>
                         )}

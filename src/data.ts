@@ -217,6 +217,34 @@ export const notifications = [
     },
 ]
 
+export const PRODUCT_FORM_DATA: Record<string, { packageTypes: string[]; units: string[] }> = {
+  "Tablet":              { packageTypes: ["Strip", "Blister", "Bottle", "Box"],              units: ["tablets"] },
+  "Capsule":             { packageTypes: ["Strip", "Blister", "Bottle", "Box"],              units: ["capsules"] },
+  "Syrup":               { packageTypes: ["Bottle"],                                          units: ["ml"] },
+  "Suspension":          { packageTypes: ["Bottle"],                                          units: ["ml"] },
+  "Drops":               { packageTypes: ["Bottle"],                                          units: ["ml"] },
+  "Injection":           { packageTypes: ["Vial", "Ampoule", "Prefilled Syringe"],           units: ["ml"] },
+  "Cream":               { packageTypes: ["Tube", "Jar"],                                    units: ["g", "ml"] },
+  "Ointment":            { packageTypes: ["Tube", "Jar"],                                    units: ["g"] },
+  "Gel":                 { packageTypes: ["Tube", "Pump Bottle"],                            units: ["g", "ml"] },
+  "Lotion":              { packageTypes: ["Bottle", "Pump Bottle"],                          units: ["ml"] },
+  "Powder":              { packageTypes: ["Sachet", "Bottle", "Jar", "Box"],                 units: ["g"] },
+  "Inhaler":             { packageTypes: ["Inhaler Device"],                                 units: ["doses"] },
+  "Spray":               { packageTypes: ["Spray Bottle"],                                   units: ["ml"] },
+  "Sachet":              { packageTypes: ["Sachet", "Box"],                                  units: ["g", "ml"] },
+  "Patch":               { packageTypes: ["Box", "Pouch"],                                   units: ["patches"] },
+  "Suppository":         { packageTypes: ["Box", "Strip"],                                   units: ["units"] },
+  "Eye Drops":           { packageTypes: ["Bottle"],                                          units: ["ml"] },
+  "Ear Drops":           { packageTypes: ["Bottle"],                                          units: ["ml"] },
+  "Nasal Drops":         { packageTypes: ["Bottle"],                                          units: ["ml"] },
+  "Effervescent Tablet": { packageTypes: ["Strip", "Box"],                                   units: ["tablets"] },
+  "Diaper":              { packageTypes: ["Pack", "Box"],                                     units: ["pieces"] },
+  "Formula Milk":        { packageTypes: ["Tin", "Can"],                                     units: ["g", "kg"] },
+  "Wipes":               { packageTypes: ["Pack", "Box"],                                     units: ["pieces"] },
+  "Baby Oil":            { packageTypes: ["Bottle", "Pump Bottle"],                          units: ["ml"] },
+  "Baby Lotion":         { packageTypes: ["Bottle", "Pump Bottle"],                          units: ["ml"] },
+}
+
 
 
 

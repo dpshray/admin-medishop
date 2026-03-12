@@ -4,13 +4,16 @@ import { z } from "zod";
 
 const VariationSchema = z.object({
     variant_id: z.number().optional(),
-    variant_name: z.string(),
-    variant_price: z.number(),
-    variant_stock: z.number(),
-    variant_unit: z.string(),
+    // variant_name: z.string(),
+    variant_form_type: z.string().min(1, "Form type is required"),
+    variant_package_type: z.string().min(1, "Package type is required"),
+    variant_unit: z.string().min(1, "Unit is required"),
+    variant_package_size: z.string().min(1, "Package size is required"),
+    variant_strength: z.string().min(1, "Strength is required"),
+    variant_price: z.number().min(1, "Price must be at least 1"),
+    variant_stock: z.number().min(0, "Stock must be at least 0"),
     variant_expiry_date: z.string().min(1, "Expiry date is required"),
     variant_batch_no: z.string().min(1, "Batch number is required"),
-    // variant_manufacturer: z.string(),
 });
 
 export const createProductSchema = z.object({

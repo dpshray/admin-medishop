@@ -8,7 +8,7 @@ const VariationSchema = z.object({
     variant_form_type: z.string().min(1, "Form type is required"),
     variant_package_type: z.string().min(1, "Package type is required"),
     variant_unit: z.string().min(1, "Unit is required"),
-    variant_package_size: z.string().min(1, "Package size is required"),
+    variant_package_size: z.number().min(1, "Package size must be at least 1"),
     variant_strength: z.string().min(1, "Strength is required"),
     variant_price: z.number().min(1, "Price must be at least 1"),
     variant_stock: z.number().min(0, "Stock must be at least 0"),

@@ -101,7 +101,7 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
         variant_form_type: "",
         variant_package_type: "",
         variant_unit: "",
-        variant_package_size: "",
+        variant_package_size: 1 ,
         variant_strength: "",
         variant_price: 1,
         variant_stock: 1,
@@ -618,7 +618,8 @@ const ProductManageForm = ({mode = "create", productUuid, onSuccessAction}: Prod
                                             />
                                             <TextInputField
                                                 label="Package Size"
-                                                {...register(`variations.${index}.variant_package_size`)}
+                                                {...register(`variations.${index}.variant_package_size`, {valueAsNumber: true})}
+                                                type="number"
                                                 placeholder="e.g. 10, 100"
                                                 error={(errors.variations?.[index] as any)?.variant_package_size?.message}
                                                 required

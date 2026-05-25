@@ -253,7 +253,7 @@ const ProductManageForm = ({
 
         setValue("name", productData.name || "");
         setValue("brand_id", productData.brand?.id || 0);
-        setValue("description", stripHtml(productData.description || ""));
+        setValue("description", productData.description || "");
         setValue(
           "categories",
           productData.categories?.map((cat: any) => cat.id) || [],
@@ -927,22 +927,22 @@ const ProductManageForm = ({
                           Regenerate
                         </Button>
                       </div>
-                  <Controller
-                    name={`variations.${index}.variant_expiry_date`}
-                    control={control}
-                    render={({ field }) => (
-                      <DatePickerField
-                    label="Expiry Date"
-                    placeholder="Select expiry date"
-                    value={field.value ? new Date(field.value) : undefined}
-                    onChangeAction={handleExpiryDateChange(index)}
-                    error={errors.variations?.[index]?.variant_expiry_date?.message}
-                    minDate={new Date()}
-                    dateFormat="PPP"
-                    clearable
-                    required
-                    allowManualInput 
-                  />
+                      <Controller
+                        name={`variations.${index}.variant_expiry_date`}
+                        control={control}
+                        render={({ field }) => (
+                          <DatePickerField
+                        label="Expiry Date"
+                        placeholder="Select expiry date"
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChangeAction={handleExpiryDateChange(index)}
+                        error={errors.variations?.[index]?.variant_expiry_date?.message}
+                        minDate={new Date()}
+                        dateFormat="PPP"
+                        clearable
+                        required
+                        allowManualInput 
+                      />
                     )}
                   />
                     </div>

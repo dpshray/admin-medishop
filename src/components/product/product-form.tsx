@@ -858,7 +858,7 @@ const ProductManageForm = ({
                         autoComplete="off"
                       />
                       <TextInputField
-                        label="Strength"
+                        label="Label or Strength"
                         {...register(`variations.${index}.variant_strength`)}
                         placeholder="e.g. 500mg, 10mg/5ml"
                         error={
@@ -927,28 +927,24 @@ const ProductManageForm = ({
                           Regenerate
                         </Button>
                       </div>
-                      <Controller
-                        name={`variations.${index}.variant_expiry_date`}
-                        control={control}
-                        render={({ field }) => (
-                          <DatePickerField
-                            label="Expiry Date"
-                            placeholder="Select expiry date"
-                            value={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            onChangeAction={handleExpiryDateChange(index)}
-                            error={
-                              errors.variations?.[index]?.variant_expiry_date
-                                ?.message
-                            }
-                            minDate={new Date()}
-                            dateFormat="PPP"
-                            clearable
-                            required
-                          />
-                        )}
-                      />
+                  <Controller
+                    name={`variations.${index}.variant_expiry_date`}
+                    control={control}
+                    render={({ field }) => (
+                      <DatePickerField
+                    label="Expiry Date"
+                    placeholder="Select expiry date"
+                    value={field.value ? new Date(field.value) : undefined}
+                    onChangeAction={handleExpiryDateChange(index)}
+                    error={errors.variations?.[index]?.variant_expiry_date?.message}
+                    minDate={new Date()}
+                    dateFormat="PPP"
+                    clearable
+                    required
+                    allowManualInput 
+                  />
+                    )}
+                  />
                     </div>
                   </div>
                 );

@@ -44,7 +44,7 @@ import { cn } from "@/lib/utils";
 import { RichTextEditor } from "../field/rich-text-editor";
 import { Label } from "../ui/label";
 import { PRODUCT_FORM_DATA } from "@/data";
-import { useDeleteProductImage } from "@/hooks/useProduct";
+import { MonthYearPicker } from "../field/month-year-picker";
 
 const FORM_TYPE_OPTIONS = Object.keys(PRODUCT_FORM_DATA).map((key) => ({
   value: key,
@@ -77,16 +77,14 @@ const ProductManageForm = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [existingVariantImages, setExistingVariantImages] = useState<
+    Record<number, string | null>
+  >({});
 
   // ── Image preview state ──────────────────────────────────────────────────
   const [existingFeaturedImage, setExistingFeaturedImage] = useState<
     string | null
   >(null);
-  const [existingGalleryImages, setExistingGalleryImages] = useState<
-    ExistingImage[]
-  >([]);
-
-  const deleteImageMutation = useDeleteProductImage();
 
   const { data: healthCondition } = useQuery({
     queryKey: ["health-condition"],
@@ -155,6 +153,7 @@ const ProductManageForm = ({
       variant_stock: 1,
       variant_batch_no: generateBatchNumber(),
       variant_expiry_date: "",
+      variant_image: null,
     }),
     [],
   );
@@ -169,7 +168,7 @@ const ProductManageForm = ({
         categories: [],
         tags: [],
         featured_image: null,
-        gallery_images: [],
+        // gallery_images: [],
         prescription_required: false,
         health_condition: [],
         discount_percent: 0,
@@ -184,7 +183,7 @@ const ProductManageForm = ({
       categories: [],
       tags: [],
       featured_image: new File([], ""),
-      gallery_images: [],
+      // gallery_images: [],
       prescription_required: false,
       health_condition: [],
       discount_percent: 0,
@@ -229,13 +228,13 @@ const ProductManageForm = ({
         const productData = response.data;
 
         // ── Populate existing image state ────────────────────────────
-        setExistingFeaturedImage(productData.featured_image ?? null);
-        setExistingGalleryImages(
-          (productData.gallery_images ?? []).map((img: any) => ({
-            id: img.id,
-            url: img.url,
-          })),
-        );
+        setExistingFeaturedImage(productData.featured_image?.url ?? null);
+
+        const variantImageMap: Record<number, string | null> = {};
+        productData.variations?.forEach((variation: any, i: number) => {
+          variantImageMap[i] = variation.variant_image ?? null;
+        });
+        setExistingVariantImages(variantImageMap);
 
         const mappedVariations =
           productData.variations?.map((variation: any) => ({
@@ -249,6 +248,7 @@ const ProductManageForm = ({
             variant_stock: variation.variant_units_in_stock || 1,
             variant_batch_no: String(variation.batch_number || ""),
             variant_expiry_date: variation.expiry_date || "",
+            variant_image: null,
           })) || [];
 
         setValue("name", productData.name || "");
@@ -300,10 +300,19 @@ const ProductManageForm = ({
     productUnits.length,
   ]);
 
-  const stripHtml = (html: string): string => {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return doc.body.textContent || "";
-  };
+  const handleVariationImageChange = useCallback(
+    (index: number) => (files: File[]) => {
+      const newFile = files[0] ?? null;
+      setValue(`variations.${index}.variant_image`, newFile, {
+        shouldValidate: true,
+      });
+      // Hide existing preview once user picks a new file
+      if (newFile) {
+        setExistingVariantImages((prev) => ({ ...prev, [index]: null }));
+      }
+    },
+    [setValue],
+  );
 
   // ── Field handlers ───────────────────────────────────────────────────────
 
@@ -397,29 +406,6 @@ const ProductManageForm = ({
     [setValue],
   );
 
-  const handleGalleryImagesChange = useCallback(
-    (files: File[]) => {
-      setValue("gallery_images", files, { shouldValidate: true });
-    },
-    [setValue],
-  );
-
-  const handleDeleteExistingGalleryImage = useCallback(
-    (imageId: number | string) => {
-      deleteImageMutation.mutate(
-        { productUuid: productUuid ?? "", imageUuid: String(imageId) },
-        {
-          onSuccess: () => {
-            setExistingGalleryImages((prev) =>
-              prev.filter((img) => img.id !== imageId),
-            );
-          },
-        },
-      );
-    },
-    [deleteImageMutation, productUuid],
-  );
-
   // ── Variation handlers ───────────────────────────────────────────────────
 
   const handleAddVariation = useCallback(() => {
@@ -463,10 +449,20 @@ const ProductManageForm = ({
   const onSubmit = useCallback(
     async (data: ProductCreate | ProductUpdate) => {
       try {
+        const transformedData = {
+          ...data,
+          variations: data.variations?.map((variation: any) => {
+            const { variant_image, ...rest } = variation;
+            return {
+              ...rest,
+              image: variant_image ?? undefined,
+            };
+          }),
+        };
         if (isUpdateMode && productUuid) {
           const response = await productService.updateProduct(
             productUuid,
-            data as ProductUpdate,
+            transformedData as ProductUpdate,
           );
           if (response) {
             toast.success(response?.message || "Product updated successfully");
@@ -475,7 +471,7 @@ const ProductManageForm = ({
           }
         } else {
           const response = await productService.createProduct(
-            data as ProductCreate,
+            transformedData as ProductCreate,
           );
           if (response) {
             toast.success(response?.message || "Product created successfully");
@@ -637,34 +633,19 @@ const ProductManageForm = ({
                 Product Images
               </h2>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-              <FileInputField
-                label="Featured Image"
-                accept="image/*"
-                multiple={false}
-                onFileChange={handleFeaturedImageChange}
-                error={errors.featured_image?.message}
-                showPreviews
-                maxFileSize={MAX_FILE_SIZE}
-                required={!isUpdateMode}
-                helperText={`Only one image is allowed and max file size is ${MAX_FILE_SIZE}KB`}
-                existingImageUrl={existingFeaturedImage}
-                existingImageAlt="Featured Image"
-              />
-              <FileInputField
-                label="Gallery Images"
-                accept="image/*"
-                multiple
-                onFileChange={handleGalleryImagesChange}
-                error={errors.gallery_images?.message}
-                showPreviews
-                maxFileSize={MAX_FILE_SIZE}
-                required={!isUpdateMode}
-                helperText={`Multiple images are allowed and max file size is ${MAX_FILE_SIZE}KB`}
-                existingImages={existingGalleryImages}
-                onRemoveExistingGalleryImage={handleDeleteExistingGalleryImage}
-              />
-            </div>
+            <FileInputField
+              label="Featured Image"
+              accept="image/*"
+              multiple={false}
+              onFileChange={handleFeaturedImageChange}
+              error={errors.featured_image?.message}
+              showPreviews
+              maxFileSize={MAX_FILE_SIZE}
+              required={!isUpdateMode}
+              helperText={`Only one image is allowed and max file size is ${MAX_FILE_SIZE}KB`}
+              existingImageUrl={existingFeaturedImage}
+              existingImageAlt="Featured Image"
+            />
           </div>
 
           {/* ── Categories & Classification ── */}
@@ -931,20 +912,39 @@ const ProductManageForm = ({
                         name={`variations.${index}.variant_expiry_date`}
                         control={control}
                         render={({ field }) => (
-                          <DatePickerField
-                        label="Expiry Date"
-                        placeholder="Select expiry date"
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChangeAction={handleExpiryDateChange(index)}
-                        error={errors.variations?.[index]?.variant_expiry_date?.message}
-                        minDate={new Date()}
-                        dateFormat="PPP"
-                        clearable
-                        required
-                        allowManualInput 
+                          <MonthYearPicker
+                            label="Expiry Date"
+                            value={field.value}
+                            onChange={field.onChange}
+                            error={
+                              errors.variations?.[index]?.variant_expiry_date
+                                ?.message
+                            }
+                            minDate={new Date()}
+                            required
+                          />
+                        )}
                       />
-                    )}
-                  />
+                    </div>
+
+                    {/* Row 3: Variation Image */}
+                    <div className="mt-4">
+                      <FileInputField
+                        label="Variation Image"
+                        accept="image/*"
+                        multiple={false}
+                        onFileChange={handleVariationImageChange(index)}
+                        error={
+                          (errors.variations?.[index] as any)?.variant_image
+                            ?.message
+                        }
+                        showPreviews
+                        maxFileSize={MAX_FILE_SIZE}
+                        required={!isUpdateMode}
+                        helperText={`Image for this variation. Max file size ${MAX_FILE_SIZE}KB`}
+                        existingImageUrl={existingVariantImages[index] ?? null}
+                        existingImageAlt={`Variation ${index + 1} Image`}
+                      />
                     </div>
                   </div>
                 );

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.1.71"],
   images: {
     dangerouslyAllowLocalIP: isDev,
     qualities: [90, 75, 85],
@@ -39,17 +40,13 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "http",
-        hostname: "192.168.100.18",
-      },
-      {
-        protocol: "http",
-        hostname: "192.168.1.68",
+        hostname: "192.168.1.69",
         port: "8002",
         pathname: "/**",
       },
       {
         protocol: "http",
-        hostname: "192.168.1.71",
+        hostname: "192.168.1.69",
         port: "8000",
       },
       {

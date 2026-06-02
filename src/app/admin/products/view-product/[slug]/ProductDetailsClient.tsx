@@ -9,7 +9,6 @@ import {
   Building2,
   CheckCircle2,
   Copy,
-  DollarSign,
   Edit,
   Eye,
   Globe,
@@ -20,6 +19,7 @@ import {
   Tag,
   Trash2,
   Users,
+  Wallet,
   Zap,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -238,10 +238,6 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
       router.back();
     }, [router]);
 
-    const handleArchive = useCallback(() => {
-      toast.info("Archive feature coming soon");
-    }, []);
-
     const formattedDate = data?.added_date
       ? new Date(data.added_date).toLocaleDateString("en-US", {
           year: "numeric",
@@ -328,13 +324,6 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
                 className="flex-1 sm:flex-none"
               />
               <ProductActionButton
-                icon={Archive}
-                label="Archive"
-                variant="secondary"
-                onClickAction={handleArchive}
-                className="flex-1 sm:flex-none"
-              />
-              <ProductActionButton
                 icon={Trash2}
                 label="Delete"
                 variant="danger"
@@ -349,7 +338,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
             <ProductMetricCard
               title="Total Revenue"
               value={FormatCurrency(200)}
-              icon={DollarSign}
+              icon={Wallet}
               trend={{ value: 12.5, isPositive: true }}
               description="This month"
             />

@@ -4,17 +4,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useCallback } from "react";
-import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Box,
   CheckCircle2,
-  DollarSign,
   Loader2,
   Mail,
   Package,
   Store,
   User,
+  Wallet,
   Warehouse,
   XCircle,
 } from "lucide-react";
@@ -310,7 +309,7 @@ export default function VendorProductDetails({ slug }: { slug: string }) {
                   </h2>
                   <div className="grid grid-cols-2 gap-4">
                     <DetailCard
-                      icon={<DollarSign className="w-5 h-5" />}
+                      icon={<Wallet className="w-5 h-5" />}
                       label="Price"
                       value={FormatCurrency(currentVariation.price)}
                       color="blue"

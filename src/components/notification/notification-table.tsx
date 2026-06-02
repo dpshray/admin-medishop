@@ -175,17 +175,6 @@ export default function NotificationTable() {
 
   return (
     <div className="space-y-4 md:space-y-6 w-full px-2 md:px-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">
-            Notifications
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Manage and review system notifications
-          </p>
-        </div>
-      </div>
-
       <DataTable
         data={data?.items ?? []}
         columns={columns}

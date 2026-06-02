@@ -1,279 +1,272 @@
-"use client"
+"use client";
 
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
-import {Button} from "@/components/ui/button"
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table"
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
-import {Download, Edit3, Eye, MoreHorizontal, Plus, Settings, Users} from "lucide-react"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {adminDashboardData} from "@/data";
-import {DashboardCard} from "@/components/dashboard/dashboard-card";
-import {CURRENCY_SYMBOL} from "@/config/app-constant";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Users, ShoppingCart, Package, Store, Tag } from "lucide-react";
+import { DashboardCard } from "@/components/dashboard/dashboard-card";
+import { CURRENCY_SYMBOL } from "@/config/app-constant";
+import { useGetDashboardTotals } from "@/hooks/use-dashboard";
+import DashboardCardSkeleton from "@/components/dashboard/DashboardCardSkeleton";
+import { useQuery } from "@tanstack/react-query";
+import userService from "@/service/user.service";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StatusBadge } from "@/lib/helper";
+import { STATUS_TYPE } from "@/types/enum";
+import { UserTable } from "@/components/table/user-table";
+import Link from "next/link";
+import orderService from "@/service/order/order.service";
+import { OrderType } from "@/components/order/admin/admin-order-table";
+import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
-    const recentActivities = [
-        {
-            type: "subscription",
-            message: "New Pro subscription -  Npr 99.00/month",
-            time: "2 min ago",
-        },
-        {
-            type: "user",
-            message: "New user registration: john@company.com",
-            time: "15 min ago",
-        },
-        {
-            type: "feature",
-            message: "API usage limit reached for Basic plan",
-            time: "1 hour ago",
-        },
-        {type: "alert", message: "Server response time increased", time: "2 hours ago"},
-    ]
+  const router = useRouter();
+  const { data, isLoading } = useGetDashboardTotals();
+  const totals = data?.data;
 
-    const customers = [
-        {
-            id: 1,
-            name: "Acme Corp",
-            email: "admin@acme.com",
-            plan: "Enterprise",
-            status: "Active",
-            mrr: 299,
-            joinDate: "2024-01-15",
-        },
-        {
-            id: 2,
-            name: "TechStart Inc",
-            email: "hello@techstart.com",
-            plan: "Pro",
-            status: "Active",
-            mrr: 99,
-            joinDate: "2024-02-03",
-        },
-        {
-            id: 3,
-            name: "Digital Agency",
-            email: "contact@digital.com",
-            plan: "Basic",
-            status: "Trial",
-            mrr: 0,
-            joinDate: "2024-03-10",
-        },
-        {
-            id: 4,
-            name: "StartupXYZ",
-            email: "team@startupxyz.com",
-            plan: "Pro",
-            status: "Cancelled",
-            mrr: 0,
-            joinDate: "2023-12-20",
-        },
-    ]
+  const dashboardCards = [
+    {
+      title: "Total Products",
+      value: String(totals?.total_products ?? 0),
+      icon: Package,
+      color: "text-green-500",
+      bgColor: "bg-green-500/10",
+    },
+    {
+      title: "Total Orders",
+      value: String(totals?.total_orders ?? 0),
+      icon: ShoppingCart,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+    },
+    {
+      title: "Total Vendors",
+      value: String(totals?.total_vendors ?? 0),
+      icon: Store,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+    },
+    {
+      title: "Total Users",
+      value: String(totals?.total_users ?? 0),
+      icon: Users,
+      color: "text-indigo-500",
+      bgColor: "bg-indigo-500/10",
+    },
+    {
+      title: "Total Brands",
+      value: String(totals?.total_brands ?? 0),
+      icon: Tag,
+      color: "text-pink-500",
+      bgColor: "bg-pink-500/10",
+    },
+  ];
 
-    const topFeatures = [
-        {
-            id: 1,
-            name: "API Analytics Dashboard",
-            usage: "2,456 requests",
-            growth: "+12%",
-            users: 89,
-        },
-        {
-            id: 2,
-            name: "Real-time Notifications",
-            usage: "1,834 events",
-            growth: "+8%",
-            users: 67,
-        },
-    ]
+  const { data: recentUser } = useQuery({
+    queryKey: ["recent-users"],
+    queryFn: () => userService.getAllUser({ page: 1, per_page: 10 }),
+  });
 
-    return (
-        <div className="mainContainer space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
-                    <p className="text-muted-foreground">Welcome back to your SaaS platform</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Select>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Last 30 days"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="7d">Last 7 days</SelectItem>
-                            <SelectItem value="30d">Last 30 days</SelectItem>
-                            <SelectItem value="90d">Last 90 days</SelectItem>
-                            <SelectItem value="1y">Last year</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+  const { data: recentOrders, isLoading: ordersLoading } = useQuery({
+    queryKey: ["recent-orders"],
+    queryFn: () =>
+      orderService.getAllOrders({
+        page: 1,
+        per_page: 5,
+      }),
+  });
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-                {adminDashboardData.map((card, index) => (
-                    <DashboardCard key={index} {...card} index={index}/>
-                ))}
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Recent Customers</CardTitle>
-                        <CardDescription>Latest customer subscriptions and activity</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Plan</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>MRR</TableHead>
-                                    <TableHead className="w-[70px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {customers.map((customer) => (
-                                    <TableRow key={customer.id}>
-                                        <TableCell>
-                                            <div>
-                                                <div className="font-medium">{customer.name}</div>
-                                                <div className="text-sm text-muted-foreground">{customer.email}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                      <span
-                          className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700">
-                        {customer.plan}
-                      </span>
-                                        </TableCell>
-                                        <TableCell>
-                      <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              customer.status === "Active"
-                                  ? "bg-green-50 text-green-700"
-                                  : customer.status === "Trial"
-                                      ? "bg-yellow-50 text-yellow-700"
-                                      : "bg-red-50 text-red-700"
-                          }`}
-                      >
-                        {customer.status}
-                      </span>
-                                        </TableCell>
-                                        <TableCell className="font-medium">{`${CURRENCY_SYMBOL} ${customer.mrr}`}</TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <MoreHorizontal className="h-4 w-4"/>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem>
-                                                        <Eye className="mr-2 h-4 w-4"/>
-                                                        View details
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-                                                        <Edit3 className="mr-2 h-4 w-4"/>
-                                                        Edit customer
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Top Features</CardTitle>
-                        <CardDescription>Most used platform features</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {topFeatures.map((feature) => (
-                                <div key={feature.id} className="space-y-2">
-                                    <div className="flex justify-between items-start">
-                                        <h4 className="font-medium text-sm">{feature.name}</h4>
-                                        <span className="text-xs text-muted-foreground">{feature.users} users</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">{feature.usage}</span>
-                                        <span className="text-green-600">{feature.growth}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-7">
-                <Card className="lg:col-span-4">
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                        <CardDescription>Latest updates from your platform</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {recentActivities.map((activity, index) => (
-                                <div key={index} className="flex items-center gap-3">
-                                    <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"/>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-gray-900">{activity.message}</p>
-                                        <p className="text-xs text-gray-500">{activity.time}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle>Quick Action List</CardTitle>
-                        <CardDescription>Common tasks and shortcuts</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2 " >
-                            {[
-                                {
-                                    title: "Add New User",
-                                    desc: "Invite team members or customers",
-                                    icon: Plus,
-                                },
-                                {title: "Manage Subscriptions", desc: "View and update billing", icon: Users},
-                                {
-                                    title: "Analytics Report",
-                                    desc: "Download usage analytics",
-                                    icon: Download,
-                                },
-                                {
-                                    title: "Platform Settings",
-                                    desc: "Configure API and features",
-                                    icon: Settings,
-                                },
-                            ].map((action, index) => (
-                                <button
-                                    key={index}
-                                    className="w-full p-3 text-left rounded-lg border hover:bg-gray-50 transition-colors"
-                                    disabled
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <action.icon className="w-5 h-5 text-blue-600"/>
-                                        <div>
-                                            <div className="font-medium text-sm">{action.title}</div>
-                                            <div className="text-xs text-gray-600">{action.desc}</div>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+  return (
+    <div className="mainContainer space-y-6 my-4 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Welcome back to your SaaS platform
+          </p>
         </div>
-    )
+      </div>
+
+      {/* Dashboard Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <DashboardCardSkeleton key={i} />
+            ))
+          : dashboardCards.map((card, index) => (
+              <DashboardCard key={index} {...card} index={index} />
+            ))}
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-12 min-w-0">
+        {/* Recent Customers */}
+        <Card className="lg:col-span-8 min-w-0">
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Recent Customers</CardTitle>
+              <CardDescription>
+                Latest customer subscriptions and activity
+              </CardDescription>
+            </div>
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              <Link href="/admin/users">View All Customers</Link>
+            </Button>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            <div className="w-full overflow-x-auto">
+              <div className="min-w-[680px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 sm:w-auto">Customer</TableHead>
+                      <TableHead>Orders</TableHead>
+                      <TableHead>Spent</TableHead>
+                      <TableHead className="text-right sm:text-left">
+                        Status
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {recentUser?.items?.map((user: UserTable) => (
+                      <TableRow key={user.uuid}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage src={user.image} />
+                              <AvatarFallback>
+                                {user.name?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">
+                                {user.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="font-medium">
+                          {user.total_orders}
+                        </TableCell>
+
+                        <TableCell className="font-medium">
+                          {CURRENCY_SYMBOL} {user.total_purchase_amount}
+                        </TableCell>
+
+                        <TableCell>
+                          <StatusBadge
+                            status={
+                              user.status
+                                ? STATUS_TYPE.VERIFIED
+                                : STATUS_TYPE.UNVERIFIED
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Recent Orders */}
+        <Card className="lg:col-span-4">
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>
+                Latest customer orders placed on the platform
+              </CardDescription>
+            </div>
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              <Link href="/admin/orders">View All Orders</Link>
+            </Button>
+          </CardHeader>
+
+          <CardContent className="space-y-2">
+            {ordersLoading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-20 animate-pulse rounded-xl bg-muted"
+                  />
+                ))
+              : recentOrders?.items?.slice(0, 5).map((order: OrderType) => (
+                  <div
+                    key={order.order_uuid}
+                    onClick={() =>
+                      router.push(`/admin/orders/${order.order_uuid}`)
+                    }
+                    className="cursor-pointer p-4 rounded-xl border hover:bg-muted/60 transition-all active:scale-[0.985]"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-sm">
+                            #{order.order_code}
+                          </p>
+                          <StatusBadge status={order.status} />
+                        </div>
+
+                        <p className="text-sm text-muted-foreground truncate">
+                          {order.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {order.email}
+                        </p>
+                      </div>
+
+                      <div className="text-right sm:text-right shrink-0">
+                        <p className="font-medium text-sm">
+                          {order.no_of_ordered_items} Item
+                          {order.no_of_ordered_items > 1 ? "s" : ""}
+                        </p>
+                        <div className="mt-2">
+                          <StatusBadge status={order.payment_status} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }

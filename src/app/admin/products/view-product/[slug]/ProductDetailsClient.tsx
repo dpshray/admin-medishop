@@ -280,7 +280,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
             <span>Back to Products</span>
           </button>
 
-          <header className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <header className="flex flex-col gap-4">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-2 break-words">
@@ -333,37 +333,6 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
               />
             </div>
           </header>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <ProductMetricCard
-              title="Total Revenue"
-              value={FormatCurrency(200)}
-              icon={Wallet}
-              trend={{ value: 12.5, isPositive: true }}
-              description="This month"
-            />
-            <ProductMetricCard
-              title="Units Sold"
-              value={1284}
-              icon={BarChart3}
-              trend={{ value: 8.2, isPositive: true }}
-              description="This month"
-            />
-            <ProductMetricCard
-              title="Conversion Rate"
-              value="3.2%"
-              icon={Zap}
-              trend={{ value: 2.1, isPositive: true }}
-              description="Last 30 days"
-            />
-            <ProductMetricCard
-              title="Page Views"
-              value="12,450"
-              icon={Eye}
-              trend={{ value: 15.3, isPositive: true }}
-              description="This month"
-            />
-          </div>
 
           <div className="bg-white rounded-md overflow-hidden">
             <div className="p-4 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">

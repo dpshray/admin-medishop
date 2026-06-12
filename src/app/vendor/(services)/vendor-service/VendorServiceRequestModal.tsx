@@ -93,7 +93,7 @@ const VendorServiceRequestModal = memo(function VendorServiceRequestModal({
         queryKey: ["vendorServiceDetails", slug],
         queryFn: async () => {
             const res = await vendorServiceProviderService.getVendorServiceProviderBySlug(slug)
-            console.log('Response from getVendorServiceProviderBySlug',res)
+            // console.log('Response from getVendorServiceProviderBySlug',res)
             return res.data
         },
         enabled: open && !!slug,

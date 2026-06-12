@@ -120,7 +120,7 @@ export default function OrderDetailsClient({ orderUuid }: OrderDetailsClientProp
     })
     
     const { data: branchesData } = useGetNcmBranch()
-    console.log("Branches data:", branchesData)
+    // console.log("Branches data:", branchesData)
 
     const { data, isLoading, refetch } = useQuery<OrderData>({
         queryKey: ["order-details", orderUuid],

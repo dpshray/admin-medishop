@@ -65,7 +65,7 @@ export default function AdminOrderTable() {
       };
       const response = await orderService.getAllOrders(params);
       setCurrentPage(response.page);
-      console.log("Orders response:", response);
+      // console.log("Orders response:", response);
       return response;
     },
     staleTime: QUERY_STALE_TIME,

@@ -17,8 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import SearchSelectField from "@/components/field/search-select";
 import TextInputField from "@/components/field/text-input";
 import MultiSelectField from "@/components/field/multi-select-input";
-import FileInputField, { ExistingImage } from "@/components/field/file-input";
-import DatePickerField from "@/components/field/date-picker";
+import FileInputField from "@/components/field/file-input";
 import {
   createProductSchema,
   ProductCreate,

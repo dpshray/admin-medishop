@@ -10,7 +10,7 @@ import DashboardCardSkeleton from "@/components/dashboard/DashboardCardSkeleton"
 export default function BookedServicesPage() {
   const { data, isLoading } = useGetServiceBookingTotals();
   const totals = data?.data;
-  console.log(data);
+  // console.log(data);
 
   const dashboardCards = [
     {

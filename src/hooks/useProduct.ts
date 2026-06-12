@@ -19,7 +19,7 @@ export function useProducts(
     queryKey: ["products", params],
     queryFn: async () => {
       const res = await productService.getAllProducts(params);
-      console.log("Response from product Hook", res.items);
+      // console.log("Response from product Hook", res.items);
       return res;
     },
     enabled: options?.enabled ?? true,

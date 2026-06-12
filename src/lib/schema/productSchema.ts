@@ -14,8 +14,8 @@ const VariationSchema = z.object({
   variant_stock: z.number().min(0, "Stock must be at least 0"),
   variant_expiry_date: z.string().min(1, "Expiry date is required"),
   variant_batch_no: z.string().min(1, "Batch number is required"),
-  variant_image: z.instanceof(File).nullable().optional(),
-  variant_image_url: z.string().nullable().optional(),
+  // variant_image: z.instanceof(File).nullable().optional(),
+  // variant_image_url: z.string().nullable().optional(),
 });
 
 export const createProductSchema = z.object({
@@ -28,7 +28,7 @@ export const createProductSchema = z.object({
   prescription_required: z.boolean().optional().default(false),
   generic_product_name_id: z.number(),
   featured_image: z.instanceof(File),
-  // gallery_images: z.array(z.instanceof(File)).min(1),
+  gallery_images: z.array(z.instanceof(File)).min(1),
   health_condition: z.array(z.number()),
   discount_percent: z.coerce.number().min(0).max(100),
 });
@@ -42,7 +42,7 @@ export const updateProductSchema = z.object({
   variations: z.array(VariationSchema).optional(),
   prescription_required: z.boolean().optional(),
   featured_image: z.instanceof(File).nullable().optional(),
-  // gallery_images: z.array(z.instanceof(File)).optional(),
+  gallery_images: z.array(z.instanceof(File)).optional(),
   health_condition: z.array(z.number()).optional(),
   discount_percent: z.coerce.number().min(0).max(100).optional(),
   generic_product_name_id: z.number().optional(),

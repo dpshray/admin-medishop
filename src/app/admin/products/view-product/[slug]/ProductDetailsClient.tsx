@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Archive,
@@ -35,6 +35,8 @@ import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductVendorTab from "@/components/product/ProductVendorTab";
 import { QUERY_STALE_TIME } from "@/config/app-constant";
+import { Skeleton } from "@/components/ui/skeleton";
+import ImageGallery from "@/components/product/image-gallery";
 
 interface Brand {
   id: number;
@@ -70,7 +72,7 @@ interface ProductVariation {
   expiry_date: string;
   status?: string;
   stock_quantity?: number;
-  variant_image?: string;
+  // variant_image?: string;
 }
 
 interface HealthCondition {
@@ -99,7 +101,7 @@ interface ProductData {
   variations: ProductVariation[];
   health_conditions: HealthCondition[];
   featured_image: ProductImage;
-  //   gallery_images: ProductImage[];
+  gallery_images: ProductImage[];
   status?: string;
   rating?: number;
   discount_percent?: string;
@@ -409,7 +411,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
                       </button>
                     </div>
                   </div>
-                  {/* {data.gallery_images.length > 0 && (
+                  {data.gallery_images.length > 0 && (
                     <Suspense
                       fallback={
                         <Skeleton className="h-20 sm:h-24 w-full rounded-lg" />
@@ -417,7 +419,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
                     >
                       <ImageGallery images={data.gallery_images} />
                     </Suspense>
-                  )} */}
+                  )}
                 </div>
 
                 <div className="space-y-6">
@@ -527,7 +529,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
                       key={variation.variant_id}
                       className="flex flex-col justify-between p-4 bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 hover:to-slate-50 rounded-xl transition-all duration-200 border border-slate-200/60 gap-4"
                     >
-                      {variation.variant_image && (
+                      {/* {variation.variant_image && (
                         <div className="relative h-24 w-24 rounded-lg overflow-hidden border border-slate-200 shrink-0">
                           <Image
                             src={variation.variant_image}
@@ -537,7 +539,7 @@ const AdminProductDetailsContent: React.FC<AdminProductDetailsProps> =
                             sizes="96px"
                           />
                         </div>
-                      )}
+                      )} */}
                       {/* Row 1: Form info + status + stock */}
                       <div className="flex items-center gap-3 flex-wrap">
                         <div

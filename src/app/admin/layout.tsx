@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Tag,
   TicketPercent,
+  TrendingUp,
   UserPen,
   Users,
   Warehouse,
@@ -117,11 +118,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       label: "Reports & Analytics",
       items: [
-        { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+        { label: "Sales Report", href: "/admin/sales-report", icon: BarChart3 },
         {
-          label: "Report History",
-          href: "/admin/report-history",
-          icon: ClipboardCheck,
+          label: "Product Performance",
+          href: "/admin/product-performance",
+          icon: Package,
+        },
+        {
+          label: "Vendor Performance",
+          href: "/admin/vendor-performance",
+          icon: TrendingUp,
         },
       ],
     },

@@ -10,7 +10,7 @@ const axiosInstance: AxiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config: any) => {
-    console.log("➡️ FULL REQUEST URL:", config.baseURL + config.url);
+    // console.log("➡️ FULL REQUEST URL:", config.baseURL + config.url);
     return config;
   },
   (error: AxiosError) => {

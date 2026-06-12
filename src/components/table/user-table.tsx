@@ -47,7 +47,7 @@ export default function UserTable() {
         search,
       };
       const res = await userService.getAllUser(params);
-      console.log("User response:", res);
+      // console.log("User response:", res);
       return res;
     },
   });

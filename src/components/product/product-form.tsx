@@ -18,7 +18,6 @@ import SearchSelectField from "@/components/field/search-select";
 import TextInputField from "@/components/field/text-input";
 import MultiSelectField from "@/components/field/multi-select-input";
 import FileInputField, { ExistingImage } from "@/components/field/file-input";
-import DatePickerField from "@/components/field/date-picker";
 import {
   createProductSchema,
   ProductCreate,
@@ -45,6 +44,7 @@ import { RichTextEditor } from "../field/rich-text-editor";
 import { Label } from "../ui/label";
 import { PRODUCT_FORM_DATA } from "@/data";
 import { MonthYearPicker } from "../field/month-year-picker";
+import { useDeleteProductImage } from "@/hooks/useProduct";
 
 const FORM_TYPE_OPTIONS = Object.keys(PRODUCT_FORM_DATA).map((key) => ({
   value: key,
@@ -77,14 +77,16 @@ const ProductManageForm = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [existingVariantImages, setExistingVariantImages] = useState<
-    Record<number, string | null>
-  >({});
 
   // ── Image preview state ──────────────────────────────────────────────────
   const [existingFeaturedImage, setExistingFeaturedImage] = useState<
     string | null
   >(null);
+  const [existingGalleryImages, setExistingGalleryImages] = useState<
+    ExistingImage[]
+  >([]);
+
+  const deleteImageMutation = useDeleteProductImage();
 
   const { data: healthCondition } = useQuery({
     queryKey: ["health-condition"],
@@ -153,7 +155,7 @@ const ProductManageForm = ({
       variant_stock: 1,
       variant_batch_no: generateBatchNumber(),
       variant_expiry_date: "",
-      variant_image: null,
+      // variant_image: null,
     }),
     [],
   );
@@ -168,7 +170,7 @@ const ProductManageForm = ({
         categories: [],
         tags: [],
         featured_image: null,
-        // gallery_images: [],
+        gallery_images: [],
         prescription_required: false,
         health_condition: [],
         discount_percent: 0,
@@ -183,7 +185,7 @@ const ProductManageForm = ({
       categories: [],
       tags: [],
       featured_image: new File([], ""),
-      // gallery_images: [],
+      gallery_images: [],
       prescription_required: false,
       health_condition: [],
       discount_percent: 0,
@@ -230,11 +232,12 @@ const ProductManageForm = ({
         // ── Populate existing image state ────────────────────────────
         setExistingFeaturedImage(productData.featured_image?.url ?? null);
 
-        const variantImageMap: Record<number, string | null> = {};
-        productData.variations?.forEach((variation: any, i: number) => {
-          variantImageMap[i] = variation.variant_image ?? null;
-        });
-        setExistingVariantImages(variantImageMap);
+        setExistingGalleryImages(
+          (productData.gallery_images ?? []).map((img: any) => ({
+            id: img.id,
+            url: img.url,
+          })),
+        );
 
         const mappedVariations =
           productData.variations?.map((variation: any) => ({
@@ -248,7 +251,7 @@ const ProductManageForm = ({
             variant_stock: variation.variant_units_in_stock || 1,
             variant_batch_no: String(variation.batch_number || ""),
             variant_expiry_date: variation.expiry_date || "",
-            variant_image: null,
+            // variant_image: null,
           })) || [];
 
         setValue("name", productData.name || "");
@@ -300,19 +303,19 @@ const ProductManageForm = ({
     productUnits.length,
   ]);
 
-  const handleVariationImageChange = useCallback(
-    (index: number) => (files: File[]) => {
-      const newFile = files[0] ?? null;
-      setValue(`variations.${index}.variant_image`, newFile, {
-        shouldValidate: true,
-      });
-      // Hide existing preview once user picks a new file
-      if (newFile) {
-        setExistingVariantImages((prev) => ({ ...prev, [index]: null }));
-      }
-    },
-    [setValue],
-  );
+  // const handleVariationImageChange = useCallback(
+  //   (index: number) => (files: File[]) => {
+  //     const newFile = files[0] ?? null;
+  //     setValue(`variations.${index}.variant_image`, newFile, {
+  //       shouldValidate: true,
+  //     });
+  //     // Hide existing preview once user picks a new file
+  //     if (newFile) {
+  //       setExistingVariantImages((prev) => ({ ...prev, [index]: null }));
+  //     }
+  //   },
+  //   [setValue],
+  // );
 
   // ── Field handlers ───────────────────────────────────────────────────────
 
@@ -325,6 +328,29 @@ const ProductManageForm = ({
       );
     },
     [setValue],
+  );
+
+  const handleGalleryImagesChange = useCallback(
+    (files: File[]) => {
+      setValue("gallery_images", files, { shouldValidate: true });
+    },
+    [setValue],
+  );
+
+  const handleDeleteExistingGalleryImage = useCallback(
+    (imageId: number | string) => {
+      deleteImageMutation.mutate(
+        { productUuid: productUuid ?? "", imageUuid: String(imageId) },
+        {
+          onSuccess: () => {
+            setExistingGalleryImages((prev) =>
+              prev.filter((img) => img.id !== imageId),
+            );
+          },
+        },
+      );
+    },
+    [deleteImageMutation, productUuid],
   );
 
   const handleGenericNameChange = useCallback(
@@ -449,20 +475,20 @@ const ProductManageForm = ({
   const onSubmit = useCallback(
     async (data: ProductCreate | ProductUpdate) => {
       try {
-        const transformedData = {
-          ...data,
-          variations: data.variations?.map((variation: any) => {
-            const { variant_image, ...rest } = variation;
-            return {
-              ...rest,
-              image: variant_image ?? undefined,
-            };
-          }),
-        };
+        // const transformedData = {
+        //   ...data,
+        //   variations: data.variations?.map((variation: any) => {
+        //     const { variant_image, ...rest } = variation;
+        //     return {
+        //       ...rest,
+        //       image: variant_image ?? undefined,
+        //     };
+        //   }),
+        // };
         if (isUpdateMode && productUuid) {
           const response = await productService.updateProduct(
             productUuid,
-            transformedData as ProductUpdate,
+            data as ProductUpdate,
           );
           if (response) {
             toast.success(response?.message || "Product updated successfully");
@@ -471,7 +497,7 @@ const ProductManageForm = ({
           }
         } else {
           const response = await productService.createProduct(
-            transformedData as ProductCreate,
+            data as ProductCreate,
           );
           if (response) {
             toast.success(response?.message || "Product created successfully");
@@ -633,19 +659,35 @@ const ProductManageForm = ({
                 Product Images
               </h2>
             </div>
-            <FileInputField
-              label="Featured Image"
-              accept="image/*"
-              multiple={false}
-              onFileChange={handleFeaturedImageChange}
-              error={errors.featured_image?.message}
-              showPreviews
-              maxFileSize={MAX_FILE_SIZE}
-              required={!isUpdateMode}
-              helperText={`Only one image is allowed and max file size is ${MAX_FILE_SIZE}KB`}
-              existingImageUrl={existingFeaturedImage}
-              existingImageAlt="Featured Image"
-            />
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
+              <FileInputField
+                label="Featured Image"
+                accept="image/*"
+                multiple={false}
+                onFileChange={handleFeaturedImageChange}
+                error={errors.featured_image?.message}
+                showPreviews
+                maxFileSize={MAX_FILE_SIZE}
+                required={!isUpdateMode}
+                helperText={`Only one image is allowed and max file size is ${MAX_FILE_SIZE}KB`}
+                existingImageUrl={existingFeaturedImage}
+                existingImageAlt="Featured Image"
+              />
+
+              <FileInputField
+                label="Gallery Images"
+                accept="image/*"
+                multiple
+                onFileChange={handleGalleryImagesChange}
+                error={errors.gallery_images?.message}
+                showPreviews
+                maxFileSize={MAX_FILE_SIZE}
+                required={!isUpdateMode}
+                helperText={`Multiple images are allowed and max file size is ${MAX_FILE_SIZE}KB`}
+                existingImages={existingGalleryImages}
+                onRemoveExistingGalleryImage={handleDeleteExistingGalleryImage}
+              />
+            </div>
           </div>
 
           {/* ── Categories & Classification ── */}
@@ -928,7 +970,7 @@ const ProductManageForm = ({
                     </div>
 
                     {/* Row 3: Variation Image */}
-                    <div className="mt-4">
+                    {/* <div className="mt-4">
                       <FileInputField
                         label="Variation Image"
                         accept="image/*"
@@ -945,7 +987,7 @@ const ProductManageForm = ({
                         existingImageUrl={existingVariantImages[index] ?? null}
                         existingImageAlt={`Variation ${index + 1} Image`}
                       />
-                    </div>
+                    </div> */}
                   </div>
                 );
               })}

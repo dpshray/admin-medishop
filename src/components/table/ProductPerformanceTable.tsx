@@ -7,7 +7,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NoDataFound } from "@/lib/helper";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import useVendor from "@/hooks/use-vendor";
 import { useCategories } from "@/hooks/all-hook";
 import { useGetProductsPerformaceReport } from "@/hooks/use-report";

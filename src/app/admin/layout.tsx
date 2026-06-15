@@ -141,6 +141,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     },
   ];
 
+  const sortedNavGroups = navGroups.map((group) => ({
+    ...group,
+    items: [...group.items].sort((a, b) => a.label.localeCompare(b.label)),
+  }));
+
   const dropdownGroups: DropdownGroup[] = [
     {
       items: [{ label: "Profile", href: "/admin/profile", icon: UserPen }],
@@ -149,7 +154,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <ReusableSidebar
-      navGroups={navGroups}
+      navGroups={sortedNavGroups}
       title="Admin Dashboard"
       subtitle="Admin Dashboard"
       currentHref="/admin"

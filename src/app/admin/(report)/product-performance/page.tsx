@@ -3,7 +3,8 @@
 import PageHeader from "@/components/headers/PageHeader";
 import ProductPerformanceTable from "@/components/table/ProductPerformanceTable";
 import { TrendingUp } from "lucide-react";
-export default function BrandPage() {
+
+export default function ProductPerformancePage() {
   return (
     <div className="min-h-screen mainContainer">
       <PageHeader

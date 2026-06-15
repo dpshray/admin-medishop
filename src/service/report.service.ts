@@ -46,6 +46,35 @@ class ReportService extends HttpServices {
       throw error;
     }
   }
+
+  async getVendorCommissionPayout(params?: PageParams) {
+    try {
+      const res = await this.getRequest({
+        url: "/vendor/commission-payout",
+        config: {
+          auth: true,
+          params,
+        },
+      });
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async requestVendorCommissionPayout() {
+    try {
+      const res = await this.postRequest({
+        url: "/vendor/commission-payout/request",
+        config: {
+          auth: true,
+        },
+      });
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 const reportService = new ReportService();

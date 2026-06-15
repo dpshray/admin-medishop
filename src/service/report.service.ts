@@ -47,6 +47,55 @@ class ReportService extends HttpServices {
     }
   }
 
+  async getCommissionPayout(params?: PageParams) {
+    try {
+      const res = await this.getRequest({
+        url: "/admin/commission-payout",
+        config: {
+          auth: true,
+          params,
+        },
+      });
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getCommissionPayoutByVendorId(id: string, params?: PageParams) {
+    try {
+      const res = await this.getRequest({
+        url: `/admin/commission-payout/${id}/orders`,
+        config: {
+          auth: true,
+          params,
+        },
+      });
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updatePayoutStatus(payoutId: string, status: string, remarks: string) {
+    try {
+      const res = await this.patchRequest({
+        url: `/admin/commission-payout/${payoutId}`,
+        config: {
+          auth: true,
+        },
+        data: {
+          status,
+          remarks,
+        },
+      });
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //vendor side
   async getVendorCommissionPayout(params?: PageParams) {
     try {
       const res = await this.getRequest({

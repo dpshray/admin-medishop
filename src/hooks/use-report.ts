@@ -30,6 +30,56 @@ export const useGetVendorPerformanceReport = (params?: PageParams) => {
   });
 };
 
+export const useGetCommissionPayout = (params?: PageParams) => {
+  return useQuery({
+    queryKey: ["commission-payout", params],
+    queryFn: async () => {
+      return reportService.getCommissionPayout(params);
+    },
+  });
+};
+
+export const useGetCommissionPayoutByVendorId = (
+  id: string,
+  params?: PageParams,
+) => {
+  return useQuery({
+    queryKey: ["commission-payout-by-vendor-id", id, params],
+    queryFn: async () => {
+      return reportService.getCommissionPayoutByVendorId(id, params);
+    },
+  });
+};
+
+export const useUpdatePayoutStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      remarks,
+    }: {
+      id: string;
+      status: string;
+      remarks: string;
+    }) => {
+      return reportService.updatePayoutStatus(id, status, remarks);
+    },
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ["commission-payout"] });
+      toast.success(
+        res?.data?.message || "Commission payout updated successfully",
+      );
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to update commission payout",
+      );
+    },
+  });
+};
+
+//vendor-side
 export const useGetVendorCommissionPayout = (params?: PageParams) => {
   return useQuery({
     queryKey: ["vendor-commission-payout", params],

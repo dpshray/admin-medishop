@@ -261,7 +261,7 @@ export const PRODUCT_FORM_DATA: Record<
   },
   Foam: {
     packageTypes: ["Bottle", "Pump Bottle", "Tube"],
-    units: ["ml", "oz"],
+    units: ["ml", "oz", "gram"],
   },
   Soap: {
     packageTypes: ["Bar"],

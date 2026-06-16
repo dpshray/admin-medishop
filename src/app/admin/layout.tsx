@@ -129,6 +129,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           href: "/admin/vendor-performance",
           icon: TrendingUp,
         },
+        {
+          label: "Commission Payout",
+          href: "/admin/commission-payout",
+          icon: ClipboardCheck,
+        },
       ],
     },
     {

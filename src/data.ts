@@ -263,4 +263,8 @@ export const PRODUCT_FORM_DATA: Record<
     packageTypes: ["Bottle", "Pump Bottle", "Tube"],
     units: ["ml", "oz"],
   },
+  Soap: {
+    packageTypes: ["Bar"],
+    units: ["gram"],
+  },
 };

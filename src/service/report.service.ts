@@ -62,7 +62,7 @@ class ReportService extends HttpServices {
     }
   }
 
-  async getCommissionPayoutByVendorId(id: string, params?: PageParams) {
+  async getCommissionPayoutByVendorId(id: number, params?: PageParams) {
     try {
       const res = await this.getRequest({
         url: `/admin/commission-payout/${id}/orders`,
@@ -79,8 +79,8 @@ class ReportService extends HttpServices {
 
   async updatePayoutStatus(payoutId: string, status: string, remarks: string) {
     try {
-      const res = await this.patchRequest({
-        url: `/admin/commission-payout/${payoutId}`,
+      const res = await this.postRequest({
+        url: `/admin/commission-payout/${payoutId}/status`,
         config: {
           auth: true,
         },
@@ -120,6 +120,21 @@ class ReportService extends HttpServices {
         },
       });
       return res;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getVendorSalesReport(params?: PageParams) {
+    try {
+      const res = await this.getRequest({
+        url: "/vendor/sale-report",
+        config: {
+          auth: true,
+          params,
+        },
+      });
+      return res?.data;
     } catch (error) {
       throw error;
     }

@@ -40,7 +40,7 @@ export const useGetCommissionPayout = (params?: PageParams) => {
 };
 
 export const useGetCommissionPayoutByVendorId = (
-  id: string,
+  id: number,
   params?: PageParams,
 ) => {
   return useQuery({
@@ -67,6 +67,9 @@ export const useUpdatePayoutStatus = () => {
     },
     onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: ["commission-payout"] });
+      queryClient.invalidateQueries({
+        queryKey: ["commission-payout-by-vendor-id"],
+      });
       toast.success(
         res?.data?.message || "Commission payout updated successfully",
       );
@@ -106,6 +109,15 @@ export const useRequestVendorCommissionPayout = () => {
         error.response?.data?.message ||
           "Failed to request vendor commission payout",
       );
+    },
+  });
+};
+
+export const useGetVendorSalesReport = (params?: PageParams) => {
+  return useQuery({
+    queryKey: ["vendor-sales-report", params],
+    queryFn: async () => {
+      return reportService.getVendorSalesReport(params);
     },
   });
 };

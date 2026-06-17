@@ -238,8 +238,14 @@ export const PRODUCT_FORM_DATA: Record<
   },
   Cream: { packageTypes: ["Tube", "Jar"], units: ["g", "ml"] },
   Ointment: { packageTypes: ["Tube", "Jar"], units: ["g"] },
-  Gel: { packageTypes: ["Tube", "Pump Bottle"], units: ["g", "ml"] },
-  Lotion: { packageTypes: ["Bottle", "Pump Bottle"], units: ["ml"] },
+  Gel: {
+    packageTypes: ["Tube", "Pump Bottle", "Pack"],
+    units: ["g", "ml", "pic"],
+  },
+  Lotion: {
+    packageTypes: ["Bottle", "Pump Bottle", "Tube"],
+    units: ["ml", "gram"],
+  },
   Powder: { packageTypes: ["Sachet", "Bottle", "Jar", "Box"], units: ["g"] },
   Inhaler: { packageTypes: ["Inhaler Device"], units: ["doses"] },
   Spray: { packageTypes: ["Spray Bottle"], units: ["ml"] },

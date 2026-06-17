@@ -42,14 +42,13 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { RichTextEditor } from "../field/rich-text-editor";
 import { Label } from "../ui/label";
-import { PRODUCT_FORM_DATA } from "@/data";
 import { MonthYearPicker } from "../field/month-year-picker";
-import { useDeleteProductImage } from "@/hooks/useProduct";
-
-const FORM_TYPE_OPTIONS = Object.keys(PRODUCT_FORM_DATA).map((key) => ({
-  value: key,
-  label: key,
-}));
+import { useDeleteProductImage, useGetProductForms } from "@/hooks/useProduct";
+import {
+  ProductForm,
+  ProductFormPackageType,
+  ProductFormUnitType,
+} from "../table/ProductFormTable";
 
 interface ProductManageFormProps {
   mode?: "create" | "edit";
@@ -85,6 +84,9 @@ const ProductManageForm = ({
   const [existingGalleryImages, setExistingGalleryImages] = useState<
     ExistingImage[]
   >([]);
+
+  const { data: productFormsData } = useGetProductForms();
+  const productForms = productFormsData?.data?.items ?? [];
 
   const deleteImageMutation = useDeleteProductImage();
 
@@ -406,6 +408,9 @@ const ProductManageForm = ({
     (index: number) => (value: string | number) => {
       setValue(`variations.${index}.variant_package_type`, value as string, {
         shouldValidate: true,
+      });
+      setValue(`variations.${index}.variant_unit`, "", {
+        shouldValidate: false,
       });
     },
     [setValue],
@@ -778,15 +783,32 @@ const ProductManageForm = ({
                   `variations.${index}.variant_batch_no`,
                 ) as string;
 
-                const formTypeData = PRODUCT_FORM_DATA[watchedFormType] ?? null;
+                const selectedForm =
+                  productForms.find(
+                    (f: ProductForm) => f.name === watchedFormType,
+                  ) ?? null;
+
                 const packageTypeOpts =
-                  formTypeData?.packageTypes.map((pt) => ({
-                    value: pt,
-                    label: pt,
-                  })) ?? [];
+                  selectedForm?.package_types.map(
+                    (pt: ProductFormPackageType) => ({
+                      value: pt.name,
+                      label: pt.name,
+                    }),
+                  ) ?? [];
+
+                const selectedPackageType =
+                  selectedForm?.package_types.find(
+                    (pt: ProductFormPackageType) =>
+                      pt.name === watchedPackageType,
+                  ) ?? null;
+
                 const unitOpts =
-                  formTypeData?.units.map((u) => ({ value: u, label: u })) ??
-                  [];
+                  selectedPackageType?.unit_types.map(
+                    (u: ProductFormUnitType) => ({
+                      value: u.name,
+                      label: u.name,
+                    }),
+                  ) ?? [];
 
                 return (
                   <div
@@ -822,7 +844,10 @@ const ProductManageForm = ({
                       <SearchSelectField
                         label="Form Type"
                         placeholder="e.g. Tablet"
-                        options={FORM_TYPE_OPTIONS}
+                        options={productForms.map((f: ProductForm) => ({
+                          value: f.name,
+                          label: f.name,
+                        }))}
                         value={watchedFormType}
                         onChange={handleFormTypeChange(index)}
                         error={

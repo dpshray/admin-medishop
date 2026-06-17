@@ -190,7 +190,7 @@ export function SalesFiltersBar({
       <div className="flex-1" />
 
       {/* Export */}
-      {onExport && (
+      {/* {onExport && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -212,7 +212,7 @@ export function SalesFiltersBar({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      )} */}
     </div>
   );
 }

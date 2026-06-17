@@ -1,3 +1,4 @@
+import { PageParams } from "@/config/app-constant";
 import HttpServices from "@/service/http.service";
 import { ParamsType } from "@/types/types";
 
@@ -123,6 +124,87 @@ class ProductService extends HttpServices {
     try {
       return await this.deleteRequest({
         url: `/admin/product/${variant_uuid}/variants/${image_uuid}`,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getProductForms(params?: PageParams) {
+    const response = await this.getRequest({
+      url: "/admin/product-variant-types",
+      config: {
+        auth: true,
+        params,
+      },
+    });
+    return response;
+  }
+
+  async createProductForm(data: any) {
+    try {
+      return await this.postRequest({
+        url: "/admin/product-variant-types",
+        data,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateProductForm(uuid: string, data: any) {
+    try {
+      return await this.postRequest({
+        url: `/admin/product-variant-types/${uuid}`,
+        data: {
+          ...data,
+          _method: "PUT",
+        },
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteProductForm(uuid: string) {
+    try {
+      return await this.deleteRequest({
+        url: `/admin/product-variant-types/${uuid}`,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deletePackageType(uuid: string) {
+    try {
+      return await this.deleteRequest({
+        url: `/admin/package-types/${uuid}`,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteUnitType(uuid: string) {
+    try {
+      return await this.deleteRequest({
+        url: `/admin/unit-types/${uuid}`,
         config: {
           auth: true,
         },

@@ -55,6 +55,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { label: "Banners", href: "/admin/banners", icon: ImageIcon },
         { label: "Generic Names", href: "/admin/generic-name", icon: Package },
         { label: "Kit Bags", href: "/admin/kit-bags", icon: Package },
+        { label: "Product Forms", href: "/admin/product-forms", icon: Layers },
       ],
     },
     {

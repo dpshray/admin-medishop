@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import productService from "@/service/product/product.service";
 import { PaginatedResponse, ParamsType } from "@/types/types";
 import { toast } from "sonner";
+import { PageParams } from "@/config/app-constant";
 
 interface UseProductsOptions {
   enabled?: boolean;
@@ -81,6 +82,106 @@ export const useDeleteVariantImage = () => {
 
     onError: () => {
       toast.error("Failed to delete variant image");
+    },
+  });
+};
+
+export const useGetProductForms = (params?: PageParams) => {
+  return useQuery({
+    queryKey: ["product-forms", params],
+    queryFn: async () => {
+      const res = await productService.getProductForms(params);
+      return res;
+    },
+  });
+};
+
+export const useCreateProductForm = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: any) => {
+      await productService.createProductForm(data);
+    },
+    onSuccess: () => {
+      toast.success("Product form created successfully");
+      queryClient.invalidateQueries({ queryKey: ["product-forms"] });
+    },
+
+    onError: () => {
+      toast.error("Failed to create product form");
+    },
+  });
+};
+
+export const useUpdateProductForm = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ uuid, data }: { uuid: string; data: any }) => {
+      await productService.updateProductForm(uuid, data);
+    },
+    onSuccess: () => {
+      toast.success("Product form updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["product-forms"] });
+    },
+
+    onError: () => {
+      toast.error("Failed to update product form");
+    },
+  });
+};
+
+export const useDeleteProductForm = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (uuid: string) => {
+      await productService.deleteProductForm(uuid);
+    },
+    onSuccess: () => {
+      toast.success("Product form deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["product-forms"] });
+    },
+
+    onError: () => {
+      toast.error("Failed to delete product form");
+    },
+  });
+};
+
+export const useDeletePackageType = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (uuid: string) => {
+      await productService.deletePackageType(uuid);
+    },
+    onSuccess: () => {
+      toast.success("Package type deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["product-forms"] });
+    },
+
+    onError: () => {
+      toast.error("Failed to delete package type");
+    },
+  });
+};
+
+export const useDeleteUnitType = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (uuid: string) => {
+      await productService.deleteUnitType(uuid);
+    },
+    onSuccess: () => {
+      toast.success("Unit type deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["product-forms"] });
+    },
+
+    onError: () => {
+      toast.error("Failed to delete unit type");
     },
   });
 };

@@ -38,13 +38,13 @@ export default function AdminSalesReportPage() {
     setPage(1); // reset to page 1 on filter change
   }, []);
 
-  const handleExport = useCallback(
-    (format: "xlsx" | "csv") => {
-      // TODO: call export endpoint with current filters
-      // console.log("export", format, filters);
-    },
-    [filters],
-  );
+  // const handleExport = useCallback(
+  //   (format: "xlsx" | "csv") => {
+  //     // TODO: call export endpoint with current filters
+  //     // console.log("export", format, filters);
+  //   },
+  //   [filters],
+  // );
 
   const tableData = data?.table.data ?? [];
   const totalPages = data?.table.last_page ?? 1;
@@ -80,7 +80,7 @@ export default function AdminSalesReportPage() {
       <SalesFiltersBar
         filters={filters}
         onChange={handleFilterChange}
-        onExport={handleExport}
+        // onExport={handleExport}
       />
 
       {/* Charts */}

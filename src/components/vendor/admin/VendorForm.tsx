@@ -34,6 +34,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import PasswordInputField from "@/components/field/password-input";
 
 interface VendorFormProps {
   mode: "create" | "edit";
@@ -113,6 +114,7 @@ export default function VendorForm({
       store_description: "",
       email: "",
       mobile_number: "",
+      password: "",
       bank_account_holder_name: "",
       bank_name: "",
       bank_account_number: "",
@@ -382,6 +384,14 @@ export default function VendorForm({
                       required
                       aria-required="true"
                     />
+                    <PasswordInputField
+                      {...register("password")}
+                      label="Password"
+                      error={errors.password?.message}
+                      required={!isEditMode}
+                      aria-required={!isEditMode}
+                      className="-mt-1"
+                    />
                   </div>
                 </section>
 
@@ -411,8 +421,7 @@ export default function VendorForm({
                       label="Store Description"
                       error={errors.store_description?.message}
                       textarea
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                   </div>
                 </section>
@@ -435,27 +444,22 @@ export default function VendorForm({
                       {...register("bank_account_holder_name")}
                       label="Account Holder Name"
                       error={errors.bank_account_holder_name?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("bank_name")}
                       label="Bank Name"
                       error={errors.bank_name?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("bank_account_number")}
                       label="Account Number"
                       error={errors.bank_account_number?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
-                      {...register("commission_percentage", {
-                        valueAsNumber: true,
-                      })}
+                      {...register("commission_percentage")}
                       label="Commission Percentage"
                       type="number"
                       error={errors.commission_percentage?.message}
@@ -481,43 +485,37 @@ export default function VendorForm({
                       {...register("country")}
                       label="Country"
                       error={errors.country?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("state")}
                       label="State/Province"
                       error={errors.state?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("district")}
                       label="District"
                       error={errors.district?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("municipality")}
                       label="Municipality"
                       error={errors.municipality?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("postal_code")}
                       label="Postal Code"
                       error={errors.postal_code?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                     <TextInputField
                       {...register("location")}
                       label="Street Address"
                       error={errors.location?.message}
-                      required
-                      aria-required="true"
+                      aria-required="false"
                     />
                   </div>
                 </section>
@@ -602,7 +600,7 @@ export default function VendorForm({
                         <FileInputField
                           name={name}
                           label={label}
-                          required={!isEditMode}
+                          // required={!isEditMode}
                           error={errors[name]?.message}
                           onFileChange={(files: File[]) =>
                             handleFileChange(name, files[0] ?? null)

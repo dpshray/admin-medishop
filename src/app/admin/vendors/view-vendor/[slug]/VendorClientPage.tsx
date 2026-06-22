@@ -15,7 +15,6 @@ import {
   Building2,
   CheckCircle2,
   CreditCard,
-  Download,
   Edit3,
   FileText,
   Globe,
@@ -54,16 +53,16 @@ interface VendorDetails {
   email_verified: boolean;
   account_status: boolean;
   store_name: string;
-  store_description: string;
-  location: string;
-  country: string;
-  state: string;
-  district: string;
-  municipality: string;
-  postal_code: string;
-  bank_name: string;
-  bank_account_holder_name: string;
-  bank_account_number: string;
+  store_description: string | null;
+  location: string | null;
+  country: string | null;
+  state: string | null;
+  district: string | null;
+  municipality: string | null;
+  postal_code: string | null;
+  bank_name: string | null;
+  bank_account_holder_name: string | null;
+  bank_account_number: string | null;
   documents: VendorDocument;
 }
 
@@ -149,7 +148,7 @@ export default function VendorClientPage({ slug }: VendorClientPageProps) {
     {
       icon: MapPin,
       label: "Location",
-      value: vendor_details.country,
+      value: vendor_details.country ?? "Not set",
       bgColor: "bg-gradient-to-br from-slate-50 to-gray-50",
       iconColor: "text-slate-600",
     },
@@ -249,15 +248,6 @@ export default function VendorClientPage({ slug }: VendorClientPageProps) {
                     <Edit3 className="w-4 h-4 mr-2" aria-hidden="true" />
                     <span>Edit</span>
                   </Button>
-                  {/* <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 sm:flex-none shadow-sm"
-                    aria-label="Export vendor data"
-                  >
-                    <Download className="w-4 h-4 mr-2" aria-hidden="true" />
-                    <span>Export</span>
-                  </Button> */}
                 </div>
               </div>
 
@@ -376,7 +366,7 @@ export default function VendorClientPage({ slug }: VendorClientPageProps) {
                         <div className="bg-white p-4 sm:p-5 rounded-lg border border-purple-200 shadow-sm">
                           <p className="text-base sm:text-lg font-mono text-center tracking-wider text-slate-800 break-all">
                             {formatAccountNumber(
-                              vendor_details.bank_account_number,
+                              vendor_details.bank_account_number ?? "",
                             )}
                           </p>
                         </div>
@@ -510,7 +500,8 @@ export default function VendorClientPage({ slug }: VendorClientPageProps) {
                     </label>
                     <div className="bg-slate-50 p-4 sm:p-6 rounded-lg border border-slate-200">
                       <p className="text-sm leading-relaxed text-slate-700">
-                        {vendor_details.store_description}
+                        {vendor_details.store_description ??
+                          "No description provided."}
                       </p>
                     </div>
                   </div>
@@ -587,7 +578,7 @@ export default function VendorClientPage({ slug }: VendorClientPageProps) {
                     <div className="bg-white p-4 sm:p-5 rounded-lg border border-purple-200 shadow-sm">
                       <p className="text-base sm:text-lg font-mono text-center tracking-wider text-slate-800 break-all">
                         {formatAccountNumber(
-                          vendor_details.bank_account_number,
+                          vendor_details.bank_account_number ?? "",
                         )}
                       </p>
                     </div>

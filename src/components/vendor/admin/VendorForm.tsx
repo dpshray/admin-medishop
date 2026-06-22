@@ -53,6 +53,7 @@ interface ApiVendorData {
   name: string;
   email: string;
   mobile_number: string;
+  commission_percentage?: number;
   vendor_details?: {
     store_name?: string;
     store_description?: string;
@@ -67,7 +68,6 @@ interface ApiVendorData {
     bank_account_number?: string;
     account_status?: boolean;
     email_verified?: boolean;
-    commission_percentage?: number;
 
     documents?: {
       citizenship_card?: string[];
@@ -175,7 +175,9 @@ export default function VendorForm({
           vendor_citizenship_card: undefined,
           vendor_tax_certificate: undefined,
           vendor_business_license: undefined,
-          commission_percentage: apiData.vendor_details?.commission_percentage,
+          commission_percentage: apiData.commission_percentage
+            ? Number(apiData.commission_percentage)
+            : undefined,
         };
 
         setExistingDocuments({

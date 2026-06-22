@@ -42,6 +42,9 @@ interface Variation {
   size_value?: number;
   size_unit?: string;
   platform_price?: number;
+  form_type?: string;
+  package_type?: string;
+  package_size?: string;
 }
 
 interface Product {
@@ -154,6 +157,8 @@ const VendorProductModal = ({
     }
   }, [watchProductId, products, setValue]);
 
+  console.log("avai", availableVariations);
+
   const handleVariationClick = useCallback(
     (variation: Variation) => {
       if (addedVariations.has(variation.id)) {
@@ -248,6 +253,16 @@ const VendorProductModal = ({
 
   const handleFormSubmit = () => {
     handleSubmit(onSubmit)();
+  };
+
+  const getVariationLabel = (variation: Variation): string => {
+    if (variation.name?.trim()) return variation.name;
+    const parts = [
+      variation.size_value,
+      variation.size_unit,
+      variation.form_type,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(" ") : `Variation ${variation.id}`;
   };
 
   return (
@@ -353,17 +368,10 @@ const VendorProductModal = ({
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           {availableVariations.map((variation) => {
-                            // console.log(
-                            //   "Checking variation:",
-                            //   variation.name,
-                            //   "ID:",
-                            //   variation.id,
-                            //   "Added Variations:",
-                            //   Array.from(addedVariations),
-                            // );
                             const isSelected = addedVariations.has(
                               variation.id,
                             );
+                            const label = getVariationLabel(variation);
                             return (
                               <Button
                                 key={variation.id}
@@ -378,17 +386,32 @@ const VendorProductModal = ({
                                 onClick={() => handleVariationClick(variation)}
                                 disabled={isSelected}
                                 aria-pressed={isSelected}
-                                aria-label={`Add ${variation.name} variation`}
+                                aria-label={`Add ${label} variation`}
                               >
                                 <div className="w-full space-y-2">
                                   <div className="flex items-center justify-between gap-2">
                                     <span className="font-semibold text-sm group-hover:text-blue-600 transition-colors truncate flex-1">
-                                      {variation.name}
+                                      {label}
                                     </span>
                                     {isSelected && (
-                                      <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                                      <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
                                     )}
                                   </div>
+                                  {variation.form_type && (
+                                    <div className="flex flex-wrap gap-1">
+                                      <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                        {variation.form_type}
+                                      </span>
+                                      {variation.package_size &&
+                                        variation.package_type && (
+                                          <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                            {variation.package_size}{" "}
+                                            {variation.size_unit} /{" "}
+                                            {variation.package_type}
+                                          </span>
+                                        )}
+                                    </div>
+                                  )}
                                   {!isSelected && (
                                     <div className="text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
                                       Click to add →

@@ -24,12 +24,14 @@ import { DashboardCard } from "@/components/dashboard/dashboard-card";
 
 interface Variation {
   variant_name: string;
+  form_type: string;
+  package_type: string;
+  package_size: string;
   size_value: string;
   size_unit: string;
   units_in_stock: number;
   vendor_price: number;
   batch_number: number | string;
-  manufacture: string;
   expiry_date: string;
 }
 
@@ -63,7 +65,7 @@ const VariationItem = ({ variation, index }: VariationItemProps) => {
         className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-50 to-transparent dark:from-indigo-900/10 rounded-bl-full opacity-40 pointer-events-none"
         aria-hidden="true"
       />
-      <div className="relative p-4 sm:p-5 lg:p-6">
+      <div className="relative p-4 sm:p-5 lg:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0 space-y-3">
             <div className="flex items-start gap-3">
@@ -89,6 +91,30 @@ const VariationItem = ({ variation, index }: VariationItemProps) => {
                 </p>
               </div>
             </div>
+
+            {/* Form / Package info */}
+            <div className="flex flex-wrap gap-1.5">
+              {variation.form_type && (
+                <Badge
+                  variant="outline"
+                  className="text-xs font-normal text-slate-600 border-slate-200 bg-slate-50 gap-1"
+                >
+                  <span className="text-indigo-600 font-medium">Form</span>
+                  {variation.form_type}
+                </Badge>
+              )}
+              {variation.package_size && variation.package_type && (
+                <Badge
+                  variant="outline"
+                  className="text-xs font-normal text-slate-600 border-slate-200 bg-slate-50 gap-1"
+                >
+                  <span className="text-indigo-600 font-medium">Package</span>
+                  {variation.package_size} {variation.size_unit} /{" "}
+                  {variation.package_type}
+                </Badge>
+              )}
+            </div>
+
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant={
@@ -119,14 +145,39 @@ const VariationItem = ({ variation, index }: VariationItemProps) => {
               )}
             </div>
           </div>
+
           <div className="text-left sm:text-right flex-shrink-0">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5 uppercase tracking-wide font-medium">
               Price
             </p>
-            <p className="  font-bold text-slate-900 dark:text-white">
+            <p className="font-bold text-slate-900 dark:text-white">
               {FormatCurrency(variation.vendor_price)}
             </p>
           </div>
+        </div>
+
+        {/* Batch / Expiry */}
+        <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+          {variation.batch_number !== 0 && variation.batch_number !== "" && (
+            <span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">
+                Batch:
+              </span>{" "}
+              {variation.batch_number}
+            </span>
+          )}
+          {variation.expiry_date && (
+            <span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">
+                Expires:
+              </span>{" "}
+              {new Date(variation.expiry_date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          )}
         </div>
       </div>
     </article>

@@ -213,6 +213,46 @@ class ProductService extends HttpServices {
       throw error;
     }
   }
+
+  async deleteVariant(variant_id: number) {
+    try {
+      return await this.deleteRequest({
+        url: `/admin/delete-variation/${variant_id}`,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async addDisclaimer(data: string) {
+    try {
+      return await this.postRequest({
+        url: `/admin/disclaimer`,
+        data,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getDisclaimer() {
+    try {
+      return await this.getRequest({
+        url: `/admin/disclaimer`,
+        config: {
+          auth: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 const productService = new ProductService();

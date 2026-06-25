@@ -31,6 +31,7 @@ export const createProductSchema = z.object({
   gallery_images: z.array(z.instanceof(File)).min(1),
   health_condition: z.array(z.number()),
   discount_percent: z.coerce.number().min(0).max(100),
+  show_disclaimer: z.boolean().default(false),
 });
 
 export const updateProductSchema = z.object({
@@ -46,6 +47,7 @@ export const updateProductSchema = z.object({
   health_condition: z.array(z.number()).optional(),
   discount_percent: z.coerce.number().min(0).max(100).optional(),
   generic_product_name_id: z.number().optional(),
+  show_disclaimer: z.boolean().default(false),
 });
 
 export type ProductCreate = z.infer<typeof createProductSchema>;

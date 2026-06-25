@@ -12,10 +12,17 @@ import {
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { useGetProductTotals } from "@/hooks/use-dashboard";
 import DashboardCardSkeleton from "@/components/dashboard/DashboardCardSkeleton";
+import { useState } from "react";
+import { useGetDisclaimer } from "@/hooks/useProduct";
+import { DisclaimerDialog } from "@/components/modal/DisclaimerDialog";
 
 export default function ProductPage() {
   const { data, isLoading } = useGetProductTotals();
   const totals = data?.data;
+
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
+  const { data: disclaimerData } = useGetDisclaimer();
+  const hasDisclaimer = !!disclaimerData?.data?.disclaimer;
 
   const dashboardCards = [
     {
@@ -57,6 +64,8 @@ export default function ProductPage() {
         title="Products Dashboard"
         icon={Building2}
         description="Manage your products"
+        actionLabel={hasDisclaimer ? "Edit Disclaimer" : "Add Disclaimer"}
+        onAction={() => setDisclaimerOpen(true)}
       />
       <div className="my-2">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -72,6 +81,11 @@ export default function ProductPage() {
       <div className="mt-6 my-2">
         <AdminProductTable />
       </div>
+
+      <DisclaimerDialog
+        open={disclaimerOpen}
+        onOpenChange={setDisclaimerOpen}
+      />
     </div>
   );
 }

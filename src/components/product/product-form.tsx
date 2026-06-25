@@ -43,12 +43,17 @@ import { cn } from "@/lib/utils";
 import { RichTextEditor } from "../field/rich-text-editor";
 import { Label } from "../ui/label";
 import { MonthYearPicker } from "../field/month-year-picker";
-import { useDeleteProductImage, useGetProductForms } from "@/hooks/useProduct";
+import {
+  useDeleteProductImage,
+  useDeleteVariant,
+  useGetProductForms,
+} from "@/hooks/useProduct";
 import {
   ProductForm,
   ProductFormPackageType,
   ProductFormUnitType,
 } from "../table/ProductFormTable";
+import ActionModal from "../modal/ConfirmModal";
 
 interface ProductManageFormProps {
   mode?: "create" | "edit";
@@ -89,6 +94,13 @@ const ProductManageForm = ({
   const productForms = productFormsData?.data?.items ?? [];
 
   const deleteImageMutation = useDeleteProductImage();
+  const deleteVariantMutation = useDeleteVariant();
+
+  const [deleteVariantModal, setDeleteVariantModal] = useState<{
+    open: boolean;
+    index: number;
+    variantId?: number;
+  }>({ open: false, index: -1, variantId: undefined });
 
   const { data: healthCondition } = useQuery({
     queryKey: ["health-condition"],
@@ -176,6 +188,7 @@ const ProductManageForm = ({
         prescription_required: false,
         health_condition: [],
         discount_percent: 0,
+        show_disclaimer: false,
       };
     }
 
@@ -192,6 +205,7 @@ const ProductManageForm = ({
       health_condition: [],
       discount_percent: 0,
       generic_product_name_id: 0,
+      show_disclaimer: false,
     };
   }, [isUpdateMode, defaultVariation]);
 
@@ -273,6 +287,7 @@ const ProductManageForm = ({
           productData.health_conditions?.map((h: any) => h.id) || [],
         );
         setValue("discount_percent", productData.discount_percent || 0);
+        setValue("show_disclaimer", productData.show_disclaimer ?? false);
         setValue(
           "generic_product_name_id",
           productData.generic_product?.generic_product_id || 0,
@@ -445,14 +460,42 @@ const ProductManageForm = ({
 
   const handleRemoveVariation = useCallback(
     (index: number) => () => {
-      remove(index);
+      const variantId = (watch(`variations.${index}`) as any)?.variant_id;
+      if (isUpdateMode && variantId) {
+        setDeleteVariantModal({ open: true, index, variantId });
+      } else {
+        remove(index);
+      }
     },
-    [remove],
+    [remove, watch, isUpdateMode],
   );
+
+  const handleConfirmDeleteVariant = useCallback(() => {
+    const { index, variantId } = deleteVariantModal;
+    if (variantId) {
+      deleteVariantMutation.mutate(variantId, {
+        onSuccess: () => {
+          remove(index);
+          setDeleteVariantModal({
+            open: false,
+            index: -1,
+            variantId: undefined,
+          });
+        },
+      });
+    }
+  }, [deleteVariantModal, deleteVariantMutation, remove]);
 
   const handlePrescriptionToggle = useCallback(
     (checked: boolean) => {
       setValue("prescription_required", checked, { shouldValidate: true });
+    },
+    [setValue],
+  );
+
+  const handleDisclaimerToggle = useCallback(
+    (checked: boolean) => {
+      setValue("show_disclaimer", checked, { shouldValidate: true });
     },
     [setValue],
   );
@@ -523,6 +566,8 @@ const ProductManageForm = ({
   if (isLoading || (isUpdateMode && !isDataLoaded)) {
     return <ProductManageFormSkeleton />;
   }
+
+  const watchShowDisclaimer = watch("show_disclaimer");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-6 sm:px-6 lg:px-8">
@@ -624,14 +669,6 @@ const ProductManageForm = ({
               )}
             </div>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-6 sm:gap-6 md:grid-cols-2">
-              <TextInputField
-                {...register("discount_percent")}
-                label="Discount Percentage"
-                type="number"
-                placeholder="Enter discount percentage"
-                error={errors.discount_percent?.message}
-                required={!isUpdateMode}
-              />
               <div className="flex items-center justify-between rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition-colors hover:border-slate-300 sm:p-5">
                 <div className="space-y-0.5 sm:space-y-1">
                   <label
@@ -651,6 +688,35 @@ const ProductManageForm = ({
                   aria-label="Toggle prescription requirement"
                 />
               </div>
+
+              <div className="flex items-center justify-between rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 transition-colors hover:border-slate-300 sm:p-5">
+                <div className="space-y-0.5 sm:space-y-1">
+                  <label
+                    htmlFor="show-disclaimer"
+                    className="cursor-pointer text-sm font-semibold text-slate-900"
+                  >
+                    Show Disclaimer
+                  </label>
+                  <p className="text-xs text-slate-500 sm:text-sm">
+                    Display disclaimer on product page
+                  </p>
+                </div>
+                <Switch
+                  id="show-disclaimer"
+                  checked={watchShowDisclaimer}
+                  onCheckedChange={handleDisclaimerToggle}
+                  aria-label="Toggle disclaimer visibility"
+                />
+              </div>
+
+              <TextInputField
+                {...register("discount_percent")}
+                label="Discount Percentage"
+                type="number"
+                placeholder="Enter discount percentage"
+                error={errors.discount_percent?.message}
+                required={!isUpdateMode}
+              />
             </div>
           </div>
 
@@ -1054,6 +1120,17 @@ const ProductManageForm = ({
           </div>
         </div>
       </div>
+
+      <ActionModal
+        open={deleteVariantModal.open}
+        setOpen={(open) => setDeleteVariantModal((prev) => ({ ...prev, open }))}
+        title="Delete Variation"
+        description="Are you sure you want to delete this variation? This action cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        loading={deleteVariantMutation.isPending}
+        onConfirm={handleConfirmDeleteVariant}
+      />
     </div>
   );
 };

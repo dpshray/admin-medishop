@@ -185,3 +185,54 @@ export const useDeleteUnitType = () => {
     },
   });
 };
+
+export const useDeleteVariant = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variant_id: number) => {
+      await productService.deleteVariant(variant_id);
+    },
+    onSuccess: () => {
+      toast.success("Variant deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+
+    onError: () => {
+      toast.error("Failed to delete variant");
+    },
+  });
+};
+
+export const useGetDisclaimer = () => {
+  return useQuery({
+    queryKey: ["disclaimer"],
+    queryFn: async () => {
+      const res = await productService.getDisclaimer();
+      return res;
+    },
+  });
+};
+
+export const useAddDisclaimer = () => {
+  const queryClient = useQueryClient();
+  const { data } = useGetDisclaimer();
+
+  return useMutation({
+    mutationFn: async (data: any) => {
+      await productService.addDisclaimer(data);
+    },
+    onSuccess: () => {
+      const isUpdate = !!data?.data;
+      toast.success(
+        isUpdate
+          ? "Disclaimer updated successfully"
+          : "Disclaimer added successfully",
+      );
+      queryClient.invalidateQueries({ queryKey: ["disclaimer"] });
+    },
+    onError: () => {
+      toast.error("Failed to save disclaimer");
+    },
+  });
+};

@@ -19,6 +19,20 @@ class ProductService extends HttpServices {
     }
   }
 
+  async getFreeProduct(params?: ParamsType) {
+    try {
+      return await this.getRequest({
+        url: "/products",
+        config: {
+          auth: true,
+          params,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getSingleProduct(uuid: string) {
     try {
       return await this.getRequest({

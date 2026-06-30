@@ -1,275 +1,338 @@
-'use client'
+"use client";
 
-import {useCallback, useMemo, useState} from "react"
-import {useMutation, useQuery} from "@tanstack/react-query"
-import {DataTable} from "@/components/table/ReusableTable"
-import brandService from "@/service/brand.service"
-import {ColumnDef} from "@tanstack/react-table"
-import {Checkbox} from "@/components/ui/checkbox"
-import {NoDataFound} from "@/lib/helper"
-import ActionModal from "@/components/modal/ConfirmModal"
-import {toast} from "sonner"
-import {BrandFormModal} from "@/components/brand/BrandFormModal"
-import {Badge} from "@/components/ui/badge"
-import {cn} from "@/lib/utils"
-import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage"
-import {RowActions} from "@/lib/action-button"
-import {DEFAULT_PAGE_SIZE} from "@/config/app-constant";
-import {Package2} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { DataTable } from "@/components/table/ReusableTable";
+import brandService from "@/service/brand.service";
+import { ColumnDef } from "@tanstack/react-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { NoDataFound } from "@/lib/helper";
+import ActionModal from "@/components/modal/ConfirmModal";
+import { toast } from "sonner";
+import { BrandFormModal } from "@/components/brand/BrandFormModal";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import GlobalTableHoverImage from "@/components/table/GlobalTableHoverImage";
+import { RowActions } from "@/lib/action-button";
+import { DEFAULT_PAGE_SIZE } from "@/config/app-constant";
+import { Package2 } from "lucide-react";
 import TableHeading from "@/components/table/table-headers";
+import { useRouter } from "next/navigation";
 
 interface Brand {
-    id: number
-    name: string
-    slug: string
-    image: string
-    is_featured?: boolean
-    is_popular?: boolean
+  id: number;
+  name: string;
+  slug: string;
+  image: string;
+  is_featured?: boolean;
+  is_popular?: boolean;
 }
 
 interface BrandResponse {
-    items: Brand[]
-    total_page: number
-    total_items?: number
+  items: Brand[];
+  total_page: number;
+  total_items?: number;
 }
 
 interface PaginationParams {
-    page: number
-    per_page: number
-    search: string
-    status?: 1 | 0
+  page: number;
+  per_page: number;
+  search: string;
+  status?: 1 | 0;
 }
 
 export default function BrandAdminTable() {
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalPages, setTotalPages] = useState(1)
-    const [totalItems, setTotalItems] = useState(0)
+  const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-    const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null)
-    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
-    const [isFormModalOpen, setFormModalOpen] = useState(false)
-    const [searchQuery, setSearchQuery] = useState("")
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isFormModalOpen, setFormModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-    const {data, isLoading, isError, error, refetch} = useQuery<BrandResponse, Error>({
-        queryKey: ["admin-brands", currentPage, searchQuery],
-        queryFn: async () => {
-            const params: PaginationParams = {page: currentPage, per_page: DEFAULT_PAGE_SIZE, search: searchQuery}
-            const response = await brandService.getAllBrands(params)
-            setTotalPages(response?.total_page || 1)
-            setTotalItems(response?.total_items || 0)
-            return response
-        },
-        staleTime: 0,
-        refetchOnWindowFocus: false,
-    })
-    const brands = useMemo(() => data?.items || [], [data])
+  const { data, isLoading, isError, error, refetch } = useQuery<
+    BrandResponse,
+    Error
+  >({
+    queryKey: ["admin-brands", currentPage, searchQuery],
+    queryFn: async () => {
+      const params: PaginationParams = {
+        page: currentPage,
+        per_page: DEFAULT_PAGE_SIZE,
+        search: searchQuery,
+      };
+      const response = await brandService.getAllBrands(params);
+      setTotalPages(response?.total_page || 1);
+      setTotalItems(response?.total_items || 0);
+      return response;
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+  const brands = useMemo(() => data?.items || [], [data]);
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: number) => brandService.deleteBrand(id),
-        onSuccess: (response: any) => {
-            toast.success(response?.message || "Brand deleted successfully")
-            setDeleteModalOpen(false)
-            setSelectedBrand(null)
-            refetch()
-        },
-        onError: (error: any) => {
-            toast.error(error?.message || "Failed to delete brand")
-        },
-    })
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => brandService.deleteBrand(id),
+    onSuccess: (response: any) => {
+      toast.success(response?.message || "Brand deleted successfully");
+      setDeleteModalOpen(false);
+      setSelectedBrand(null);
+      refetch();
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to delete brand");
+    },
+  });
 
-    const handleSearch = useCallback((value: string) => {
-        setSearchQuery(value)
-        setCurrentPage(1)
-    }, [])
-    const handlePageChange = useCallback((page: number) => setCurrentPage(page), [])
-    const handleAddBrand = useCallback(() => {
-        setSelectedBrand(null);
-        setFormModalOpen(true)
-    }, [])
-    const handleEditBrand = useCallback((brand: Brand) => {
-        setSelectedBrand(brand);
-        setFormModalOpen(true)
-    }, [])
-    const handleDeleteBrand = useCallback((brand: Brand) => {
-        setSelectedBrand(brand);
-        setDeleteModalOpen(true)
-    }, [])
-    const confirmDeleteBrand = useCallback(() => {
-        if (selectedBrand) deleteMutation.mutate(selectedBrand.id)
-    }, [selectedBrand, deleteMutation])
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, []);
+  const handlePageChange = useCallback(
+    (page: number) => setCurrentPage(page),
+    [],
+  );
+  const handleViewBrand = useCallback(
+    (brand: Brand) => {
+      router.push(`/admin/brands/${brand.slug}`);
+    },
+    [router],
+  );
+  const handleAddBrand = useCallback(() => {
+    setSelectedBrand(null);
+    setFormModalOpen(true);
+  }, []);
+  const handleEditBrand = useCallback((brand: Brand) => {
+    setSelectedBrand(brand);
+    setFormModalOpen(true);
+  }, []);
+  const handleDeleteBrand = useCallback((brand: Brand) => {
+    setSelectedBrand(brand);
+    setDeleteModalOpen(true);
+  }, []);
+  const confirmDeleteBrand = useCallback(() => {
+    if (selectedBrand) deleteMutation.mutate(selectedBrand.id);
+  }, [selectedBrand, deleteMutation]);
 
-    const handleFormSubmit = useCallback(async (formData: any) => {
-        try {
-            if (selectedBrand) {
-                const response = await brandService.updateBrand(selectedBrand.id, formData)
-                toast.success(response?.message || "Brand updated successfully")
-            } else {
-                const response = await brandService.createBrand(formData)
-                toast.success(response?.message || "Brand created successfully")
-            }
-            setFormModalOpen(false)
-            setSelectedBrand(null)
-            refetch()
-        } catch (error: any) {
-            toast.error(error?.message || "Failed to save brand")
+  const handleFormSubmit = useCallback(
+    async (formData: any) => {
+      try {
+        if (selectedBrand) {
+          const response = await brandService.updateBrand(
+            selectedBrand.id,
+            formData,
+          );
+          toast.success(response?.message || "Brand updated successfully");
+        } else {
+          const response = await brandService.createBrand(formData);
+          toast.success(response?.message || "Brand created successfully");
         }
-    }, [selectedBrand, refetch])
+        setFormModalOpen(false);
+        setSelectedBrand(null);
+        refetch();
+      } catch (error: any) {
+        toast.error(error?.message || "Failed to save brand");
+      }
+    },
+    [selectedBrand, refetch],
+  );
 
-    const columns: ColumnDef<Brand>[] = useMemo(() => [
-        {
-            id: "select",
-            header: ({table}) => (
-                <Checkbox
-                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all brands"
-                />
-            ),
-            cell: ({row}) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label={`Select brand ${row.original.name}`}
-                    className="mx-auto"
-                />
-            ),
-            size: 50,
-            enableSorting: false,
-            enableHiding: false,
-        },
-        {
-            accessorKey: "image",
-            header: "Image",
-            size: 100,
-            cell: ({row}) =>
-                <GlobalTableHoverImage src={row.original.image} alt={row.original.name}
-                                       fallbackSrc="/placeholder.png"/>,
-            enableSorting: false,
-        },
-        {
-            accessorKey: "name",
-            header: "Brand Name",
-            size: 200,
-            cell: ({row}) =>
-                <div className="flex flex-col gap-1">
-                    <span className="font-medium text-gray-900">{row.original.name}</span>
-                    <Badge variant="outline" className="w-fit text-xs">
-                        {row.original.slug}
-                    </Badge>
-                </div>
-        },
-        {
-            accessorKey: "is_featured",
-            header: "Featured",
-            size: 120,
-            cell: ({row}) => (
-                <Badge
-                    variant={row.original.is_featured ? "default" : "secondary"}
-                    className={cn(
-                        row.original.is_featured ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 hover:bg-gray-500",
-                        "text-white"
-                    )}
-                >
-                    {row.original.is_featured ? "Featured" : "Standard"}
-                </Badge>
-            ),
-        },
-        {
-            accessorKey: "is_popular",
-            header: "Popular",
-            size: 120,
-            cell: ({row}) => (
-                <Badge
-                    variant={row.original.is_popular ? "default" : "secondary"}
-                    className={cn(
-                        row.original.is_popular ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400 hover:bg-gray-500",
-                        "text-white"
-                    )}
-                >
-                    {row.original.is_popular ? "Popular" : "Standard"}
-                </Badge>
-            ),
-        },
-        {
-            id: "actions",
-            header: "Actions",
-            size: 100,
-            cell: ({row}) => <RowActions row={row} onEditAction={() => handleEditBrand(row.original)}
-                                         onDeleteAction={() => handleDeleteBrand(row.original)}/>,
-            enableSorting: false,
-            enableHiding: false,
-        },
-    ], [handleEditBrand, handleDeleteBrand])
+  const columns: ColumnDef<Brand>[] = useMemo(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all brands"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={`Select brand ${row.original.name}`}
+            className="mx-auto"
+          />
+        ),
+        size: 50,
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: "image",
+        header: "Image",
+        size: 100,
+        cell: ({ row }) => (
+          <GlobalTableHoverImage
+            src={row.original.image}
+            alt={row.original.name}
+            fallbackSrc="/placeholder.png"
+          />
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: "name",
+        header: "Brand Name",
+        size: 200,
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-1">
+            <span className="font-medium text-gray-900">
+              {row.original.name}
+            </span>
+            <Badge variant="outline" className="w-fit text-xs">
+              {row.original.slug}
+            </Badge>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "is_featured",
+        header: "Featured",
+        size: 120,
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.is_featured ? "default" : "secondary"}
+            className={cn(
+              row.original.is_featured
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-gray-400 hover:bg-gray-500",
+              "text-white",
+            )}
+          >
+            {row.original.is_featured ? "Featured" : "Standard"}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "is_popular",
+        header: "Popular",
+        size: 120,
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.is_popular ? "default" : "secondary"}
+            className={cn(
+              row.original.is_popular
+                ? "bg-blue-500 hover:bg-blue-600"
+                : "bg-gray-400 hover:bg-gray-500",
+              "text-white",
+            )}
+          >
+            {row.original.is_popular ? "Popular" : "Standard"}
+          </Badge>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        size: 100,
+        cell: ({ row }) => (
+          <RowActions
+            row={row}
+            onViewAction={() => handleViewBrand(row.original)}
+            onEditAction={() => handleEditBrand(row.original)}
+            onDeleteAction={() => handleDeleteBrand(row.original)}
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+    ],
+    [handleViewBrand, handleEditBrand, handleDeleteBrand],
+  );
 
-    if (isError) {
-        return (
-            <div className="p-6">
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-center gap-3">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                              clipRule="evenodd"/>
-                    </svg>
-                    <div>
-                        <h3 className="text-sm font-medium text-red-800">Failed to load brands</h3>
-                        <p className="mt-1 text-sm text-red-700">{error?.message || "An unexpected error occurred"}</p>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
+  if (isError) {
     return (
-        <div className="space-y-6">
-            <TableHeading
-                title="Brand Management"
-                description="Manage your brand catalog and settings"
-                icon={Package2}
-                className={cn('mt-2')}
+      <div className="p-6">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-center gap-3">
+          <svg
+            className="h-5 w-5 text-red-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
             />
-
-            <DataTable<Brand, any>
-                data={brands}
-                columns={columns}
-                loading={isLoading}
-                onAddAction={handleAddBrand}
-                actionLabel="Add Brand"
-                pagination={{
-                    page: currentPage,
-                    totalPages,
-                    onPageChange: handlePageChange,
-                    dataCount: totalItems,
-                }}
-                onSearchAction={handleSearch}
-                enableRowSelection
-                enableSorting
-                enableSearch
-                enableColumnVisibility
-                searchPlaceholder="Search brands by name..."
-                totalCount={totalItems}
-                noDataText={<NoDataFound/>}
-            />
-
-            <ActionModal
-                open={isDeleteModalOpen}
-                setOpen={setDeleteModalOpen}
-                title="Delete Brand"
-                description={selectedBrand ? `Are you sure you want to delete "${selectedBrand.name}"? This action cannot be undone.` : "Are you sure you want to delete this brand?"}
-                confirmLabel="Delete Brand"
-                onConfirm={confirmDeleteBrand}
-                loading={deleteMutation.isPending}
-            />
-
-            <BrandFormModal
-                open={isFormModalOpen}
-                onCloseAction={() => {
-                    setFormModalOpen(false);
-                    setSelectedBrand(null)
-                }}
-                onSubmitAction={handleFormSubmit}
-                slug={selectedBrand?.slug}
-                isLoading={false}
-            />
+          </svg>
+          <div>
+            <h3 className="text-sm font-medium text-red-800">
+              Failed to load brands
+            </h3>
+            <p className="mt-1 text-sm text-red-700">
+              {error?.message || "An unexpected error occurred"}
+            </p>
+          </div>
         </div>
-    )
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <TableHeading
+        title="Brand Management"
+        description="Manage your brand catalog and settings"
+        icon={Package2}
+        className={cn("mt-2")}
+      />
+
+      <DataTable<Brand, any>
+        data={brands}
+        columns={columns}
+        loading={isLoading}
+        onAddAction={handleAddBrand}
+        actionLabel="Add Brand"
+        pagination={{
+          page: currentPage,
+          totalPages,
+          onPageChange: handlePageChange,
+          dataCount: totalItems,
+        }}
+        onSearchAction={handleSearch}
+        enableRowSelection
+        enableSorting
+        enableSearch
+        enableColumnVisibility
+        searchPlaceholder="Search brands by name..."
+        totalCount={totalItems}
+        noDataText={<NoDataFound />}
+      />
+
+      <ActionModal
+        open={isDeleteModalOpen}
+        setOpen={setDeleteModalOpen}
+        title="Delete Brand"
+        description={
+          selectedBrand
+            ? `Are you sure you want to delete "${selectedBrand.name}"? This action cannot be undone.`
+            : "Are you sure you want to delete this brand?"
+        }
+        confirmLabel="Delete Brand"
+        onConfirm={confirmDeleteBrand}
+        loading={deleteMutation.isPending}
+      />
+
+      <BrandFormModal
+        open={isFormModalOpen}
+        onCloseAction={() => {
+          setFormModalOpen(false);
+          setSelectedBrand(null);
+        }}
+        onSubmitAction={handleFormSubmit}
+        slug={selectedBrand?.slug}
+        isLoading={false}
+      />
+    </div>
+  );
 }

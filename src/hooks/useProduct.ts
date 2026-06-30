@@ -38,6 +38,16 @@ export function useProducts(
   };
 }
 
+export const useFreeProducts = (params: ParamsType = {}) => {
+  return useQuery({
+    queryKey: ["free-products", params],
+    queryFn: async () => {
+      const res = await productService.getFreeProduct(params);
+      return res?.data;
+    },
+  });
+};
+
 export const useDeleteProductImage = () => {
   const queryClient = useQueryClient();
 

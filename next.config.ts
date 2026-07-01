@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   images: {
     dangerouslyAllowLocalIP: isDev,
     qualities: [90, 75, 85],
+    unoptimized: true,
+    minimumCacheTTL: 60 * 60 * 24 * 30, //30 days
     domains: [
       "192.168.100.18",
       "192.168.100.23",

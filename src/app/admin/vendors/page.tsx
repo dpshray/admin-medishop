@@ -1,7 +1,6 @@
 "use client";
 
 import { Building2, UserCheck, UserPlus, Users, UserX } from "lucide-react";
-import { adminVendorDashboardCards } from "@/data";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import VendorTable from "@/app/admin/vendors/VenderTable";
 import PageHeader from "@/components/headers/PageHeader";

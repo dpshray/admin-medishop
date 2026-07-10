@@ -121,3 +121,12 @@ export const useGetVendorSalesReport = (params?: PageParams) => {
     },
   });
 };
+
+export const useGetVendorDashboardChart = (params?: PageParams) => {
+  return useQuery({
+    queryKey: ["vendor-dashboard-chart", params],
+    queryFn: async () => {
+      return reportService.getVendorDashboardChart(params);
+    },
+  });
+};

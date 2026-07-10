@@ -28,7 +28,7 @@ interface Props {
   onChange: (partial: Partial<VendorSalesFilters>) => void;
 }
 
-const PRESET_OPTIONS = [
+export const PRESET_OPTIONS = [
   { value: "today", label: "Today" },
   { value: "yesterday", label: "Yesterday" },
   { value: "last_7_days", label: "Last 7 Days" },

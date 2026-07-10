@@ -139,6 +139,21 @@ class ReportService extends HttpServices {
       throw error;
     }
   }
+
+  async getVendorDashboardChart(params?: PageParams) {
+    try {
+      const res = await this.getRequest({
+        url: "/vendor/dashboard-chart",
+        config: {
+          auth: true,
+          params,
+        },
+      });
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 const reportService = new ReportService();

@@ -72,62 +72,7 @@ export const vendorDashboardCards = [
     bgColor: "bg-purple-100",
   },
 ];
-export const adminVendorDashboardCards = [
-  {
-    title: "Total Vendors",
-    value: "1,245",
-    change: "+12%",
-    changeType: "positive" as const,
-    icon: Package,
-    color: "text-blue-500",
-    bgColor: "bg-blue-100",
-  },
-  {
-    title: "Active Vendors",
-    value: "1,120",
-    change: "+10%",
-    changeType: "positive" as const,
-    icon: Settings,
-    color: "text-green-500",
-    bgColor: "bg-green-100",
-  },
-  {
-    title: "New Vendors",
-    value: "125",
-    change: "+18%",
-    changeType: "positive" as const,
-    icon: Package,
-    color: "text-purple-500",
-    bgColor: "bg-purple-100",
-  },
-  {
-    title: "Vendor Products",
-    value: "8,432",
-    change: "+8%",
-    changeType: "positive" as const,
-    icon: Package,
-    color: "text-yellow-500",
-    bgColor: "bg-yellow-100",
-  },
-  {
-    title: "Sales",
-    value: `${CURRENCY_SYMBOL} 32,450`,
-    change: "-3%",
-    changeType: "negative" as const,
-    icon: Download,
-    color: "text-red-500",
-    bgColor: "bg-red-100",
-  },
-  {
-    title: "Active Orders",
-    value: "1,120",
-    change: "+5%",
-    changeType: "positive" as const,
-    icon: Settings,
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-100",
-  },
-];
+
 export const adminDashboardData = [
   {
     title: "Monthly Revenue",

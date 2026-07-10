@@ -2,8 +2,6 @@
 import HealthConditionTable from "@/components/healthCondition/health-conditon-table";
 import PageHeader from "@/components/headers/PageHeader";
 import { Package2 } from "lucide-react";
-import { adminVendorDashboardCards } from "@/data";
-import { DashboardCard } from "@/components/dashboard/dashboard-card";
 
 export default function HealthCondition() {
   return (

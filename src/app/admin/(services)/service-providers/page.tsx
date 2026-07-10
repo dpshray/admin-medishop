@@ -1,9 +1,7 @@
 "use client";
 
 import { Layers } from "lucide-react";
-import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import PageHeader from "@/components/headers/PageHeader";
-import { adminVendorDashboardCards } from "@/data";
 import AdminServiceProviderTable from "@/app/admin/(services)/service-providers/ServiceProviderTable";
 
 export default function ServiceProviderPage() {

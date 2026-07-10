@@ -20,18 +20,6 @@ import { useGetVendorDashboardChart } from "@/hooks/use-report";
 import SearchSelectField from "../field/search-select";
 import { CURRENCY_SYMBOL } from "@/config/app-constant";
 
-const FILTER_OPTIONS = [
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "last_7_days", label: "Last 7 Days" },
-  { value: "last_30_days", label: "Last 30 Days" },
-  { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
-  { value: "this_year", label: "This Year" },
-] as const;
-
-type FilterValue = (typeof FILTER_OPTIONS)[number]["value"];
-
 interface ChartPoint {
   label: string;
   revenue: number;
@@ -53,9 +41,7 @@ function formatLabel(label: string) {
 }
 
 export function RevenueChart() {
-  const [filter, setFilter] = useState<FilterValue>("last_7_days");
-
-  const { data, isLoading } = useGetVendorDashboardChart({ filter });
+  const { data, isLoading } = useGetVendorDashboardChart();
 
   const chartData: ChartPoint[] = useMemo(() => {
     const charts = data?.data?.charts ?? [];
@@ -75,17 +61,6 @@ export function RevenueChart() {
           </CardTitle>
           <CardDescription>Revenue performance overview</CardDescription>
         </div>
-
-        <SearchSelectField
-          options={
-            FILTER_OPTIONS as unknown as { value: string; label: string }[]
-          }
-          value={filter}
-          onChange={(value) => setFilter(value as FilterValue)}
-          placeholder="Select range"
-          className="w-full sm:w-[180px]"
-          maxHeight={240}
-        />
       </CardHeader>
 
       <CardContent>
